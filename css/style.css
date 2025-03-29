@@ -1,0 +1,348 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+  --accent-color: rgb(0, 179, 255);
+  --base-color: #2E2B41;
+  --text-color: rgb(0, 179, 200);
+  --input-color: #F3F0FF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: Poppins, Segoe UI, sans-serif;
+  font-size: 12pt;
+  color: var(--text-color);
+  text-align: center;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--base-color);
+}
+.walkthrough {
+  position: relative;
+  justify-content: flex-start;
+  padding: 40px 20px;
+}
+
+.walkthrough-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.skip-btn {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.skip-btn:hover {
+  text-decoration: underline;
+}
+
+.slide-container {
+  width: 100%;
+  max-width: 400px;
+  height: 400px;
+  position: relative;
+}
+
+.slide {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide.active {
+  display: flex;
+}
+
+.slide img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+
+.slide h2 {
+  font-size: 1.75rem;
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.slide p {
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0 10px;
+}
+
+.indicator {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ddd;
+  transition: 200ms;
+}
+
+.dot.active {
+  background-color: var(--accent-color);
+}
+
+.walkthrough-footer {
+  margin-top: 20px;
+}
+
+.next-btn {
+  border: none;
+  border-radius: 1000px;
+  padding: .85em 4em;
+  background-color: var(--accent-color);
+  color: var(--base-color);
+  font: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.next-btn:hover {
+  background-color: var(--text-color);
+}
+
+.wrapper {
+  box-sizing: border-box;
+  background-color: var(--base-color);
+  height: 100vh;
+  width: max(40%, 600px);
+  padding: 10px;
+  border-radius: 0 20px 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+form {
+  width: min(400px, 100%);
+  margin-top: 20px;
+  margin-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+form>div {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+form label {
+  flex-shrink: 0;
+  height: 50px;
+  width: 50px;
+  background-color: var(--accent-color);
+  fill: var(--base-color);
+  color: var(--base-color);
+  border-radius: 10px 0 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+form input {
+  box-sizing: border-box;
+  flex-grow: 1;
+  min-width: 0;
+  height: 50px;
+  padding: 1em;
+  font: inherit;
+  border-radius: 0 10px 10px 0;
+  border: 2px solid var(--input-color);
+  border-left: none;
+  background-color: var(--input-color);
+  transition: 150ms ease;
+}
+
+form input:hover {
+  border-color: var(--accent-color);
+}
+
+form input:focus {
+  outline: none;
+  border-color: var(--text-color);
+}
+
+div:has(input:focus)>label {
+  background-color: var(--text-color);
+}
+
+form input::placeholder {
+  color: var(--text-color);
+}
+
+form button {
+  margin-top: 10px;
+  border: none;
+  border-radius: 1000px;
+  padding: .85em 4em;
+  background-color: var(--accent-color);
+  color: var(--base-color);
+  font: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+form button:hover {
+  background-color: var(--text-color);
+}
+
+form button:focus {
+  outline: none;
+  background-color: var(--text-color);
+}
+
+a {
+  text-decoration: none;
+  color: var(--accent-color);
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@media(max-width: 1100px) {
+  .wrapper {
+    width: min(600px, 100%);
+    border-radius: 0;
+  }
+}
+
+form div.incorrect label {
+  background-color: #f06272;
+}
+
+form div.incorrect input {
+  border-color: #f06272;
+}
+
+#error-message {
+  color: #f06272;
+}
+
+/* Sign-Up Methods Styles */
+.signup-method {
+  justify-content: center;
+}
+
+.method-buttons {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.method-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  border: none;
+  border-radius: 1000px;
+  padding: .85em 2em;
+  font: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.method-btn img,
+.method-btn span {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Individual Styles for Buttons */
+.google-btn {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.google-btn:hover {
+  background-color: rgb(0, 179, 200)
+}
+
+.facebook-btn {
+  background-color: #3b5998;
+  color: white;
+}
+
+.facebook-btn:hover {
+  background-color: #2d4373;
+}
+
+.email-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.email-btn span {
+  font-size: 18px;
+}
+
+.email-btn:hover {
+  background-color: #388e3c;
+}
+
+.phone-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.phone-btn:hover {
+  background-color: #f57c00;
+}
+
+.google-btn img,
+.facebook-btn img,
+.phone-btn img {
+  filter: brightness(0) invert(1);
+  /* White icons */
+}

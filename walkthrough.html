@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Intro Walkthrough</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="wrapper walkthrough">
+    <div class="walkthrough-header">
+      <button class="skip-btn" onclick="skipWalkthrough()">Skip</button>
+    </div>
+    
+    <div class="slide-container">
+      <div class="slide active">
+        <img src="images/manage-sales.png" alt="Welcome Slide"/>
+        <h2>Welcome to PaperLess!</h2>
+        <p>Manage your sales anywhere, anytime with ease and efficiency.</p>
+      </div>
+
+      <div class="slide">
+        <img src="images/buy-logo.webp" alt="Track Sales"/>
+        <h2>Track Sales in Real Time</h2>
+        <p>Monitor daily transactions and keep track of revenue at a glance.</p>
+      </div>
+
+      <div class="slide">
+        <img src="images/manage-inventory.webp" alt="Manage Inventory"/>
+        <h2>Manage Your Inventory</h2>
+        <p>Add, edit, and organize your products seamlessly, all in one place.</p>
+      </div>
+    </div>
+
+    <div class="indicator">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
+    <div class="walkthrough-footer">
+      <button class="next-btn" onclick="nextSlide()">Next</button>
+    </div>
+  </div>
+
+  <script src="js/validation.js"></script>
+
+</body>
+</html>

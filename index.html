@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS - Dashboard</title>
+  <link rel="stylesheet" href="css/index.css" />
+  <link rel="icon" href="icons/inventry3.svg" type="image/svg+xml" />
+</head>
+
+<body>
+  <nav>
+    <button class="menu-btn" aria-label="Toggle Sidebar">
+      <img src="icons/bars-solid (1).svg" alt="" width="24" height="24" />
+    </button>
+    <div class="search-container-main">
+      <input type="text" class="search-bar" placeholder="Search Product" />
+      <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon" />
+    </div>
+    <img src="icons/inventry3.svg" alt="" class="logo">
+  </nav>
+
+  <aside id="sidebar">
+    <button type="button" id="close-btn">
+      <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
+    </button>
+    <a href="#" class="sidebar-link" id="toggle-theme-btn">🔄 Theme</a>
+    <a href="#" class="sidebar-link" id="feedback-btn">💬 Feedback</a>
+    <a href="#" class="sidebar-link logout-btn">🚪 Logout</a>
+  </aside>
+
+  <main>
+    <div class="main-content" id="main-content"></div>
+  </main>
+
+  <footer>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-section="dashboard">
+        <img src="icons/house-solid.svg" alt="Home" width="24" height="24" />
+      </button>
+
+      <button class="nav-btn" data-section="cart">
+        <img src="icons/cart-shopping-solid.svg" alt="Cart" width="24" height="24" />
+      </button>
+
+        <button class="pop" id="pop">
+          <img src="icons/circle-plus-solid.svg" alt="Cart" width="35" height="35" />
+        </button>
+        <div class="slider" id="slider">
+          <button class="add-customer-btn" id="add-customer-btn" data-section="adder">
+            <img src="icons/users-solid.svg" alt="Add Customer" width="24" height="24"/>
+          </button>
+          <button class="add-customer-btn" id="add-customer-btn" data-section="adder">
+            <img src="icons/cubes-stacked-solid.svg" alt="Add Customer" width="24" height="24"/>
+          </button>
+          <button class="add-customer-btn" id="add-customer-btn" data-section="adder">
+            <img src="icons/circle-plus-solid.svg" alt="Add Customer" width="24" height="24"/>
+          </button>
+          <button class="add-customer-btn" id="add-customer-btn" data-section="adder">
+            <img src="icons/circle-plus-solid.svg" alt="Add Customer" width="24" height="24"/>
+          </button>
+        </div>
+
+      <button class="nav-btn" id="view-customers-btn" data-section="customers">
+        <img src="icons/users-solid.svg" alt="Customers" width="24" height="24" />
+      </button>
+
+      <button class="nav-btn" data-section="products" aria-label="Products">
+        <img src="icons/box-open-solid.svg" alt="Products" width="24" height="24" />
+      </button>
+
+      <span class="active-indicator" id="active-indicator"></span>
+    </div>
+  </footer>
+
+
+  <div id="feedback-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">❌</span>
+      <h2>Feedback</h2>
+      <p>We appreciate your feedback! Let us know how we can improve.</p>
+      <textarea id="feedback-text" placeholder="Type your feedback here..."></textarea>
+      <p id="feedback-message" class="feedback-message"></p>
+      <button id="submit-feedback">Submit</button>
+    </div>
+  </div>
+
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-storage-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script type="module" src="js/index.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up Method</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div class="wrapper signup-method">
+    <h1>Sign Up With:</h1>
+    
+    <div class="method-buttons">
+      <button class="method-btn google-btn" onclick="redirectToSignup('signup-google.html')">
+        <img src="icons/google-brands.svg" alt="Google Logo" />
+        Google
+      </button>
+
+      <button class="method-btn facebook-btn" onclick="redirectToSignup('signup-facebook.html')">
+        <img src="icons/facebook-brands.svg" alt="Facebook Logo" />
+        Facebook
+      </button>
+
+      <button class="method-btn email-btn" onclick="redirectToSignup('signup.html')">
+        <img src="icons/envelope-solid.svg" alt="Email Logo" />
+        Email
+      </button>
+
+      <button class="method-btn phone-btn" onclick="redirectToSignup('signup-phone.html')">
+        <img src="icons/phone-solid.svg" alt="Phone Icon" />
+        Phone Number
+      </button>
+    </div>
+    <br>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+  </div>
+
+  <script>
+    function redirectToSignup(url) {
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
