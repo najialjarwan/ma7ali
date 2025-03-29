@@ -149,7 +149,6 @@ function initProductPage() {
                     <option value="high-stock">High Stock (51+)</option>
                 </select>
             </div>
-            <button class="func-btn" id="add-product-btn">ADD PRODUCT</button>
             <button class="func-btn" id="export-product-btn">EXPORT PRODUCTS</button>
         </div>
         <div id="products-grid" class="products-grid"></div>

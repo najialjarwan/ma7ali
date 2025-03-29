@@ -289,6 +289,7 @@ footer {
   background-color: transparent;
   display: flex;
   align-items: flex-start;
+
 }
 
 .pop.active {
@@ -306,63 +307,68 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
   position: absolute;
-  z-index: -1000;
   bottom: 15px;
   width: 50px;
   height: 50px;
-  border-radius: 60%;
+  border-radius: 100%;
   transform: translate(0) scale(0);
   background: transparent;
-  border: 2px groove var(--text-color);
-  backdrop-filter: blur(7px);
   transition: all 0.8s ease-in-out;
 }
 
 .slider.active {
-  transform: translateY(-5rem) scaleX(1);
+  transform: translateY(-5rem) scaleX(1.1);
   border-radius: 20px;
   width: 200px;
   height: 50px;
+  backdrop-filter: blur(3px);
+  border-top: 1px solid var(--text-color);
+  border-bottom: 1px solid var(--text-color);
 }
-
-.add-customer-btn {
-  border: none;
-  background-color: transparent;
+.slider button {
+  border: 1px solid var(--text-color);
+  background-color: var(--accent-color);
   position: absolute;
   opacity: 0;
   left: 0;
+  border-radius: 20px;
   transition: transform 0.3s ease-in-out;
+  display: flex;          /* Add this to make the button a flex container */
+  justify-content: center; /* Centers the image horizontally */
+  align-items: center;    /* Centers the image vertically */
+  width: 50px;            /* Set the desired button size */
+  height: 50px;           /* Set the desired button size */
 }
 
-.slider.active .add-customer-btn:nth-child(1) {
+.slider button img {
+  width: 25x;    /* Make the image take up the full width of the button */
+  height: 25px;   /* Make the image take up the full height of the button */
+  object-fit: contain; /* Ensures the image scales proportionally without distortion */
+}
+
+.slider.active button:nth-child(1) {
   transition-delay: 0.1s;
   transform: translateX(0);
   opacity: 1;
 }
 
-.slider.active .add-customer-btn:nth-child(2) {
+.slider.active button:nth-child(2) {
   transition-delay: 0.2s;
   transform: translateX(50px);
   opacity: 1;
 }
 
-.slider.active .add-customer-btn:nth-child(3) {
+.slider.active button:nth-child(3) {
   transition-delay: 0.3s;
   transform: translateX(100px);
   opacity: 1;
 }
 
-.slider.active .add-customer-btn:nth-child(4) {
+.slider.active button:nth-child(4) {
   transition-delay: 0.4s;
   transform: translateX(150px);
   opacity: 1;
-}
-
-.add-customer-btn img {
-  width: 50px;
-  height: 50px;
 }
 
 
