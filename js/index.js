@@ -1206,6 +1206,48 @@ async function fetchProductsforExporting() {
     }
 }
 
+function logToFirestore(message, status = 'info') {
+    db.collection("debug_logs").add({
+        message: message,
+        status: status, // 'info' for success, 'error' for errors
+        timestamp: firebase.firestore.Timestamp.now()
+    })
+    .then(() => {
+        console.log("Log message sent to Firestore");
+    })
+    .catch((error) => {
+        console.error("Error logging to Firestore: ", error);
+    });
+}
+
+function listenForLogs() {
+    db.collection("debug_logs")
+        .orderBy("timestamp", "desc")
+        .limit(10)
+        .onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                const logData = change.doc.data();
+                const logElement = document.createElement("div");
+
+                logElement.style.padding = "10px";
+                logElement.style.marginBottom = "5px";
+                logElement.style.border = "1px solid #ccc";
+                logElement.style.borderRadius = "5px";
+                logElement.style.backgroundColor = logData.status === 'error' ? '#ffdddd' : '#ddffdd';
+
+                logElement.innerHTML = `
+                    <strong>${logData.status.toUpperCase()}</strong>: ${logData.message} 
+                    <br><small>${logData.timestamp.toDate().toLocaleString()}</small>
+                `;
+
+                document.body.appendChild(logElement);
+            });
+        });
+}
+
+listenForLogs();
+
+
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
 });
