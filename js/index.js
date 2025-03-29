@@ -31,12 +31,18 @@ function initializeEventListeners() {
         slider.classList.toggle("active");
         popButton.classList.toggle("active");
         e.stopPropagation();
+
         document.getElementById("add-customer-btn").addEventListener("click", function () {
             const section = this.getAttribute("data-section");
             if (section) {
-                indicator.classList.remove("active-indicator");
-                slider.classList.remove("active");
-                popButton.classList.remove("active");
+                removeActive();
+                loadContent(section);
+            }
+        });
+        document.getElementById("add-product-btn").addEventListener("click", function ()  {
+            const section = this.getAttribute("data-section");
+            console.log('add proudct btn clicked', section);
+            if (section) {
                 removeActive();
                 loadContent(section);
             }
@@ -93,6 +99,9 @@ function initializeEventListeners() {
     function removeActive() {
         document.querySelectorAll(".nav-btn").forEach((btn) =>
             btn.classList.remove("active"));
+        indicator.classList.remove("active-indicator");
+        slider.classList.remove("active");
+        popButton.classList.remove("active");
     }
 }
 
@@ -112,8 +121,11 @@ async function loadContent(section) {
         if (section === "customers") {
             initCustomersPage();
         }
-        if (section === "adder") {
+        if (section === "addCustomer") {
             showCustomerForm();
+        }
+        if(section === "addProduct"){
+            showProductForm();
         }
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
@@ -123,7 +135,6 @@ async function loadContent(section) {
 
 //Products Section//
 function initProductPage() {
-
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div id="filter-options" class="filter-options">
@@ -154,42 +165,6 @@ function initProductPage() {
         <div id="products-grid" class="products-grid"></div>
     `;
     fetchProducts();
-    document.getElementById("add-product-btn").addEventListener("click", () => {
-        const mainContent = document.querySelector(".main-content");
-        mainContent.innerHTML = `
-            <h2>Add a New Product</h2>
-            <form id="product-form" class="product-form">
-                <label for="barcode">Barcode: </label>
-                <input type="text" id="barcode" name="barcode" ><br>
-
-                <label for="label">Product Label: </label>
-                <input type="text" id="label" name="label" ><br>
-
-                <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
-                <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
-                <button type="button" id="customFileButton">Choose File</button>
-
-                <label for="price">Price ($): </label>
-                <input type="number" id="price" name="price" ><br>
-
-                <label for="category">Category: </label>
-                <input type="text" id="category" name="category"><br>
-
-                <label for="stock">Stock Quantity: </label>
-                <input type="number" id="stock" name="stock" ><br>
-
-                <button type="submit">Add</button>
-            </form>
-        `;
-        addProduct();
-        document.getElementById("customFileButton").addEventListener("click", () => {
-            document.getElementById("img").click(); // Trigger the file input
-        });
-        document.getElementById("img").addEventListener("change", (event) => {
-            const fileName = event.target.files[0]?.name || "No file selected";
-            document.getElementById("fileName").textContent = `Selected: ${fileName}`;
-        });
-    });
 
     document.body.addEventListener("click", async (event) => {
         if (event.target && event.target.id === "export-product-btn") {
@@ -311,6 +286,42 @@ async function fetchProducts() {
     }
 }
 
+function showProductForm(){
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+        <h2>Add a New Product</h2>
+        <form id="product-form" class="product-form">
+            <label for="barcode">Barcode: </label>
+            <input type="text" id="barcode" name="barcode" ><br>
+
+            <label for="label">Product Label: </label>
+            <input type="text" id="label" name="label" ><br>
+
+            <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
+            <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
+            <button type="button" id="customFileButton">Choose File</button>
+
+            <label for="price">Price ($): </label>
+            <input type="number" id="price" name="price" ><br>
+
+            <label for="category">Category: </label>
+            <input type="text" id="category" name="category"><br>
+
+            <label for="stock">Stock Quantity: </label>
+            <input type="number" id="stock" name="stock" ><br>
+
+            <button type="submit">Add</button>
+        </form>
+    `;
+    addProduct();
+    document.getElementById("customFileButton").addEventListener("click", () => {
+        document.getElementById("img").click(); // Trigger the file input
+    });
+    document.getElementById("img").addEventListener("change", (event) => {
+        const fileName = event.target.files[0]?.name || "No file selected";
+        document.getElementById("fileName").textContent = `Selected: ${fileName}`;
+    });
+}
 async function addProduct() {
     const form = document.getElementById("product-form");
     form.addEventListener("submit", async (event) => {
