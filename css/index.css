@@ -30,7 +30,6 @@ body {
   background: url("../images/background10.png");
   background-size: cover;
   background-attachment: fixed;
-  /* Prevents background image from scrolling */
   background-position: center center;
   overflow: hidden;
 }
@@ -48,7 +47,6 @@ nav {
   align-items: center;
   gap: 5px;
   z-index: 10;
-  /* Ensure nav stays above other elements */
 }
 
 aside {
@@ -334,17 +332,17 @@ footer {
   left: 0;
   border-radius: 20px;
   transition: transform 0.3s ease-in-out;
-  display: flex;          /* Add this to make the button a flex container */
-  justify-content: center; /* Centers the image horizontally */
-  align-items: center;    /* Centers the image vertically */
-  width: 50px;            /* Set the desired button size */
-  height: 50px;           /* Set the desired button size */
+  display: flex;          
+  justify-content: center;
+  align-items: center; 
+  width: 50px;        
+  height: 50px;
 }
 
 .slider button img {
-  width: 25x;    /* Make the image take up the full width of the button */
-  height: 25px;   /* Make the image take up the full height of the button */
-  object-fit: contain; /* Ensures the image scales proportionally without distortion */
+  width: 25px;    
+  height: 25px;   
+  object-fit: contain;
 }
 
 .slider.active button:nth-child(1) {

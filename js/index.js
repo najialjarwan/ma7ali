@@ -39,7 +39,7 @@ function initializeEventListeners() {
                 loadContent(section);
             }
         });
-        document.getElementById("add-product-btn").addEventListener("click", function ()  {
+        document.getElementById("add-product-btn").addEventListener("click", function () {
             const section = this.getAttribute("data-section");
             console.log('add proudct btn clicked', section);
             if (section) {
@@ -124,7 +124,7 @@ async function loadContent(section) {
         if (section === "addCustomer") {
             showCustomerForm();
         }
-        if(section === "addProduct"){
+        if (section === "addProduct") {
             showProductForm();
         }
     } catch (error) {
@@ -286,7 +286,7 @@ async function fetchProducts() {
     }
 }
 
-function showProductForm(){
+function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <h2>Add a New Product</h2>
@@ -322,14 +322,13 @@ function showProductForm(){
         document.getElementById("fileName").textContent = `Selected: ${fileName}`;
     });
 }
+
 async function addProduct() {
     const form = document.getElementById("product-form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const formData = new FormData(form);
-
-        // Function to convert HEIC/large images to JPEG and lower resolution
         const convertToJPEG = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -379,17 +378,17 @@ async function addProduct() {
         let imgUrl = "";
         if (imageFile) {
             try {
-                console.time("ImageResizeAndUpload"); // Start timer for debugging
-                const resizedImage = await convertToJPEG(imageFile); // Convert HEIC and resize
+                console.time("ImageResizeAndUpload");
+                const resizedImage = await convertToJPEG(imageFile);
                 const storageRef = storage.ref();
                 const imageRef = storageRef.child(`product-images/${imageFile.name}`);
-                await imageRef.put(resizedImage); // Upload resized image
-                imgUrl = await imageRef.getDownloadURL(); // Get uploaded image URL
-                console.timeEnd("ImageResizeAndUpload"); // End timer for debugging
+                await imageRef.put(resizedImage);
+                imgUrl = await imageRef.getDownloadURL();
+                console.timeEnd("ImageResizeAndUpload");
             } catch (error) {
                 console.error("Image upload failed:", error);
                 showModalMessage("Image upload failed. Please try again.", false);
-                return; // Stop further execution if upload fails
+                return;
             }
         }
 
@@ -414,7 +413,6 @@ async function addProduct() {
         }
 
         try {
-            // Check if a product with the same barcode or label already exists
             const snapshot = await db.collection("products")
                 .where("barcode", "==", productData.barcode)
                 .get();
@@ -429,18 +427,16 @@ async function addProduct() {
                 return;
             }
 
-            // Add product to Firestore
             try {
                 const docRef = await db.collection("products").add({
                     ...productData,
-                    createdAt: firebase.firestore.Timestamp.now() // ✅ Store Firestore Timestamp correctly
+                    createdAt: firebase.firestore.Timestamp.now()
                 });
 
-                // Fetch the newly added document to get the correct timestamp
+
                 const newDoc = await docRef.get();
                 const newProductData = newDoc.data();
 
-                // Add the new product to `allProducts`
                 allProducts.push({
                     ...newProductData,
                     id: docRef.id, // Firestore-generated ID
@@ -459,6 +455,7 @@ async function addProduct() {
         }
     });
 }
+
 let allProducts = [];
 $(document).ready(function () {
 
@@ -876,7 +873,6 @@ async function addCustomer() {
 function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     const mainContent = document.querySelector(".main-content");
-
     mainContent.innerHTML = `
         <form id="customer-form" class="product-form">
             <label for="customer-name">Name:</label>
@@ -887,11 +883,14 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
 
             <button type="button" id="edit-customer-btn">Edit Customer</button>
             <button type="button" id="remove-customer-btn">Remove Customer</button>
+            <button type="button" id="add-debt">Add Debt</button>
             <button type="button" id="cancel-customer-btn">Go Back</button>
+
+
         </form>
 
         <div id="customer-table" class="customer-table">
-            <p>Table Placeholder</p>
+            <p>Customer's Debt</p>
         </div>
     `;
 
@@ -899,6 +898,7 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
     const editBtn = document.getElementById("edit-customer-btn");
     const removeBtn = document.getElementById("remove-customer-btn");
     const cancelBtn = document.getElementById("cancel-customer-btn");
+    const debtBtn = document.getElementById("add-debt");
 
     editBtn.addEventListener("click", async () => {
         const updatedName = document.getElementById("customer-name").value.trim();
@@ -963,6 +963,74 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
             viewCustomersBtn.click();
         }, 10);
     });
+
+    debtBtn.addEventListener("click", () => {
+        mainContent.innerHTML = `
+            <form id="customer-debt" class="customer-form">
+                <label for="debt-details">Details:</label>
+                <input type="text" id="debt-details" placeholder="Enter details" required /><br />
+    
+                <label for="debt-balance">Balance:</label>
+                <input type="number" id="debt-balance" placeholder="Enter balance" required /><br />
+    
+                <button type="submit">Add Debt</button>
+                <button type="button" id="cancel-debt-btn">Cancel</button>
+            </form>
+        `;
+
+        const customerForm = document.getElementById("customer-debt");
+        const cancelDebtBtn = document.getElementById("cancel-debt-btn");
+
+        customerForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const details = document.getElementById("debt-details").value.trim();
+            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+
+            if (!details || isNaN(balance) || balance <= 0) {
+                console.error("Validation failed: Invalid details or balance.");
+                showModalMessage("Invalid input. Please enter valid details and balance!", false);
+                return;
+            }
+
+            try {
+                const debtRef = db.collection("customers").doc(customerId).collection("debts");
+
+                await debtRef.add({
+                    details,
+                    balance,
+                    createdAt: firebase.firestore.Timestamp.now(),
+                });
+
+                console.log(`Debt added for customer ${customerId}:`, { details, balance });
+
+                // Recalculate total balance
+                const debtsSnapshot = await debtRef.get();
+                let totalBalance = 0;
+
+                debtsSnapshot.forEach((doc) => {
+                    totalBalance += doc.data().balance;
+                });
+
+                await db.collection("customers").doc(customerId).update({
+                    totalBalance: totalBalance,
+                });
+
+                console.log(`Total balance updated for customer ${customerId}: ${totalBalance}`);
+
+                showModalMessage("Debt added successfully!", true);
+            } catch (error) {
+                console.error("Error adding debt:", error);
+                showModalMessage(`Error adding debt: ${error.message}`, false);
+            }
+        });
+
+        cancelDebtBtn.addEventListener("click", () => {
+            console.log(`Debt form canceled for customer ${customerId}`);
+            displayCustomerDetails(customerId, customerName, customerPhone);
+        });
+    });
+
 }
 //----------------//
 
