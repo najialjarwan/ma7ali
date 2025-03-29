@@ -903,24 +903,26 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
     editBtn.addEventListener("click", async () => {
         const updatedName = document.getElementById("customer-name").value.trim();
         const updatedPhone = document.getElementById("customer-phone").value.trim();
+        
+        let nameChanged = updatedName !== customerName;
+        let phoneChanged = updatedPhone !== customerPhone;
+    
         try {
-
             const customersSnapshot = await db.collection("customers").get();
             let nameExists = false;
             let phoneNumberExists = false;
-
+    
             customersSnapshot.forEach((doc) => {
                 const customer = doc.data();
-
-
-                if (customer.name.toLowerCase() === updatedName.toLowerCase()) {
+    
+                if (nameChanged && customer.name.toLowerCase() === updatedName.toLowerCase()) {
                     nameExists = true;
                 }
-                if (customer.phoneNumber === updatedPhone) {
+                if (phoneChanged && customer.phoneNumber === updatedPhone) {
                     phoneNumberExists = true;
                 }
             });
-
+    
             if (nameExists || phoneNumberExists) {
                 let errorMessage = "Failed to update customer: ";
                 if (nameExists && phoneNumberExists) {
@@ -931,8 +933,7 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
                     errorMessage += "Phone Number already exist!";
                 }
                 showModalMessage(errorMessage, false);
-            }
-            else {
+            } else {
                 await db.collection("customers").doc(customerId).update({
                     name: updatedName,
                     phoneNumber: updatedPhone,
@@ -943,6 +944,7 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
             alert(`Error updating customer: ${error.message}`);
         }
     });
+    
 
     removeBtn.addEventListener("click", async () => {
         try {
