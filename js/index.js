@@ -966,7 +966,7 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     debtBtn.addEventListener("click", () => {
         mainContent.innerHTML = `
-            <form id="customer-debt" class="customer-form">
+            <form id="customer-debt" class="product-form">
                 <label for="debt-details">Details:</label>
                 <input type="text" id="debt-details" placeholder="Enter details" required /><br />
     
@@ -1004,7 +1004,6 @@ function displayCustomerDetails(customerId, customerName, customerPhone) {
 
                 console.log(`Debt added for customer ${customerId}:`, { details, balance });
 
-                // Recalculate total balance
                 const debtsSnapshot = await debtRef.get();
                 let totalBalance = 0;
 
