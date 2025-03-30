@@ -499,6 +499,9 @@ footer {
   width: 100%;
   margin-bottom: 20px;
 }
+#customerFileButton:active{
+  transform: scale(0.8);
+}
 
 #fileName {
   margin-top: 10px;
@@ -526,6 +529,10 @@ footer {
   height: 50px;
   margin-top: 10px;
 }
+.product-form button:active {
+  transform: scale(0.8);
+}
+
 
 #update-button {
   background-color: var(--accent-color) !important;
@@ -533,7 +540,8 @@ footer {
 }
 
 #cancel-button,
-#cancel-customer-btn {
+#cancel-customer-btn,
+#cancel-debt-btn {
   background-color: transparent !important;
   color: var(--text-color) !important;
   border: 4px groove var(--input-color) !important;
@@ -546,19 +554,19 @@ footer {
 
 .customer-table {
   width: 95vw;
-  background-color: var(--accent-color);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
 }
 
 .customer-table p{
   border: 1px solid black;
-  background-color: var(--input-color);
+  background-color: var(--accent-color);
+  color: var(--text-color);
   margin: 0px;
 }
 
 .customer-table .add-debt{
   background-color: var(--accent-color);
-  color: var(--input-color);
+  color: var(--text-color);
   border: 3px groove var(--text-color);
   border-radius: 5px;
   width: 50%;
@@ -574,13 +582,12 @@ footer {
   width: 100%;
   padding: 10px;
   color: red;
-  background-color: var(--accent-color);
   border: 1px solid var(--accent-color);
   display: block;
   text-align: center;
 }
 .customer-table .remove-debt-btn:active{
-  transform: scale(0.50);
+  transform: scale(0.90);
 }
 
 .customer-table table {
@@ -600,7 +607,8 @@ footer {
 
 .customer-table td {
   text-align: left;
-  border: 1px solid var(--text-color);
+  background-color: var(--input-color);
+  border: 1px solid var(--input-color);
   color: var(--text-color);
   padding: 0 5px !important;
   position: relative;
@@ -722,6 +730,9 @@ footer {
   border-bottom: 1px solid var(--input-color);
   align-items: center;
   gap: 1px;
+}
+.customers-card:active{
+  transform: scale(0.8);
 }
 
 .customer-name,
