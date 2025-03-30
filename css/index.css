@@ -458,7 +458,7 @@ footer {
 .product-form {
   background-color: transparent;
   color: var(--text-color);
-  width: 100%;
+  width: 95vw;
   max-width: 600px;
   padding: 2px;
   border-radius: 10px;
@@ -547,7 +547,8 @@ footer {
   border: 4px groove var(--input-color) !important;
 }
 
-#remove-button {
+#remove-button,
+#remove-customer-btn {
   background-color: var(--accent-color) !important;
   color: red !important;
 }
@@ -563,20 +564,27 @@ footer {
   color: var(--text-color);
   margin: 0px;
 }
-.customer-table .actions{
+.customer-table .debt-actions{
   background-color: var(--accent-color);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+}
+.customer-table .debt-actions button{
+  width: 90%;
+  border: 1px solid var(--text-color);
+  background-color: var(--accent-color);
+  color: rgb(88, 129, 182);
+  font-weight: bolder;
+  font-size: 20px;
+
 }
 
-.customer-table .add-debt{
-  background-color: var(--accent-color);
-  color: var(--text-color);
-  border: 3px groove var(--text-color);
-  border-radius: 5px;
-  width: 50%;
-  padding: 5px;
-  margin: 5px;
-}
-.customer-table .add-debt:active{
+.add-debt:active, .export:active{
   transform: scale(0.90);
 }
 

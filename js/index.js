@@ -827,7 +827,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <tbody id="debt-details-table"></tbody>
             </table>
             <p>Total Balance: <span id="total-balance">0</span></p>
-            <div class="actions" id="actions">
+            <div class="debt-actions" id="debt-actions">
                 <button type="button" class="add-debt" id="add-debt">Add</button>
                 <button type="button" class="export" id="export">Export</button>
             </div>
@@ -1197,25 +1197,22 @@ async function fetchProductsforExporting() {
 }
 
 function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
-    const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded
+    const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
-    // Add title and customer information
     pdf.setFontSize(16);
     pdf.text("Customer Debt Details", 10, 10);
     pdf.setFontSize(12);
     pdf.text(`Customer Name: ${customerName}`, 10, 20);
     pdf.text(`Phone Number: ${customerPhone}`, 10, 30);
 
-    // Define table headers and rows
     const columns = ["Details", "Balance ($)", "Created At"];
     const rows = debtDetails.map(debt => [debt.details, debt.balance, debt.createdAt]);
 
-    // Use autoTable to create the table
     pdf.autoTable({
         head: [columns],
         body: rows,
-        startY: 40, // Start below the customer information
+        startY: 40,
     });
 
     // Save the PDF
