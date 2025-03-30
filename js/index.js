@@ -798,30 +798,6 @@ async function fetchCustomers() {
     }
 }
 
-function showCustomerForm() {
-    const mainContent = document.getElementById("main-content");
-    mainContent.innerHTML = `
-            <h1>Add Customer</h1>
-            <form id="customer-form" class="product-form">
-                <label for="name">Name: </label>
-                <input type="text" id="name" name="name" required><br>
-
-                <label for="phoneNumber">Phone Number: </label>
-                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
-
-                <button type="submit">Add</button>
-            </form>
-        `;
-
-    const customerForm = document.getElementById("customer-form");
-
-    customerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        addCustomer();
-    });
-
-}
-
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     const mainContent = document.querySelector(".main-content");
@@ -1030,6 +1006,29 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     totalBalanceElement.textContent = totalBalance;
 }
 
+function showCustomerForm() {
+    const mainContent = document.getElementById("main-content");
+    mainContent.innerHTML = `
+            <h1>Add Customer</h1>
+            <form id="customer-form" class="product-form">
+                <label for="name">Name: </label>
+                <input type="text" id="name" name="name" required><br>
+
+                <label for="phoneNumber">Phone Number: </label>
+                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
+
+                <button type="submit">Add</button>
+            </form>
+        `;
+
+    const customerForm = document.getElementById("customer-form");
+
+    customerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        addCustomer();
+    });
+
+}
 
 async function addCustomer() {
     const name = document.getElementById("name").value.trim().toLowerCase();
