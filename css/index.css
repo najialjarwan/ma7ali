@@ -543,6 +543,56 @@ footer {
   color: red !important;
 }
 
+/* Table Container */
+.customer-table {
+  width: 100%;
+  margin: 20px 0;
+  padding: 0 10px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
+.customer-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Table Header */
+.customer-table th {
+  background-color: var(--accent-color);
+  color: #333;
+  font-size: 1.1em;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+/* Table Body */
+.customer-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #f1f1f1;
+  color: #333;
+}
+
+/* Alternating Row Colors */
+.customer-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Table Hover Effect */
+.customer-table tr:hover {
+  background-color: var(--accent-color);
+  color: white;
+  cursor: pointer;
+}
+
+/* Table Border */
+.customer-table table, .customer-table th, .customer-table td {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
 
 
 .section-title {
