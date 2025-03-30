@@ -834,6 +834,16 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         </div>
     `;
 
+    document.getElementById("export").addEventListener("click", async () => {
+        try {
+            const debtDetails = await fetchDebtDetailsForExport(customerId);
+            exportDebtDetailsToPDF(debtDetails, customerName, customerPhone);
+        } catch (error) {
+            console.error("Error exporting debt details:", error);
+        }
+    });
+    
+
     async function loadDebts() {
         const debtDetailsTable = document.getElementById("debt-details-table");
         const totalBalanceElement = document.getElementById("total-balance");
@@ -1186,6 +1196,44 @@ async function fetchProductsforExporting() {
     }
 }
 
+function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
+    const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded
+    const pdf = new jsPDF();
+
+    // Add title and customer information
+    pdf.setFontSize(16);
+    pdf.text("Customer Debt Details", 10, 10);
+    pdf.setFontSize(12);
+    pdf.text(`Customer Name: ${customerName}`, 10, 20);
+    pdf.text(`Phone Number: ${customerPhone}`, 10, 30);
+
+    // Define table headers and rows
+    const columns = ["Details", "Balance ($)", "Created At"];
+    const rows = debtDetails.map(debt => [debt.details, debt.balance, debt.createdAt]);
+
+    // Use autoTable to create the table
+    pdf.autoTable({
+        head: [columns],
+        body: rows,
+        startY: 40, // Start below the customer information
+    });
+
+    // Save the PDF
+    pdf.save(`${customerName}_debt_details.pdf`);
+}
+
+async function fetchDebtDetailsForExport(customerId) {
+    const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
+    const debts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            details: data.details,
+            balance: data.balance.toFixed(2),
+            createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Unknown Date",
+        };
+    });
+    return debts;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
