@@ -826,7 +826,11 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 </thead>
                 <tbody id="debt-details-table"></tbody>
             </table>
-            <p>Total Balance: <span id="total-balance">0</span> <button type="button" class="add-debt" id="add-debt">Add</button></p>
+            <p>Total Balance: <span id="total-balance">0</span></p>
+            <div class="actions" id="actions">
+                <button type="button" class="add-debt" id="add-debt">Add</button>
+                <button type="button" class="export" id="export">Export</button>
+            </div>
         </div>
     `;
 

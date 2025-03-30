@@ -563,6 +563,9 @@ footer {
   color: var(--text-color);
   margin: 0px;
 }
+.customer-table .actions{
+  background-color: var(--accent-color);
+}
 
 .customer-table .add-debt{
   background-color: var(--accent-color);
