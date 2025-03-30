@@ -185,7 +185,7 @@ main {
     color: var(--accent-color);
   }
 
-  /* Close Button */
+  
   #close-btn {
     border: none;
     background-color: var(--accent-color);
@@ -221,7 +221,7 @@ main {
   }
 }
 
-/* Modern Footer Styling */
+
 footer {
   position: sticky;
   bottom: 0;
@@ -231,7 +231,7 @@ footer {
   z-index: 10;
 }
 
-/* Style the bottom navigation */
+
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -554,8 +554,10 @@ footer {
   color: red !important;
 }
 
+
 .customer-table {
-  width: 95vw;
+  width: 100%;
+  max-width: 100%; 
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
 }
 
@@ -588,25 +590,10 @@ footer {
   transform: scale(0.90);
 }
 
-.customer-table .remove-debt-btn {
-  height: 100%;
-  width: 100%;
-  padding: 10px;
-  color: red;
-  border: 1px solid var(--accent-color);
-  display: block;
-  text-align: center;
-  border: 1px solid red;
-}
-.customer-table .remove-debt-btn:active{
-  transform: scale(0.90);
-}
-
 .customer-table table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
-  border-spacing: 5px;
-  overflow: auto;
 }
 
 .customer-table th {
@@ -617,22 +604,49 @@ footer {
   border: 1px solid black;
   padding: 5px;
 }
+
+
 .customer-table td {
   text-align: left;
+  vertical-align: top; 
   background-color: var(--input-color);
   border: 1px solid var(--text-color);
   color: var(--text-color);
-  padding: 0 5px !important;
-  position: relative;
-  padding: 0;
-  text-wrap: wrap;
+  padding: 5px;
   font-size: 0.8em;
+  word-wrap: break-word; 
+  word-break: break-word; 
+  white-space: normal; 
+  max-width: 100px;
+  padding: 2px;
+  border: 1px solid #000;
+  height: auto;          
+  box-sizing: border-box;
 }
 
+
 .customer-table td:last-child {
-  text-align: center;
-  padding: 0 !important;
-  margin: 0 !important;
+  padding: 0; 
+  height: 100%; 
+  position: relative;
+  height: 100%;
+  background-color: lightgray;
+}
+
+.customer-table .remove-debt-btn {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: red;
+  border: none;
+  font-size: 0.8em;
+  background-color: lightgray;
+}
+
+.customer-table .remove-debt-btn:active {
+  transform: scale(0.90);
 }
 
 .section-title {
@@ -823,7 +837,7 @@ footer {
   font-size: 5px;
 }
 
-/* Style for product details text */
+
 .product-card p,
 .customers-card p {
   font-size: 12px;
