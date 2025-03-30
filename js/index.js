@@ -811,7 +811,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
             <button type="button" id="edit-customer-btn">Edit Customer</button>
             <button type="button" id="remove-customer-btn">Remove Customer</button>
-            <button type="button" id="add-debt">Add Debt</button>
             <button type="button" id="cancel-customer-btn">Go Back</button>
         </form>
 
@@ -827,7 +826,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 </thead>
                 <tbody id="debt-details-table"></tbody>
             </table>
-            <p>Total Balance: <span id="total-balance">0</span></p>
+            <p>Total Balance: <span id="total-balance">0</span><button type="button" id="add-debt">Add</button></p>
         </div>
     `;
 
@@ -913,7 +912,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <label for="debt-balance">Balance:</label>
                 <input type="number" id="debt-balance" placeholder="Enter balance" required /><br />
     
-                <button type="submit">Add Debt</button>
+                <button type="submit">Add</button>
                 <button type="button" id="cancel-customer-btn">Go Back</button>
             </form>
         `;
