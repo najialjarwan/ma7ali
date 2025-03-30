@@ -946,7 +946,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 const debtsSnapshot = await debtRef.get();
                 let totalBalance = 0;
 
-                debtDetailsTable.innerHTML = ''; // Clear previous debt rows
+                debtDetailsTable.innerHTML = '';
 
                 debtsSnapshot.forEach((doc) => {
                     const debt = doc.data();
@@ -996,6 +996,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             <td>${debt.details}</td>
             <td>${debt.balance}</td>
             <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
+            <td><button class="remove-debt-btn" data-debt-id="${doc.id}">Remove</button></td>
         `;
         debtDetailsTable.appendChild(debtRow);
 
