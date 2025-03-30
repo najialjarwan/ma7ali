@@ -821,6 +821,216 @@ function showCustomerForm() {
     });
 
 }
+
+async function displayCustomerDetails(customerId, customerName, customerPhone) {
+
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+        <form id="customer-form" class="product-form">
+            <label for="customer-name">Name:</label>
+            <input type="text" id="customer-name" placeholder="${customerName}" value="${customerName}" required /><br />
+
+            <label for="customer-phone">Phone Number:</label>
+            <input type="text" id="customer-phone" placeholder="${customerPhone}" value="${customerPhone}" required /><br />
+
+            <button type="button" id="edit-customer-btn">Edit Customer</button>
+            <button type="button" id="remove-customer-btn">Remove Customer</button>
+            <button type="button" id="add-debt">Add Debt</button>
+            <button type="button" id="cancel-customer-btn">Go Back</button>
+        </form>
+
+        <div id="customer-table" class="customer-table">
+            <p>Customer's Debt</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Details</th>
+                        <th>Balance</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody id="debt-details-table"></tbody>
+            </table>
+            <p>Total Balance: <span id="total-balance">0</span></p>
+        </div>
+    `;
+
+    const editBtn = document.getElementById("edit-customer-btn");
+    const removeBtn = document.getElementById("remove-customer-btn");
+    const cancelBtn = document.getElementById("cancel-customer-btn");
+    const debtBtn = document.getElementById("add-debt");
+
+    const debtDetailsTable = document.getElementById("debt-details-table");
+    const totalBalanceElement = document.getElementById("total-balance");
+
+    editBtn.addEventListener("click", async () => {
+        const updatedName = document.getElementById("customer-name").value.trim();
+        const updatedPhone = document.getElementById("customer-phone").value.trim();
+        
+        let nameChanged = updatedName !== customerName;
+        let phoneChanged = updatedPhone !== customerPhone;
+    
+        try {
+            const customersSnapshot = await db.collection("customers").get();
+            let nameExists = false;
+            let phoneNumberExists = false;
+    
+            customersSnapshot.forEach((doc) => {
+                const customer = doc.data();
+    
+                if (nameChanged && customer.name.toLowerCase() === updatedName.toLowerCase()) {
+                    nameExists = true;
+                }
+                if (phoneChanged && customer.phoneNumber === updatedPhone) {
+                    phoneNumberExists = true;
+                }
+            });
+    
+            if (nameExists || phoneNumberExists) {
+                let errorMessage = "Failed to update customer: ";
+                if (nameExists && phoneNumberExists) {
+                    errorMessage += "Name and Phone Number already exist!";
+                } else if (nameExists) {
+                    errorMessage += "Name already exist!";
+                } else if (phoneNumberExists) {
+                    errorMessage += "Phone Number already exist!";
+                }
+                showModalMessage(errorMessage, false);
+            } else {
+                await db.collection("customers").doc(customerId).update({
+                    name: updatedName,
+                    phoneNumber: updatedPhone,
+                });
+                showModalMessage("Customer Edited Successfully!", true);
+            }
+        } catch (error) {
+            alert(`Error updating customer: ${error.message}`);
+        }
+    });
+
+    removeBtn.addEventListener("click", async () => {
+        try {
+            await db.collection("customers").doc(customerId).delete();
+            showModalMessage("Customer removed successfully!", true);
+            setTimeout(() => {
+                const viewCustomersBtn = document.getElementById("view-customers-btn");
+                viewCustomersBtn.click();
+            }, 10);
+        } catch (error) {
+            console.error(`Error removing customer: ${error.message}`);
+        }
+    });
+
+    cancelBtn.addEventListener("click", async () => {
+        setTimeout(() => {
+            const viewCustomersBtn = document.getElementById("view-customers-btn");
+            viewCustomersBtn.click();
+        }, 10);
+    });
+
+    debtBtn.addEventListener("click", () => {
+        mainContent.innerHTML = `
+            <form id="customer-debt" class="product-form">
+                <label for="debt-details">Details:</label>
+                <input type="text" id="debt-details" placeholder="Enter details" required /><br />
+    
+                <label for="debt-balance">Balance:</label>
+                <input type="number" id="debt-balance" placeholder="Enter balance" required /><br />
+    
+                <button type="submit">Add Debt</button>
+                <button type="button" id="cancel-customer-btn">Go Back</button>
+            </form>
+        `;
+
+        const customerForm = document.getElementById("customer-debt");
+        const cancelDebtBtn = document.getElementById("cancel-customer-btn");
+
+        customerForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const details = document.getElementById("debt-details").value.trim();
+            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+
+            if (!details || isNaN(balance) || balance <= 0) {
+                console.error("Validation failed: Invalid details or balance.");
+                showModalMessage("Invalid input. Please enter valid details and balance!", false);
+                return;
+            }
+
+            try {
+                const debtRef = db.collection("customers").doc(customerId).collection("debts");
+
+                await debtRef.add({
+                    details,
+                    balance,
+                    createdAt: firebase.firestore.Timestamp.now(),
+                });
+
+                console.log(`Debt added for customer ${customerId}:`, { details, balance });
+
+                const debtsSnapshot = await debtRef.get();
+                let totalBalance = 0;
+
+                debtDetailsTable.innerHTML = ''; // Clear previous debt rows
+
+                debtsSnapshot.forEach((doc) => {
+                    const debt = doc.data();
+                    const debtRow = document.createElement("tr");
+
+                    debtRow.innerHTML = `
+                        <td>${debt.details}</td>
+                        <td>${debt.balance}</td>
+                        <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
+                    `;
+                    debtDetailsTable.appendChild(debtRow);
+
+                    totalBalance += debt.balance;
+                });
+
+                await db.collection("customers").doc(customerId).update({
+                    totalBalance: totalBalance,
+                });
+
+                console.log(`Total balance updated for customer ${customerId}: ${totalBalance}`);
+
+                totalBalanceElement.textContent = totalBalance;
+                showModalMessage("Debt added successfully!", true);
+            } catch (error) {
+                console.error("Error adding debt:", error);
+                showModalMessage(`Error adding debt: ${error.message}`, false);
+            }
+        });
+
+        cancelDebtBtn.addEventListener("click", () => {
+            console.log(`Debt form canceled for customer ${customerId}`);
+            displayCustomerDetails(customerId, customerName, customerPhone);
+        });
+    });
+
+    const debtRef = db.collection("customers").doc(customerId).collection("debts");
+    const debtsSnapshot = await debtRef.get();
+    let totalBalance = 0;
+
+    debtDetailsTable.innerHTML = '';
+
+    debtsSnapshot.forEach((doc) => {
+        const debt = doc.data();
+        const debtRow = document.createElement("tr");
+
+        debtRow.innerHTML = `
+            <td>${debt.details}</td>
+            <td>${debt.balance}</td>
+            <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
+        `;
+        debtDetailsTable.appendChild(debtRow);
+
+        totalBalance += debt.balance;
+    });
+
+    totalBalanceElement.textContent = totalBalance;
+}
+
+
 async function addCustomer() {
     const name = document.getElementById("name").value.trim().toLowerCase();
     const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
@@ -870,169 +1080,6 @@ async function addCustomer() {
     }
 }
 
-function displayCustomerDetails(customerId, customerName, customerPhone) {
-
-    const mainContent = document.querySelector(".main-content");
-    mainContent.innerHTML = `
-        <form id="customer-form" class="product-form">
-            <label for="customer-name">Name:</label>
-            <input type="text" id="customer-name" placeholder="${customerName}" value="${customerName}" required /><br />
-
-            <label for="customer-phone">Phone Number:</label>
-            <input type="text" id="customer-phone" placeholder="${customerPhone}" value="${customerPhone}" required /><br />
-
-            <button type="button" id="edit-customer-btn">Edit Customer</button>
-            <button type="button" id="remove-customer-btn">Remove Customer</button>
-            <button type="button" id="add-debt">Add Debt</button>
-            <button type="button" id="cancel-customer-btn">Go Back</button>
-
-
-        </form>
-
-        <div id="customer-table" class="customer-table">
-            <p>Customer's Debt</p>
-        </div>
-    `;
-
-
-    const editBtn = document.getElementById("edit-customer-btn");
-    const removeBtn = document.getElementById("remove-customer-btn");
-    const cancelBtn = document.getElementById("cancel-customer-btn");
-    const debtBtn = document.getElementById("add-debt");
-
-    editBtn.addEventListener("click", async () => {
-        const updatedName = document.getElementById("customer-name").value.trim();
-        const updatedPhone = document.getElementById("customer-phone").value.trim();
-        
-        let nameChanged = updatedName !== customerName;
-        let phoneChanged = updatedPhone !== customerPhone;
-    
-        try {
-            const customersSnapshot = await db.collection("customers").get();
-            let nameExists = false;
-            let phoneNumberExists = false;
-    
-            customersSnapshot.forEach((doc) => {
-                const customer = doc.data();
-    
-                if (nameChanged && customer.name.toLowerCase() === updatedName.toLowerCase()) {
-                    nameExists = true;
-                }
-                if (phoneChanged && customer.phoneNumber === updatedPhone) {
-                    phoneNumberExists = true;
-                }
-            });
-    
-            if (nameExists || phoneNumberExists) {
-                let errorMessage = "Failed to update customer: ";
-                if (nameExists && phoneNumberExists) {
-                    errorMessage += "Name and Phone Number already exist!";
-                } else if (nameExists) {
-                    errorMessage += "Name already exist!";
-                } else if (phoneNumberExists) {
-                    errorMessage += "Phone Number already exist!";
-                }
-                showModalMessage(errorMessage, false);
-            } else {
-                await db.collection("customers").doc(customerId).update({
-                    name: updatedName,
-                    phoneNumber: updatedPhone,
-                });
-                showModalMessage("Customer Edited Successfully!", true);
-            }
-        } catch (error) {
-            alert(`Error updating customer: ${error.message}`);
-        }
-    });
-    
-
-    removeBtn.addEventListener("click", async () => {
-        try {
-            await db.collection("customers").doc(customerId).delete();
-            showModalMessage("Customer removed successfully!", true);
-            setTimeout(() => {
-                const viewCustomersBtn = document.getElementById("view-customers-btn");
-                viewCustomersBtn.click();
-            }, 10);
-        } catch (error) {
-            console.error(`Error removing customer: ${error.message}`);
-        }
-    });
-
-    cancelBtn.addEventListener("click", async () => {
-        setTimeout(() => {
-            const viewCustomersBtn = document.getElementById("view-customers-btn");
-            viewCustomersBtn.click();
-        }, 10);
-    });
-
-    debtBtn.addEventListener("click", () => {
-        mainContent.innerHTML = `
-            <form id="customer-debt" class="product-form">
-                <label for="debt-details">Details:</label>
-                <input type="text" id="debt-details" placeholder="Enter details" required /><br />
-    
-                <label for="debt-balance">Balance:</label>
-                <input type="number" id="debt-balance" placeholder="Enter balance" required /><br />
-    
-                <button type="submit">Add Debt</button>
-                <button type="button" id="cancel-debt-btn">Cancel</button>
-            </form>
-        `;
-
-        const customerForm = document.getElementById("customer-debt");
-        const cancelDebtBtn = document.getElementById("cancel-debt-btn");
-
-        customerForm.addEventListener("submit", async (event) => {
-            event.preventDefault();
-
-            const details = document.getElementById("debt-details").value.trim();
-            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
-
-            if (!details || isNaN(balance) || balance <= 0) {
-                console.error("Validation failed: Invalid details or balance.");
-                showModalMessage("Invalid input. Please enter valid details and balance!", false);
-                return;
-            }
-
-            try {
-                const debtRef = db.collection("customers").doc(customerId).collection("debts");
-
-                await debtRef.add({
-                    details,
-                    balance,
-                    createdAt: firebase.firestore.Timestamp.now(),
-                });
-
-                console.log(`Debt added for customer ${customerId}:`, { details, balance });
-
-                const debtsSnapshot = await debtRef.get();
-                let totalBalance = 0;
-
-                debtsSnapshot.forEach((doc) => {
-                    totalBalance += doc.data().balance;
-                });
-
-                await db.collection("customers").doc(customerId).update({
-                    totalBalance: totalBalance,
-                });
-
-                console.log(`Total balance updated for customer ${customerId}: ${totalBalance}`);
-
-                showModalMessage("Debt added successfully!", true);
-            } catch (error) {
-                console.error("Error adding debt:", error);
-                showModalMessage(`Error adding debt: ${error.message}`, false);
-            }
-        });
-
-        cancelDebtBtn.addEventListener("click", () => {
-            console.log(`Debt form canceled for customer ${customerId}`);
-            displayCustomerDetails(customerId, customerName, customerPhone);
-        });
-    });
-
-}
 //----------------//
 
 function toggleSidebar() {
