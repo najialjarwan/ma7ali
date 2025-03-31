@@ -133,159 +133,78 @@ async function loadContent(section) {
     }
 }
 
-//Products Section//
-function initProductPage() {
-    const mainContent = document.querySelector(".main-content");
+//Adder Section//
+function showCustomerForm() {
+    const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
-        <div id="filter-options" class="filter-options">
-            <div class="filter-group">
-                <label for="category-select">Filter by Category:</label>
-                <select id="category-select">
-                    <option value="">All Categories</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="sort-select">Sort by Price:</label>
-                <select id="sort-select">
-                    <option value="asc">Lowest to Highest</option>
-                    <option value="desc">Highest to Lowest</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="stock-select">Filter by Stock:</label>
-                <select id="stock-select">
-                    <option value="">All Stock Levels</option>
-                    <option value="low-stock">Low Stock (1-10)</option>
-                    <option value="medium-stock">Medium Stock (11-50)</option>
-                    <option value="high-stock">High Stock (51+)</option>
-                </select>
-            </div>
-            <button class="export-product-btn" id="export-product-btn">EXPORT PRODUCTS</button>
-        </div>
-        <div id="products-grid" class="products-grid"></div>
-    `;
-    fetchProducts();
+            <h1>Add Customer</h1>
+            <form id="customer-form" class="product-form">
+                <label for="name">Name: </label>
+                <input type="text" id="name" name="name" required><br>
 
-    document.body.addEventListener("click", async (event) => {
-        if (event.target && event.target.id === "export-product-btn") {
-            try {
-                const products = await fetchProductsforExporting();
-                const exportType = document.getElementById("export-type-select")?.value || "pdf";
+                <label for="phoneNumber">Phone Number: </label>
+                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
 
-                if (exportType === "pdf") {
-                    exportToPDF(products);
-                } else if (exportType === "csv") {
-                    exportToCSV(products);
-                } else {
-                    console.error("Invalid export type selected!");
-                }
-            } catch (error) {
-                console.error("Error exporting products:", error);
-            }
-        }
+                <button type="submit">Add</button>
+            </form>
+        `;
+
+    const customerForm = document.getElementById("customer-form");
+
+    customerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        addCustomer();
     });
-}
 
-async function fetchProducts() {
-    const productsGrid = document.getElementById("products-grid");
-    const categorySelect = document.getElementById("category-select");
-    const sortSelect = document.getElementById("sort-select");
-    const stockSelect = document.getElementById("stock-select");
+}
+async function addCustomer() {
+    const name = document.getElementById("name").value.trim().toLowerCase();
+    const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
+
+
+    const phoneNumberRegex = /^[0-9]+$/;
+    if (!phoneNumberRegex.test(phoneNumber)) {
+        showModalMessage("Invalid input, please try again!", false);
+        return;
+    }
 
     try {
-        const snapshot = await db.collection("products").get();
+        const customersSnapshot = await db.collection("customers").get();
+        let nameExists = false;
+        let phoneNumberExists = false;
 
-        if (snapshot.empty) {
-            productsGrid.innerHTML = "<p>No products available.</p>";
-            return;
+        customersSnapshot.forEach((doc) => {
+            const customer = doc.data();
+
+
+            if (customer.name.toLowerCase() === name.toLowerCase()) {
+                nameExists = true;
+            }
+            if (customer.phoneNumber === phoneNumber) {
+                phoneNumberExists = true;
+            }
+        });
+
+        if (nameExists || phoneNumberExists) {
+            let errorMessage = "Failed to add customer: ";
+            if (nameExists && phoneNumberExists) {
+                errorMessage += "Name and Phone Number already exist!";
+            } else if (nameExists) {
+                errorMessage += "Name already exist!";
+            } else if (phoneNumberExists) {
+                errorMessage += "Phone Number already exist!";
+            }
+            showModalMessage(errorMessage, false);
+        } else {
+            await db.collection("customers").add({ name, phoneNumber });
+            showModalMessage("Customer added successfully!", true);
+            const customerForm = document.getElementById("customer-form");
+            customerForm.reset();
         }
-
-        const products = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                ...data,
-                createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
-            };
-        });
-
-        const uniqueCategories = [...new Set(products.map(product => product.category))];
-        uniqueCategories.forEach(category => {
-            const option = document.createElement("option");
-            option.value = category;
-            option.textContent = category;
-            categorySelect.appendChild(option);
-        });
-
-        const applyFilters = () => {
-            let filteredProducts = [...products];
-
-            // Filter by category
-            const selectedCategory = categorySelect.value;
-            if (selectedCategory) {
-                filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
-            }
-
-            // Filter by stock range
-            const stockRange = stockSelect.value;
-            if (stockRange) {
-                switch (stockRange) {
-                    case "low-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 1 && product.stock <= 10);
-                        break;
-                    case "medium-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
-                        break;
-                    case "high-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock > 50);
-                        break;
-                }
-            }
-
-            const sortOrder = sortSelect.value;
-            if (sortOrder) {
-                filteredProducts = filteredProducts.sort((a, b) =>
-                    sortOrder === "asc" ? a.price - b.price : b.price - a.price
-                );
-            }
-            renderProducts(filteredProducts);
-        };
-
-        const renderProducts = (filteredProducts) => {
-            productsGrid.innerHTML = "";
-
-            filteredProducts.forEach(product => {
-                const productCard = document.createElement("div");
-                productCard.className = "product-card";
-
-                productCard.innerHTML = `
-                    <div class="product-image">
-                        <img src="${product.img}" alt="${product.label}">
-                    </div>
-                    <div class="product-details">
-                        <p><strong>Label:</strong> ${product.label}</p>
-                        <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Price:</strong> $${product.price.toFixed(2)}</p>
-                        <p><strong>Category:</strong> ${product.category}</p>
-                        <p><strong>Stock:</strong> ${product.stock}</p>
-                        <p><strong>Created At:</strong> ${product.createdAt}</p>
-                    </div>
-                        `;
-
-                productsGrid.appendChild(productCard);
-            });
-        };
-
-        categorySelect.addEventListener("change", applyFilters);
-        stockSelect.addEventListener("change", applyFilters);
-        sortSelect.addEventListener("change", applyFilters);
-
-        renderProducts(products);
     } catch (error) {
-        productsGrid.innerHTML = `<p>Error fetching products: ${error.message}</p>`;
-        console.error("Error fetching products:", error);
+        showModalMessage(`Error checking for duplicates: ${error.message}`, false);
     }
 }
-
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -322,7 +241,6 @@ function showProductForm() {
         document.getElementById("fileName").textContent = `Selected: ${fileName}`;
     });
 }
-
 async function addProduct() {
     const form = document.getElementById("product-form");
     form.addEventListener("submit", async (event) => {
@@ -455,7 +373,160 @@ async function addProduct() {
         }
     });
 }
+//-------------//
 
+
+//Products Section//
+function initProductPage() {
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+        <div id="filter-options" class="filter-options">
+            <div class="filter-group">
+                <label for="category-select">Filter by Category:</label>
+                <select id="category-select">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sort-select">Sort by Price:</label>
+                <select id="sort-select">
+                    <option value="asc">Lowest to Highest</option>
+                    <option value="desc">Highest to Lowest</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="stock-select">Filter by Stock:</label>
+                <select id="stock-select">
+                    <option value="">All Stock Levels</option>
+                    <option value="low-stock">Low Stock (1-10)</option>
+                    <option value="medium-stock">Medium Stock (11-50)</option>
+                    <option value="high-stock">High Stock (51+)</option>
+                </select>
+            </div>
+            <button class="export-product-btn" id="export-product-btn">EXPORT PRODUCTS</button>
+        </div>
+        <div id="products-grid" class="products-grid"></div>
+    `;
+    fetchProducts();
+
+    document.body.addEventListener("click", async (event) => {
+        if (event.target && event.target.id === "export-product-btn") {
+            try {
+                const products = await fetchProductsforExporting();
+                const exportType = document.getElementById("export-type-select")?.value || "pdf";
+
+                if (exportType === "pdf") {
+                    exportToPDF(products);
+                } else if (exportType === "csv") {
+                    exportToCSV(products);
+                } else {
+                    console.error("Invalid export type selected!");
+                }
+            } catch (error) {
+                console.error("Error exporting products:", error);
+            }
+        }
+    });
+}
+async function fetchProducts() {
+    const productsGrid = document.getElementById("products-grid");
+    const categorySelect = document.getElementById("category-select");
+    const sortSelect = document.getElementById("sort-select");
+    const stockSelect = document.getElementById("stock-select");
+
+    try {
+        const snapshot = await db.collection("products").get();
+
+        if (snapshot.empty) {
+            productsGrid.innerHTML = "<p>No products available.</p>";
+            return;
+        }
+
+        const products = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
+            };
+        });
+
+        const uniqueCategories = [...new Set(products.map(product => product.category))];
+        uniqueCategories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
+
+        const applyFilters = () => {
+            let filteredProducts = [...products];
+
+            // Filter by category
+            const selectedCategory = categorySelect.value;
+            if (selectedCategory) {
+                filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
+            }
+
+            // Filter by stock range
+            const stockRange = stockSelect.value;
+            if (stockRange) {
+                switch (stockRange) {
+                    case "low-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 1 && product.stock <= 10);
+                        break;
+                    case "medium-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
+                        break;
+                    case "high-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock > 50);
+                        break;
+                }
+            }
+
+            const sortOrder = sortSelect.value;
+            if (sortOrder) {
+                filteredProducts = filteredProducts.sort((a, b) =>
+                    sortOrder === "asc" ? a.price - b.price : b.price - a.price
+                );
+            }
+            renderProducts(filteredProducts);
+        };
+
+        const renderProducts = (filteredProducts) => {
+            productsGrid.innerHTML = "";
+
+            filteredProducts.forEach(product => {
+                const productCard = document.createElement("div");
+                productCard.className = "product-card";
+
+                productCard.innerHTML = `
+                    <div class="product-image">
+                        <img src="${product.img}" alt="${product.label}">
+                    </div>
+                    <div class="product-details">
+                        <p><strong>Label:</strong> ${product.label}</p>
+                        <p><strong>Barcode:</strong> ${product.barcode}</p>
+                        <p><strong>Price:</strong> $${product.price.toFixed(2)}</p>
+                        <p><strong>Category:</strong> ${product.category}</p>
+                        <p><strong>Stock:</strong> ${product.stock}</p>
+                        <p><strong>Created At:</strong> ${product.createdAt}</p>
+                    </div>
+                        `;
+
+                productsGrid.appendChild(productCard);
+            });
+        };
+
+        categorySelect.addEventListener("change", applyFilters);
+        stockSelect.addEventListener("change", applyFilters);
+        sortSelect.addEventListener("change", applyFilters);
+
+        renderProducts(products);
+    } catch (error) {
+        productsGrid.innerHTML = `<p>Error fetching products: ${error.message}</p>`;
+        console.error("Error fetching products:", error);
+    }
+}
 let allProducts = [];
 $(document).ready(function () {
 
@@ -707,6 +778,7 @@ $(document).ready(function () {
 });
 //---------------//
 
+
 //Customers Section//
 function initCustomersPage() {
 
@@ -721,7 +793,6 @@ function initCustomersPage() {
         `;
     fetchCustomers();
 }
-
 async function fetchCustomers() {
     const searchInput = document.getElementById("search-customers");
     const customersGrid = document.getElementById("customers-grid");
@@ -797,7 +868,6 @@ async function fetchCustomers() {
         customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
     }
 }
-
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -946,82 +1016,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
     });
 }
-
-
-function showCustomerForm() {
-    const mainContent = document.getElementById("main-content");
-    mainContent.innerHTML = `
-            <h1>Add Customer</h1>
-            <form id="customer-form" class="product-form">
-                <label for="name">Name: </label>
-                <input type="text" id="name" name="name" required><br>
-
-                <label for="phoneNumber">Phone Number: </label>
-                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
-
-                <button type="submit">Add</button>
-            </form>
-        `;
-
-    const customerForm = document.getElementById("customer-form");
-
-    customerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        addCustomer();
-    });
-
-}
-
-async function addCustomer() {
-    const name = document.getElementById("name").value.trim().toLowerCase();
-    const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
-
-
-    const phoneNumberRegex = /^[0-9]+$/;
-    if (!phoneNumberRegex.test(phoneNumber)) {
-        showModalMessage("Invalid input, please try again!", false);
-        return;
-    }
-
-    try {
-        const customersSnapshot = await db.collection("customers").get();
-        let nameExists = false;
-        let phoneNumberExists = false;
-
-        customersSnapshot.forEach((doc) => {
-            const customer = doc.data();
-
-
-            if (customer.name.toLowerCase() === name.toLowerCase()) {
-                nameExists = true;
-            }
-            if (customer.phoneNumber === phoneNumber) {
-                phoneNumberExists = true;
-            }
-        });
-
-        if (nameExists || phoneNumberExists) {
-            let errorMessage = "Failed to add customer: ";
-            if (nameExists && phoneNumberExists) {
-                errorMessage += "Name and Phone Number already exist!";
-            } else if (nameExists) {
-                errorMessage += "Name already exist!";
-            } else if (phoneNumberExists) {
-                errorMessage += "Phone Number already exist!";
-            }
-            showModalMessage(errorMessage, false);
-        } else {
-            await db.collection("customers").add({ name, phoneNumber });
-            showModalMessage("Customer added successfully!", true);
-            const customerForm = document.getElementById("customer-form");
-            customerForm.reset();
-        }
-    } catch (error) {
-        showModalMessage(`Error checking for duplicates: ${error.message}`, false);
-    }
-}
-
 //----------------//
+
 
 function toggleSidebar() {
     document.getElementById("sidebar").classList.add("show");
