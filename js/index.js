@@ -395,31 +395,68 @@ async function addProduct() {
     });
 }
 
-
 function showCartForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
-            <p>Please Enter cart name to create a cart</p>
-            <form id="cart-form" class="product-form">
-                <label for="name">Name: </label>
-                <input type="text" id="name" name="name" required><br>
+        <form id="cart-form" class="product-form">
+            <label for="name">Name: (required)</label>
+            <input type="text" id="name" name="name" required><br>
+            <button type="submit" class="save-cart-btn" id="save-cart-btn">Save</button>
+        </form>
+    `;
 
-                <button type="submit" class="save-cart-btn" id="save-cart-btn">Save</button>
-            </form>
+    const cartForm = document.getElementById("cart-form");
+    const searchContainer = document.querySelector(".search-customer-container");
+
+    cartForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const saveCartBtn = document.getElementById("save-cart-btn");
+        const nameInput = document.getElementById("name");
+
+        saveCartBtn.disabled = true;
+        nameInput.disabled = true;
+
+        try {
+            await addCart();
+            cartForm.remove();
+        } catch (error) {
+            console.error("Error adding cart:", error);
+            saveCartBtn.disabled = false;
+            nameInput.disabled = false;
+        }
+    });
+}
+async function addCart() {
+    const cartName = document.getElementById("name").value.trim();
+    if (!cartName) {
+        showModalMessage("Please enter cart name to add a cart", false);
+        return;
+    }
+
+    const cartRef = db.collection("carts").doc();
+    const cartData = {
+        name: cartName,
+        dateCreated: firebase.firestore.Timestamp.now(),
+        totalCost: 0
+    };
+
+    const mainContent = document.getElementById("main-content");
+    try {
+        await cartRef.set(cartData);
+        showModalMessage('Cart added successfully!', true);
+        mainContent.innerHTML = `
+            <h4>Add Products To The Cart: ${cartName}</h4>
             <div class="search-customer-container search-container-main">
-                <input type="text" class="search-bar" id="search-customers" placeholder="Search Product to Add"/>
+                <input type="text" class="search-bar" id="search-customers" placeholder="Search Product"/>
                 <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
             </div>
             <div class="cart-product-card" id="cart-product-card"></div>
-        `;
-
-    fetchProductToAdd();
-
-    const cartForm = document.getElementById("cart-form");
-    cartForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        addCart();
-    });
+            `;
+        fetchProductToAdd();
+    } catch (error) {
+        console.error("Error adding cart:", error);
+    }
 }
 async function fetchProductToAdd() {
 
@@ -435,7 +472,6 @@ async function fetchProductToAdd() {
 
             if (!querySnapshot.empty) {
                 const product = querySnapshot.docs[0].data();
-                console.log("Product found:", product);
                 displayProductToAdd(product, querySnapshot.docs[0].id);
             }
         } catch (error) {
@@ -467,36 +503,9 @@ function displayProductToAdd(product, productId) {
     });
 
 }
-async function addCart() {
-    const nameInput = document.getElementById("name").value.trim();
-    if (!nameInput) {
-        showModalMessage("Please enter cart name to add a cart", false);
-        return;
-    }
-
-    const cartRef = db.collection("carts").doc();
-    const cartData = {
-        name: nameInput,
-        dateCreated: firebase.firestore.Timestamp.now(),
-        totalCost: 0
-    };
-
-    try {
-        await cartRef.set(cartData);
-        showModalMessage('Cart added successfully!', true);
-    } catch (error) {
-        console.error("Error adding cart:", error);
-    }
-}
 async function addToCart(productId, label, price) {
-    const nameInput = document.getElementById("name").value.trim();
-    if (!nameInput) {
-        showModalMessage("Please enter cart name to add a cart", false);
-        console.error("Cart name is empty");
-        return;
-    }
 
-    const cartQuery = await db.collection("carts").where("name", "==", nameInput).get();
+    const cartQuery = await db.collection("carts").where("name", "==", cartName).get();
     if (cartQuery.empty) {
         console.error("Cart not found");
         return;
