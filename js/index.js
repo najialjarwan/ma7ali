@@ -41,7 +41,21 @@ function initializeEventListeners() {
         });
         document.getElementById("add-product-btn").addEventListener("click", function () {
             const section = this.getAttribute("data-section");
-            console.log('add proudct btn clicked', section);
+            if (section) {
+                removeActive();
+                loadContent(section);
+            }
+        });
+        document.getElementById("add-cart-btn").addEventListener("click", function () {
+            const section = this.getAttribute("data-section");
+            if (section) {
+                removeActive();
+                loadContent(section);
+            }
+        });
+        document.getElementById("add-sales-btn").addEventListener("click", function () {
+            const section = this.getAttribute("data-section");
+            console.log('add sales btn clicked', section);
             if (section) {
                 removeActive();
                 loadContent(section);
@@ -127,6 +141,12 @@ async function loadContent(section) {
         if (section === "addProduct") {
             showProductForm();
         }
+        if (section === "addCart") {
+            showCartForm();
+        }
+        if (section === "addSales") {
+            showSalesForm();
+        }
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
@@ -205,6 +225,7 @@ async function addCustomer() {
         showModalMessage(`Error checking for duplicates: ${error.message}`, false);
     }
 }
+
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -312,7 +333,7 @@ async function addProduct() {
 
         const productData = {
             barcode: formData.get("barcode"),
-            label: formData.get("label"),
+            label: formData.get("label").toLowerCase(),
             img: imgUrl,
             price: parseFloat(formData.get("price")),
             category: formData.get("category"),
@@ -373,6 +394,148 @@ async function addProduct() {
         }
     });
 }
+
+
+function showCartForm() {
+    const mainContent = document.getElementById("main-content");
+    mainContent.innerHTML = `
+            <p>Please Enter cart name</p>
+            <form id="cart-form" class="product-form">
+                <label for="name">Name: </label>
+                <input type="text" id="name" name="name" required><br>
+
+                <button type="submit" class="save-cart-btn" id="save-cart-btn">Save</button>
+            </form>
+            <div class="search-customer-container search-container-main">
+                <input type="text" class="search-bar" id="search-customers" placeholder="Search Product to Add"/>
+                <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+            </div>
+            <div class="cart-product-card" id="cart-product-card"></div>
+        `;
+    fetchProductToAdd();
+    
+    const cartForm = document.getElementById("cart-form");
+    cartForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        addCart();
+    });
+}
+async function fetchProductToAdd() {
+    const searchInput = document.getElementById("search-customers");
+    if (!searchInput) {
+        console.error("Search input field not found.");
+        return;
+    }
+    
+    searchInput.addEventListener("input", async function () {
+        console.log("Search event triggered. Input value:", searchInput.value);
+        const searchValue = searchInput.value.toLowerCase();
+        if (!searchValue) {
+            console.log("Empty search value. Skipping query.");
+            return;
+        }
+
+        try {
+            console.log("Querying Firestore with:", searchValue);
+            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
+            console.log("Query result size:", querySnapshot.size);
+            
+            if (!querySnapshot.empty) {
+                const product = querySnapshot.docs[0].data();
+                console.log("Product found:", product);
+                displayProductToAdd(product, querySnapshot.docs[0].id);
+            } else {
+                console.log("No matching product found.");
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    });
+}
+function displayProductToAdd(product, productId) {
+    const productCard = document.getElementById("cart-product-card");
+    if (!productCard) {
+        console.error("Product display container not found.");
+        return;
+    }
+    
+    console.log("Displaying product:", product);
+    productCard.innerHTML = `
+        <div class="product-container">
+            <div class="left">
+                <img src="${product.img}" alt="${product.label}" width="100" height="100">
+            </div>
+            <div class="right">
+                <button onclick="addToCart('${productId}', '${product.label}', ${product.price})">Add to Cart</button>
+            </div>
+        </div>`;
+}
+async function addCart() {
+    const nameInput = document.getElementById("name").value.trim();
+    if (!nameInput) {
+        showModalMessage("Please enter cart name to add a cart", false);
+        console.error("Cart name is empty");
+        return;
+    }
+
+    const cartRef = db.collection("carts").doc();
+    const cartData = {
+        name: nameInput,
+        dateCreated: firebase.firestore.Timestamp.now(),
+        totalCost: 0
+    };
+
+    try {
+        await cartRef.set(cartData);
+        console.log("Cart added successfully:", cartData);
+    } catch (error) {
+        console.error("Error adding cart:", error);
+    }
+}
+async function addToCart(productId, label, price) {
+    const nameInput = document.getElementById("name").value.trim();
+    if (!nameInput) {
+        showModalMessage("Please enter cart name to add a cart", false);
+        console.error("Cart name is empty");
+        return;
+    }
+
+    const cartQuery = await db.collection("carts").where("name", "==", nameInput).get();
+    if (cartQuery.empty) {
+        console.error("Cart not found");
+        return;
+    }
+
+    const cartDoc = cartQuery.docs[0].ref;
+    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
+    const productSnap = await cartProductsRef.get();
+
+    if (productSnap.exists) {
+        const productData = productSnap.data();
+        await cartProductsRef.update({
+            quantity: productData.quantity + 1,
+            total: (productData.quantity + 1) * price
+        });
+    } else {
+        await cartProductsRef.set({
+            name: label,
+            quantity: 1,
+            price: price,
+            total: price
+        });
+    }
+
+    const cartProducts = await cartDoc.collection("cartProducts").get();
+    let totalCost = 0;
+    cartProducts.forEach(doc => {
+        totalCost += doc.data().total;
+    });
+    await cartDoc.update({ totalCost });
+
+    console.log("Product added to cart:", label);
+}
+
+
 //-------------//
 
 
@@ -912,7 +1075,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             console.error("Error exporting debt details:", error);
         }
     });
-    
+
 
     async function loadDebts() {
         const debtDetailsTable = document.getElementById("debt-details-table");
@@ -920,7 +1083,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         const debtRef = db.collection("customers").doc(customerId).collection("debts");
         const debtsSnapshot = await debtRef.get();
         let totalBalance = 0;
-        
+
         debtDetailsTable.innerHTML = '';
 
         debtsSnapshot.forEach((doc) => {
@@ -992,7 +1155,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             event.preventDefault();
             const details = document.getElementById("debt-details").value.trim();
             const balance = parseFloat(document.getElementById("debt-balance").value.trim());
-            
+
             if (!details || isNaN(balance) || balance <= 0) {
                 showModalMessage("Invalid input. Please enter valid details and balance!", false);
                 return;
