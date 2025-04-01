@@ -399,13 +399,14 @@ function showCartForm() {
             <label for="cartName">Cart Name: (required)</label>
             <input type="text" id="cartName" name="cartName" required><br>
             <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
+            <button type="button" class="cancel-cart-btn" id="cancel-cart-btn" style="display: none;">Cancel</button>
         </form>
         <div class="search-customer-container search-container-main" >
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div class="cart-products-container" id="cart-products-container"></div>
-        <div class="cart-display-container" id="cart-display-container"></div>
+        <div class="cart-products-container" id="cart-products-container"> </div>
+        <div class="cart-display-container" id="cart-display-container" style="display: none;"></div>
     `;
     fetchProductToAdd();
 
@@ -414,9 +415,13 @@ function showCartForm() {
         event.preventDefault();
 
         const saveCartBtn = document.getElementById("save-cart-btn");
+        const cancelCartBtn = document.getElementById("cancel-cart-btn");
         const cartName = document.getElementById("cartName");
 
+        // Remove the create button and enable the cancel button
         saveCartBtn.remove();
+        cancelCartBtn.style.display = "inline-block";
+        cancelCartBtn.style.color = "red";
         cartName.disabled = true;
 
         try {
@@ -424,10 +429,45 @@ function showCartForm() {
             document.getElementById("search-customers").disabled = false;
         } catch (error) {
             console.error("Error adding cart:", error);
-            saveCartBtn.disabled = false;
+            // If there's an error, restore the create button
+            cancelCartBtn.style.display = "none";
             cartName.disabled = false;
         }
     });
+
+    // Attach cancel event listener
+    const cancelCartBtn = document.getElementById("cancel-cart-btn");
+    cancelCartBtn.addEventListener("click", cancelCart);
+}
+async function cancelCart() {
+    if (!currentCartId) {
+        console.error("No active cart to cancel.");
+        return;
+    }
+
+    try {
+        const cartDocRef = db.collection("carts").doc(currentCartId);
+        const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
+
+        // Use a batch to delete each product in the subcollection
+        let batch = db.batch();
+        cartProductsSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // Delete the main cart document
+        await cartDocRef.delete();
+        console.log("Cart and its products have been canceled and deleted.");
+
+        // Reset the global cart id
+        currentCartId = null;
+
+        // Reset the UI as if the user is visiting the page for the first time
+        showCartForm();
+    } catch (error) {
+        console.error("Error canceling cart:", error);
+    }
 }
 let currentCartId = null;
 async function addCart() {
@@ -493,6 +533,7 @@ async function addToCart(productId, label, price) {
 }
 function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
+    cartDisplayContainer.style.display = "block";
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
         <div class="cart-products-list-container" id="cart-products-list"></div>
