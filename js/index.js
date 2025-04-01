@@ -400,7 +400,13 @@ function showCartForm() {
             <input type="text" id="name" name="name" required><br>
             <button type="submit" class="save-cart-btn" id="save-cart-btn">Save</button>
         </form>
+        <div class="search-customer-container search-container-main" style="display:none">
+            <input type="text" class="search-bar" id="search-customers" placeholder="Search Product"/>
+            <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+        </div>
+        <div class="cart-product-card" id="cart-product-card"></div>
     `;
+    fetchProductToAdd();
 
     const cartForm = document.getElementById("cart-form");
     const searchContainer = document.querySelector(".search-customer-container");
@@ -416,45 +422,13 @@ function showCartForm() {
 
         try {
             await addCart();
-            cartForm.remove();
+            searchContainer.style.display = "block";
         } catch (error) {
             console.error("Error adding cart:", error);
             saveCartBtn.disabled = false;
             nameInput.disabled = false;
         }
     });
-}
-let cartName = "";
-async function addCart() {
-    cartName = document.getElementById("name").value.trim();
-    if (!cartName) {
-        showModalMessage("Please enter cart name to add a cart", false);
-        return;
-    }
-
-    const cartRef = db.collection("carts").doc();
-    const cartData = {
-        name: cartName,
-        dateCreated: firebase.firestore.Timestamp.now(),
-        totalCost: 0
-    };
-
-    const mainContent = document.getElementById("main-content");
-    try {
-        await cartRef.set(cartData);
-        showModalMessage('Cart added successfully!', true);
-        mainContent.innerHTML = `
-            <h4>Add Products To The Cart: ${cartName}</h4>
-            <div class="search-customer-container search-container-main">
-                <input type="text" class="search-bar" id="search-customers" placeholder="Search Product"/>
-                <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
-            </div>
-            <div class="cart-product-card" id="cart-product-card"></div>
-            `;
-        fetchProductToAdd();
-    } catch (error) {
-        console.error("Error adding cart:", error);
-    }
 }
 async function fetchProductToAdd() {
 
@@ -501,8 +475,29 @@ function displayProductToAdd(product, productId) {
     });
 
 }
-async function addToCart(productId, label, price) {
+async function addCart() {
+    const cartName = document.getElementById("name").value.trim();
+    if (!cartName) {
+        showModalMessage("Please enter cart name to add a cart", false);
+        return;
+    }
 
+    const cartRef = db.collection("carts").doc();
+    const cartData = {
+        name: cartName,
+        dateCreated: firebase.firestore.Timestamp.now(),
+        totalCost: 0
+    };
+
+    try {
+        await cartRef.set(cartData);
+        showModalMessage(`Cart added successfully!<br>Search Product to add to the cart: ${cartName}`, true);
+    } catch (error) {
+        console.error("Error adding cart:", error);
+    }
+}
+async function addToCart(productId, label, price) {
+    const cartName = document.getElementById("name").value.trim();
     const cartQuery = await db.collection("carts").where("name", "==", cartName).get();
     if (cartQuery.empty) {
         console.error("Cart not found");
@@ -1273,7 +1268,7 @@ function showModalMessage(message, isSuccess) {
 
     // Add message text
     const messageText = document.createElement("p");
-    messageText.textContent = message;
+    messageText.innerHTML = message;
     messageText.style.color = isSuccess ? "green" : "red";
     messageText.style.fontSize = "16px";
     messageText.style.fontWeight = "bold";
