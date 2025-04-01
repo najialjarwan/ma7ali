@@ -416,7 +416,7 @@ function showCartForm() {
         const saveCartBtn = document.getElementById("save-cart-btn");
         const cartName = document.getElementById("cartName");
 
-        saveCartBtn.remove(); 
+        saveCartBtn.remove();
         cartName.disabled = true;
 
         try {
@@ -429,6 +429,7 @@ function showCartForm() {
         }
     });
 }
+let currentCartId = null;
 async function addCart() {
     const cartName = document.getElementById("cartName").value.trim();
     if (!cartName) {
@@ -446,9 +447,8 @@ async function addCart() {
     try {
         await cartRef.set(cartData);
         console.log("Cart created successfully:", cartData);
-        document.getElementById("search-customers").disabled = false;
-
-        // **Display the cart immediately after creation**
+        // Store the cart ID globally
+        currentCartId = cartRef.id;
         displayCart(cartRef.id);
 
     } catch (error) {
@@ -456,15 +456,12 @@ async function addCart() {
     }
 }
 async function addToCart(productId, label, price) {
-    const cartName = document.getElementById("cartName").value.trim();
-    const cartQuery = await db.collection("carts").where("name", "==", cartName).get();
-
-    if (cartQuery.empty) {
-        console.error("Cart not found");
+    if (!currentCartId) {
+        console.error("No active cart found");
         return;
     }
 
-    const cartDoc = cartQuery.docs[0].ref;
+    const cartDoc = db.collection("carts").doc(currentCartId);
     const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
     const productSnap = await cartProductsRef.get();
 
@@ -577,7 +574,12 @@ function displayProductToAdd(product, productId) {
         </div>
         `;
     const addToCartBtn = document.getElementById("add-to-cart-btn");
-    document.getElementById("cart-products-container").addEventListener("click", function () {
+    // Remove any previous event listeners by cloning the button
+    const newAddToCartBtn = addToCartBtn.cloneNode(true);
+    addToCartBtn.parentNode.replaceChild(newAddToCartBtn, addToCartBtn);
+
+    // Attach a new event listener to the newly created button
+    newAddToCartBtn.addEventListener("click", function () {
         addToCart(productId, product.label, product.price);
     });
 }//-------------//
