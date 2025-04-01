@@ -446,7 +446,6 @@ async function addCart() {
     try {
         await cartRef.set(cartData);
         console.log("Cart created successfully:", cartData);
-        showModalMessage(`Cart added successfully!<br>Search Product to add to the cart: ${cartName}`, true);
         document.getElementById("search-customers").disabled = false;
 
         // **Display the cart immediately after creation**
@@ -499,16 +498,16 @@ function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
-        <div class="cart-products-list" id="cart-products-list"></div>
+        <div class="cart-products-list-container" id="cart-products-list"></div>
     `;
 
     db.collection("carts").doc(cartId).onSnapshot(doc => {
         if (doc.exists) {
             const cart = doc.data();
             document.getElementById("cart-details").innerHTML = `
-                <h3>Cart Name: ${cart.name}</h3>
-                <p>Date Created: ${cart.dateCreated.toDate().toLocaleString()}</p>
-                <p>Total Cost: $${cart.totalCost}</p>
+                <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
+                <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
+                <p><strong>Total Cost: </strong>$${cart.totalCost}</p>
             `;
             console.log("Cart details updated:", cart);
         }
@@ -521,12 +520,10 @@ function displayCart(cartId) {
             const product = doc.data();
             cartProductsHTML += `
                 <div class="cart-products-list">
-                    <div class="right">
-                        <p><strong>${product.name}</strong></p>
-                        <p>Quantity: ${product.quantity}</p>
-                        <p>Price: $${product.price}</p>
-                        <p>Total: $${product.total}</p>
-                    </div>
+                    <p style="font-weight: bold; text-decoration: underline;">${product.name}</p>
+                    <p><strong>Quantity: </strong>${product.quantity}</p>
+                    <p><strong>Price: $</strong>${product.price}</p>
+                    <p><strong>Total: $</strong>${product.total}</p>
                 </div>
             `;
         });
