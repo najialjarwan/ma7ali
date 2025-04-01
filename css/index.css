@@ -598,6 +598,9 @@ footer {
   border: none;
   background-color: lightgreen;
 }
+.add-to-cart-btn:active{
+  transform: scale(1.1);
+}
 
 .cart-display-container{
   width: 100%;

@@ -579,6 +579,7 @@ function displayCart(cartId) {
                     exportBtn.id = "export-cart";
                     exportBtn.className = "export-product-btn";
                     exportBtn.textContent = "Export Cart";
+                    exportBtn.style.padding = "20px";
                     exportBtn.addEventListener("click", exportCartToPDF);
                     cartDisplayContainer.appendChild(exportBtn);
                 }
