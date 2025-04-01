@@ -404,8 +404,8 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div class="cart-display-container" id="cart-display-container"></div>
         <div class="cart-products-container" id="cart-products-container"></div>
+        <div class="cart-display-container" id="cart-display-container"></div>
     `;
     fetchProductToAdd();
 
@@ -502,7 +502,6 @@ function displayCart(cartId) {
         <div class="cart-products-list" id="cart-products-list"></div>
     `;
 
-    // Fetch cart details
     db.collection("carts").doc(cartId).onSnapshot(doc => {
         if (doc.exists) {
             const cart = doc.data();
@@ -515,17 +514,13 @@ function displayCart(cartId) {
         }
     });
 
-    // Fetch cart products list
     db.collection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
         let cartProductsHTML = "";
 
         snapshot.forEach(doc => {
             const product = doc.data();
             cartProductsHTML += `
-                <div class="cart-product-card">
-                    <div class="left">
-                        <img src="${product.img || 'default-image.jpg'}" alt="${product.name}" width="100" height="100">
-                    </div>
+                <div class="cart-products-list">
                     <div class="right">
                         <p><strong>${product.name}</strong></p>
                         <p>Quantity: ${product.quantity}</p>
