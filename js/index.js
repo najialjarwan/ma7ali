@@ -398,10 +398,10 @@ function showCartForm() {
         <form id="cart-form" class="product-form">
             <label for="name">Name: (required)</label>
             <input type="text" id="name" name="name" required><br>
-            <button type="submit" class="save-cart-btn" id="save-cart-btn">Save</button>
+            <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
         </form>
-        <div class="search-customer-container search-container-main" style="display:none">
-            <input type="text" class="search-bar" id="search-customers" placeholder="Search Product"/>
+        <div class="search-customer-container search-container-main" >
+            <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
@@ -409,7 +409,6 @@ function showCartForm() {
     fetchProductToAdd();
 
     const cartForm = document.getElementById("cart-form");
-    const searchContainer = document.querySelector(".search-customer-container");
 
     cartForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -422,58 +421,13 @@ function showCartForm() {
 
         try {
             await addCart();
-            searchContainer.style.display = "block";
+            document.getElementById("search-customers").disabled = false;
         } catch (error) {
             console.error("Error adding cart:", error);
             saveCartBtn.disabled = false;
             nameInput.disabled = false;
         }
     });
-}
-async function fetchProductToAdd() {
-
-    const searchInput = document.getElementById("search-customers");
-    searchInput.addEventListener("input", async function () {
-        const searchValue = searchInput.value.toLowerCase();
-        if (!searchValue) {
-            return;
-        }
-
-        try {
-            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
-
-            if (!querySnapshot.empty) {
-                const product = querySnapshot.docs[0].data();
-                displayProductToAdd(product, querySnapshot.docs[0].id);
-            }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    });
-}
-function displayProductToAdd(product, productId) {
-    const productCard = document.getElementById("cart-products-container");
-    if (!productCard) {
-        console.error("Product display container not found.");
-        return;
-    }
-
-    console.log("Displaying product:", product);
-    productCard.innerHTML = `
-        <div class="cart-product-card">
-            <div class="left">
-                <img src="${product.img}" alt="${product.label}" width="100" height="100">
-            </div>
-            <div class="right">
-                <button type="submit" class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
-            </div>
-        </div>
-        `;
-    const addToCartBtn = document.getElementById("add-to-cart-btn");
-    document.getElementById("cart-products-container").addEventListener("click", function () {
-        addToCart(productId, product.label, product.price);
-    });
-
 }
 async function addCart() {
     const cartName = document.getElementById("name").value.trim();
@@ -531,6 +485,51 @@ async function addToCart(productId, label, price) {
     await cartDoc.update({ totalCost });
 
     console.log("Product added to cart:", label);
+}
+async function fetchProductToAdd() {
+
+    const searchInput = document.getElementById("search-customers");
+    searchInput.addEventListener("input", async function () {
+        const searchValue = searchInput.value.toLowerCase();
+        if (!searchValue) {
+            return;
+        }
+
+        try {
+            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
+
+            if (!querySnapshot.empty) {
+                const product = querySnapshot.docs[0].data();
+                displayProductToAdd(product, querySnapshot.docs[0].id);
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    });
+}
+function displayProductToAdd(product, productId) {
+    const productCard = document.getElementById("cart-products-container");
+    if (!productCard) {
+        console.error("Product display container not found.");
+        return;
+    }
+
+    console.log("Displaying product:", product);
+    productCard.innerHTML = `
+        <div class="cart-product-card">
+            <div class="left">
+                <img src="${product.img}" alt="${product.label}" width="100" height="100">
+            </div>
+            <div class="right">
+                <button type="submit" class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
+            </div>
+        </div>
+        `;
+    const addToCartBtn = document.getElementById("add-to-cart-btn");
+    document.getElementById("cart-products-container").addEventListener("click", function () {
+        addToCart(productId, product.label, product.price);
+    });
+
 }
 
 
