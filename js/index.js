@@ -222,7 +222,7 @@ async function addCustomer() {
         showModalMessage(`Error checking for duplicates: ${error.message}`, false);
     }
 }
-
+//
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -391,7 +391,7 @@ async function addProduct() {
         }
     });
 }
-
+//
 function showCartForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -405,7 +405,7 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div class="cart-products-container" id="cart-products-container"> </div>
+        <div class="cart-products-container" id="cart-products-container"></div>
         <div class="cart-display-container" id="cart-display-container" style="display: none;"></div>
     `;
     fetchProductToAdd();
@@ -633,6 +633,7 @@ function displayProductToAdd(product, productId) {
                 <button type="submit" class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
             </div>
         </div>
+        <img src="images/buy-logo.webp" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         `;
     const addToCartBtn = document.getElementById("add-to-cart-btn");
     // Remove any previous event listeners by cloning the button
@@ -642,6 +643,55 @@ function displayProductToAdd(product, productId) {
     // Attach a new event listener to the newly created button
     newAddToCartBtn.addEventListener("click", function () {
         addToCart(productId, product.label, product.price);
+        const productCard = event.target.closest(".cart-product-card");
+        const productImage = productCard.querySelector("img");
+        
+        if (productImage) {
+            animateImageToCart(productImage);
+        }
+        else {
+            console.error("Product image not found in the product card.");
+        }
+    });
+}
+function animateImageToCart(sourceImageElement) {
+    // Ensure the cart icon exists
+    const cartIcon = document.getElementById("cart-icon");
+    if (!cartIcon) {
+        console.error("Cart icon element not found.");
+        return;
+    }
+
+    // Clone the source image element
+    const flyingImage = sourceImageElement.cloneNode(true);
+    flyingImage.classList.add("flying-cart-image");
+    document.body.appendChild(flyingImage);
+
+    // Get starting position of the source image
+    const startRect = sourceImageElement.getBoundingClientRect();
+    flyingImage.style.left = `${startRect.left}px`;
+    flyingImage.style.top = `${startRect.top}px`;
+    flyingImage.style.width = `${startRect.width}px`;
+    flyingImage.style.height = `${startRect.height}px`;
+
+    // Get target position (cart icon)
+    const targetRect = cartIcon.getBoundingClientRect();
+
+    // Calculate translation differences
+    const translateX = targetRect.left - startRect.left;
+    const translateY = targetRect.top - startRect.top;
+
+    // Force reflow to ensure the starting styles are applied
+    flyingImage.offsetWidth;
+
+    // Apply transform: translate and scale down to the cart icon's size (optional scaling factor)
+    const scaleFactor = 0.5; // Adjust scale if necessary
+    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor})`;
+    flyingImage.style.opacity = "0.5"; // Optionally fade out during transition
+
+    // Remove the clone after the animation completes
+    flyingImage.addEventListener("transitionend", () => {
+        flyingImage.remove();
     });
 }//-------------//
 

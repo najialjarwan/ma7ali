@@ -563,6 +563,12 @@ footer {
   display: flex;
   justify-content: center;
 }
+.flying-cart-image {
+  position: absolute;
+  transition: transform 1s ease-in-out, opacity 1s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
 
 .cart-product-card {
   display: flex;
