@@ -396,8 +396,8 @@ function showCartForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <form id="cart-form" class="product-form">
-            <label for="name">Name: (required)</label>
-            <input type="text" id="name" name="name" required><br>
+            <label for="cartName">Cart Name: (required)</label>
+            <input type="text" id="cartName" name="cartName" required><br>
             <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
         </form>
         <div class="search-customer-container search-container-main" >
@@ -409,15 +409,14 @@ function showCartForm() {
     fetchProductToAdd();
 
     const cartForm = document.getElementById("cart-form");
-
     cartForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const saveCartBtn = document.getElementById("save-cart-btn");
-        const nameInput = document.getElementById("name");
+        const cartName = document.getElementById("cartName");
 
-        saveCartBtn.disabled = true;
-        nameInput.disabled = true;
+        saveCartBtn.remove(); 
+        cartName.disabled = true;
 
         try {
             await addCart();
@@ -425,12 +424,12 @@ function showCartForm() {
         } catch (error) {
             console.error("Error adding cart:", error);
             saveCartBtn.disabled = false;
-            nameInput.disabled = false;
+            cartName.disabled = false;
         }
     });
 }
 async function addCart() {
-    const cartName = document.getElementById("name").value.trim();
+    const cartName = document.getElementById("cartName").value.trim();
     if (!cartName) {
         showModalMessage("Please enter cart name to add a cart", false);
         return;
@@ -451,7 +450,7 @@ async function addCart() {
     }
 }
 async function addToCart(productId, label, price) {
-    const cartName = document.getElementById("name").value.trim();
+    const cartName = document.getElementById("cartName").value.trim();
     const cartQuery = await db.collection("carts").where("name", "==", cartName).get();
     if (cartQuery.empty) {
         console.error("Cart not found");
@@ -529,7 +528,6 @@ function displayProductToAdd(product, productId) {
     document.getElementById("cart-products-container").addEventListener("click", function () {
         addToCart(productId, product.label, product.price);
     });
-
 }
 
 
