@@ -399,10 +399,10 @@ function showCartForm() {
             <label for="cartName">Cart Name: (required)</label>
             <input type="text" id="cartName" name="cartName" required><br>
             <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
-            <button type="button" class="cancel-cart-btn" id="cancel-cart-btn" style="display: none;">Cancel</button>
+            <button type="button" class="cancel-cart-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
         </form>
         <div class="search-customer-container search-container-main" >
-            <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product"/>
+            <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
         <div class="cart-products-container" id="cart-products-container"> </div>
@@ -545,7 +545,7 @@ function displayCart(cartId) {
             document.getElementById("cart-details").innerHTML = `
                 <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
                 <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
-                <p><strong>Total Cost: </strong>$${cart.totalCost}</p>
+                <p><strong>Total Cost: </strong>$${cart.totalCost.toFixed(2)}</p>
             `;
             console.log("Cart details updated:", cart);
         }
@@ -570,6 +570,25 @@ function displayCart(cartId) {
         if (cartProductsList) {
             cartProductsList.innerHTML = cartProductsHTML;
             console.log("Cart products updated:", snapshot.docs.map(doc => doc.data()));
+
+            // Add the Export Cart button if there's at least one product
+            if (!snapshot.empty) {
+                let exportBtn = document.getElementById("export-cart");
+                if (!exportBtn) {
+                    exportBtn = document.createElement("button");
+                    exportBtn.id = "export-cart";
+                    exportBtn.className = "export-product-btn";
+                    exportBtn.textContent = "Export Cart";
+                    exportBtn.addEventListener("click", exportCartToPDF);
+                    cartDisplayContainer.appendChild(exportBtn);
+                }
+            } else {
+                // If there are no products, remove export button if it exists
+                const existingExportBtn = document.getElementById("export-cart");
+                if (existingExportBtn) {
+                    existingExportBtn.remove();
+                }
+            }
         } else {
             console.error("cart-products-list container not found!");
         }
@@ -1467,6 +1486,82 @@ async function fetchDebtDetailsForExport(customerId) {
     });
     return debts;
 }
+async function exportCartToPDF() {
+    if (!currentCartId) {
+        console.error("No active cart to export.");
+        return;
+    }
+
+    const cartDocRef = db.collection("carts").doc(currentCartId);
+    const cartSnapshot = await cartDocRef.get();
+    if (!cartSnapshot.exists) {
+        console.error("Cart does not exist.");
+        return;
+    }
+    const cartData = cartSnapshot.data();
+
+    // Fetch cart products from the subcollection
+    const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
+    if (cartProductsSnapshot.empty) {
+        alert("Cart is empty. Please add products before exporting.");
+        return;
+    }
+    const cartProducts = cartProductsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            name: data.name,
+            quantity: data.quantity,
+            price: data.price,
+            total: data.total
+        };
+    });
+
+    // Create PDF using jsPDF and autoTable
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    // Title for the PDF
+    pdf.setFontSize(16);
+    pdf.text("Cart Export", 10, 10);
+
+    // --- Cart Details Table ---
+    // Prepare cart details in a table-friendly format
+    const cartDetails = [
+        ["Cart Name", cartData.name],
+        ["Date Created", cartData.dateCreated.toDate().toLocaleString()],
+        ["Total Cost", `$${cartData.totalCost.toFixed(2)}`]
+    ];
+
+    pdf.autoTable({
+        head: [["Cart Detail", "Value"]],
+        body: cartDetails,
+        startY: 20,
+        theme: "grid"
+    });
+
+    // --- Cart Products Table ---
+    // Determine the starting Y position after the first table
+    const finalY = pdf.lastAutoTable.finalY + 10;
+
+    const columns = ["Product Name", "Quantity", "Price ($)", "Total ($)"];
+    const rows = cartProducts.map(product => [
+        product.name,
+        product.quantity,
+        product.price.toFixed(2),
+        product.total.toFixed(2)
+    ]);
+
+    pdf.autoTable({
+        head: [columns],
+        body: rows,
+        startY: finalY,
+        theme: "grid"
+    });
+
+    // Save the PDF file; using the cart name in the filename
+    pdf.save(`${cartData.name}_export.pdf`);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
 });
