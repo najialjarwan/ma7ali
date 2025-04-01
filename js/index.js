@@ -404,6 +404,7 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
+        <div class="cart-display-container" id="cart-display-container"></div>
         <div class="cart-products-container" id="cart-products-container"></div>
     `;
     fetchProductToAdd();
@@ -444,7 +445,13 @@ async function addCart() {
 
     try {
         await cartRef.set(cartData);
+        console.log("Cart created successfully:", cartData);
         showModalMessage(`Cart added successfully!<br>Search Product to add to the cart: ${cartName}`, true);
+        document.getElementById("search-customers").disabled = false;
+
+        // **Display the cart immediately after creation**
+        displayCart(cartRef.id);
+
     } catch (error) {
         console.error("Error adding cart:", error);
     }
@@ -452,6 +459,7 @@ async function addCart() {
 async function addToCart(productId, label, price) {
     const cartName = document.getElementById("cartName").value.trim();
     const cartQuery = await db.collection("carts").where("name", "==", cartName).get();
+
     if (cartQuery.empty) {
         console.error("Cart not found");
         return;
@@ -467,6 +475,7 @@ async function addToCart(productId, label, price) {
             quantity: productData.quantity + 1,
             total: (productData.quantity + 1) * price
         });
+        console.log("Updated product quantity in cart:", productData.name);
     } else {
         await cartProductsRef.set({
             name: label,
@@ -474,6 +483,7 @@ async function addToCart(productId, label, price) {
             price: price,
             total: price
         });
+        console.log("Added new product to cart:", label);
     }
 
     const cartProducts = await cartDoc.collection("cartProducts").get();
@@ -483,7 +493,57 @@ async function addToCart(productId, label, price) {
     });
     await cartDoc.update({ totalCost });
 
-    console.log("Product added to cart:", label);
+    console.log("Updated cart total cost:", totalCost);
+}
+function displayCart(cartId) {
+    const cartDisplayContainer = document.getElementById("cart-display-container");
+    cartDisplayContainer.innerHTML = `
+        <div class="cart-details" id="cart-details"></div>
+        <div class="cart-products-list" id="cart-products-list"></div>
+    `;
+
+    // Fetch cart details
+    db.collection("carts").doc(cartId).onSnapshot(doc => {
+        if (doc.exists) {
+            const cart = doc.data();
+            document.getElementById("cart-details").innerHTML = `
+                <h3>Cart Name: ${cart.name}</h3>
+                <p>Date Created: ${cart.dateCreated.toDate().toLocaleString()}</p>
+                <p>Total Cost: $${cart.totalCost}</p>
+            `;
+            console.log("Cart details updated:", cart);
+        }
+    });
+
+    // Fetch cart products list
+    db.collection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
+        let cartProductsHTML = "";
+
+        snapshot.forEach(doc => {
+            const product = doc.data();
+            cartProductsHTML += `
+                <div class="cart-product-card">
+                    <div class="left">
+                        <img src="${product.img || 'default-image.jpg'}" alt="${product.name}" width="100" height="100">
+                    </div>
+                    <div class="right">
+                        <p><strong>${product.name}</strong></p>
+                        <p>Quantity: ${product.quantity}</p>
+                        <p>Price: $${product.price}</p>
+                        <p>Total: $${product.total}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        const cartProductsList = document.getElementById("cart-products-list");
+        if (cartProductsList) {
+            cartProductsList.innerHTML = cartProductsHTML;
+            console.log("Cart products updated:", snapshot.docs.map(doc => doc.data()));
+        } else {
+            console.error("cart-products-list container not found!");
+        }
+    });
 }
 async function fetchProductToAdd() {
 
