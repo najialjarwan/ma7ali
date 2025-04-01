@@ -553,7 +553,16 @@ footer {
   color: red !important;
 }
 
-
+.cart-product-card{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--accent-color);
+  border-radius: 10px;
+  background-color: transparent;
+}
 .customer-table {
   width: 100%;
   max-width: 100%; 

@@ -404,7 +404,7 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div class="cart-product-card" id="cart-product-card"></div>
+        <div class="cart-products-container" id="cart-products-container"></div>
     `;
     fetchProductToAdd();
 
@@ -452,7 +452,7 @@ async function fetchProductToAdd() {
     });
 }
 function displayProductToAdd(product, productId) {
-    const productCard = document.getElementById("cart-product-card");
+    const productCard = document.getElementById("cart-products-container");
     if (!productCard) {
         console.error("Product display container not found.");
         return;
@@ -460,7 +460,7 @@ function displayProductToAdd(product, productId) {
 
     console.log("Displaying product:", product);
     productCard.innerHTML = `
-        <div class="product-container">
+        <div class="cart-product-card">
             <div class="left">
                 <img src="${product.img}" alt="${product.label}" width="100" height="100">
             </div>
@@ -470,7 +470,7 @@ function displayProductToAdd(product, productId) {
         </div>
         `;
     const addToCartBtn = document.getElementById("add-to-cart-btn");
-    document.getElementById("cart-product-card").addEventListener("click", function () {
+    document.getElementById("cart-products-container").addEventListener("click", function () {
         addToCart(productId, product.label, product.price);
     });
 
