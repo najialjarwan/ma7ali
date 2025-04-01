@@ -528,10 +528,7 @@ function displayProductToAdd(product, productId) {
     document.getElementById("cart-products-container").addEventListener("click", function () {
         addToCart(productId, product.label, product.price);
     });
-}
-
-
-//-------------//
+}//-------------//
 
 
 //Products Section//
@@ -933,8 +930,7 @@ $(document).ready(function () {
 
         displayProducts(products); // Initial display
     });
-});
-//---------------//
+}); //---------------//
 
 
 //Customers Section//
@@ -1173,18 +1169,15 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
     });
-}
-//----------------//
+}//----------------//
 
 
 function toggleSidebar() {
     document.getElementById("sidebar").classList.add("show");
 }
-
 function closeSidebar() {
     document.getElementById("sidebar").classList.remove("show");
 }
-
 let initialBaseColor, initialTextColor, initialInputColor, initialAccentColor;
 function toggleTheme() {
     const root = document.documentElement;
@@ -1218,11 +1211,9 @@ function toggleTheme() {
         document.body.style.backgroundImage = `url('../images/background10.png')`;
     }
 }
-
 function openFeedbackModal() {
     document.getElementById("feedback-modal").style.display = "flex";
 }
-
 function submitFeedback() {
     const feedbackText = document.getElementById("feedback-text").value;
     const feedbackMessage = document.getElementById("feedback-message");
@@ -1294,7 +1285,6 @@ function showModalMessage(message, isSuccess) {
     // Append modal to the body
     document.body.appendChild(modalContainer);
 }
-
 async function exportToPDF(data) {
     try {
         const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded from the CDN
@@ -1328,7 +1318,6 @@ async function exportToPDF(data) {
         console.error("Error exporting to PDF:", error);
     }
 }
-
 async function fetchProductsforExporting() {
     try {
         const snapshot = await db.collection("products").get();
@@ -1349,7 +1338,6 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
-
 function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
@@ -1372,7 +1360,6 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
     // Save the PDF
     pdf.save(`${customerName}_debt_details.pdf`);
 }
-
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
     const debts = snapshot.docs.map(doc => {
@@ -1385,7 +1372,6 @@ async function fetchDebtDetailsForExport(customerId) {
     });
     return debts;
 }
-
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
 });
