@@ -144,9 +144,6 @@ async function loadContent(section) {
         if (section === "addCart") {
             showCartForm();
         }
-        if (section === "addSales") {
-            showSalesForm();
-        }
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
@@ -427,8 +424,9 @@ function showCartForm() {
         }
     });
 }
+let cartName = "";
 async function addCart() {
-    const cartName = document.getElementById("name").value.trim();
+    cartName = document.getElementById("name").value.trim();
     if (!cartName) {
         showModalMessage("Please enter cart name to add a cart", false);
         return;
