@@ -554,7 +554,7 @@ footer {
 }
 
 #cartName:disabled{
-  background-color: lightgreen;
+  background-color: lightgoldenrodyellow;
   color: var(--text-color);
 }
 
@@ -568,7 +568,7 @@ footer {
   display: flex;
   border: 3px solid var(--accent-color);
   width: 100%;
-  max-width: 530px;
+  max-width: 515px;
 }
 .left {
   border-right: 3px solid var(--accent-color);
@@ -596,7 +596,7 @@ footer {
   height: 100%;
   width: 100%;
   border: none;
-  background-color: lightseagreen;
+  background-color: lightgreen;
 }
 
 
@@ -784,10 +784,10 @@ footer {
 
 .search-bar {
   text-align: left;
+  background-color: transparent !important;
   color: var(--input-color);
-  padding-left: 50px;
+  padding-left: 30px;
   width: 100%;
-  background-color: var(--accent-color);
 }
 
 .search-bar::placeholder {
