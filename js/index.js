@@ -418,7 +418,6 @@ function showCartForm() {
         const cancelCartBtn = document.getElementById("cancel-cart-btn");
         const cartName = document.getElementById("cartName");
 
-        // Remove the create button and enable the cancel button
         saveCartBtn.remove();
         cancelCartBtn.style.display = "inline-block";
         cancelCartBtn.style.color = "red";
@@ -429,41 +428,30 @@ function showCartForm() {
             document.getElementById("search-customers").disabled = false;
         } catch (error) {
             console.error("Error adding cart:", error);
-            // If there's an error, restore the create button
             cancelCartBtn.style.display = "none";
             cartName.disabled = false;
         }
     });
 
-    // Attach cancel event listener
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
     cancelCartBtn.addEventListener("click", cancelCart);
 }
 async function cancelCart() {
-    if (!currentCartId) {
-        console.error("No active cart to cancel.");
-        return;
-    }
 
     try {
         const cartDocRef = db.collection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
 
-        // Use a batch to delete each product in the subcollection
         let batch = db.batch();
         cartProductsSnapshot.forEach(doc => {
             batch.delete(doc.ref);
         });
         await batch.commit();
 
-        // Delete the main cart document
         await cartDocRef.delete();
-        console.log("Cart and its products have been canceled and deleted.");
 
-        // Reset the global cart id
         currentCartId = null;
 
-        // Reset the UI as if the user is visiting the page for the first time
         showCartForm();
     } catch (error) {
         console.error("Error canceling cart:", error);
@@ -486,7 +474,6 @@ async function addCart() {
 
     try {
         await cartRef.set(cartData);
-        console.log("Cart created successfully:", cartData);
         // Store the cart ID globally
         currentCartId = cartRef.id;
         displayCart(cartRef.id);
@@ -511,7 +498,6 @@ async function addToCart(productId, label, price) {
             quantity: productData.quantity + 1,
             total: (productData.quantity + 1) * price
         });
-        console.log("Updated product quantity in cart:", productData.name);
     } else {
         await cartProductsRef.set({
             name: label,
@@ -519,7 +505,6 @@ async function addToCart(productId, label, price) {
             price: price,
             total: price
         });
-        console.log("Added new product to cart:", label);
     }
 
     const cartProducts = await cartDoc.collection("cartProducts").get();
@@ -528,8 +513,6 @@ async function addToCart(productId, label, price) {
         totalCost += doc.data().total;
     });
     await cartDoc.update({ totalCost });
-
-    console.log("Updated cart total cost:", totalCost);
 }
 function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
@@ -547,7 +530,6 @@ function displayCart(cartId) {
                 <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
                 <p><strong>Total Cost: </strong>$${cart.totalCost.toFixed(2)}</p>
             `;
-            console.log("Cart details updated:", cart);
         }
     });
 
@@ -569,9 +551,7 @@ function displayCart(cartId) {
         const cartProductsList = document.getElementById("cart-products-list");
         if (cartProductsList) {
             cartProductsList.innerHTML = cartProductsHTML;
-            console.log("Cart products updated:", snapshot.docs.map(doc => doc.data()));
 
-            // Add the Export Cart button if there's at least one product
             if (!snapshot.empty) {
                 let exportBtn = document.getElementById("export-cart");
                 if (!exportBtn) {
@@ -584,7 +564,6 @@ function displayCart(cartId) {
                     cartDisplayContainer.appendChild(exportBtn);
                 }
             } else {
-                // If there are no products, remove export button if it exists
                 const existingExportBtn = document.getElementById("export-cart");
                 if (existingExportBtn) {
                     existingExportBtn.remove();
@@ -623,7 +602,6 @@ function displayProductToAdd(product, productId) {
         return;
     }
 
-    console.log("Displaying product:", product);
     productCard.innerHTML = `
         <div class="cart-product-card">
             <div class="left">
@@ -680,7 +658,7 @@ function animateImageToCart(sourceImageElement) {
 
     // Calculate translation distances
     const translateX = targetRect.left - startRect.left;
-    const translateY = targetRect.top - startRect.top -35;
+    const translateY = targetRect.top - startRect.top -25;
 
     // Force reflow before applying the transform
     flyingImage.offsetWidth;
