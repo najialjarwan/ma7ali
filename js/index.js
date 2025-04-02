@@ -585,6 +585,7 @@ function animateImageToCart(sourceImageElement) {
         flyingImage.remove();
     });
 }
+
 let showSales = false;
 function showSalesForm() {
     showSales = true;
@@ -599,29 +600,56 @@ function showSalesForm() {
     fetchProductToAdd();
 }
 async function fetchProductToAdd() {
-
     const searchInput = document.getElementById("search-customers");
-    searchInput.addEventListener("input", async function () {
-        const searchValue = searchInput.value.toLowerCase();
-        if (!searchValue) {
-            return;
+    const productCardContainer = document.getElementById("cart-products-container");
+
+    if (!productCardContainer) {
+        console.error("Product container not found.");
+        return;
+    }
+
+    try {
+        // Fetch all products initially
+        const querySnapshot = await db.collection("products").orderBy("label").get();
+        let allProducts = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Function to display products (filtered or all)
+        function displayProducts(filteredProducts) {
+            productCardContainer.innerHTML = ""; // Clear previous content
+            filteredProducts.forEach(product => {
+                displayProductToAdd(product, product.id);
+            });
         }
 
-        try {
-            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
+        // Display all products initially
+        if (showSales)
+            displayProducts(allProducts);
 
-            if (!querySnapshot.empty) {
-                const product = querySnapshot.docs[0].data();
-                displayProductToAdd(product, querySnapshot.docs[0].id);
+        // Listen for search input changes
+        searchInput.addEventListener("input", function () {
+            const searchValue = searchInput.value.toLowerCase();
+
+            if (!searchValue) {
+                displayProducts(allProducts); // Show all products if search is empty
+                return;
             }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    });
+
+            const filteredProducts = allProducts.filter(product =>
+                product.label.toLowerCase().includes(searchValue)
+            );
+            displayProducts(filteredProducts); // Show filtered products
+        });
+
+    } catch (error) {
+        console.error("Error fetching products:", error);
+    }
 }
 function displayProductToAdd(product, productId) {
-    const productCard = document.getElementById("cart-products-container");
-    if (!productCard) {
+    const productCardContainer = document.getElementById("cart-products-container");
+    if (!productCardContainer) {
         console.error("Product display container not found.");
         return;
     }
@@ -629,29 +657,29 @@ function displayProductToAdd(product, productId) {
     const actionText = showSales ? "Add to Sales" : "Add to Cart";
     const actionFunction = showSales ? addToSales : addToCart;
 
+    // Create product card element
+    const productCard = document.createElement("div");
+    productCard.classList.add("cart-product-card");
     productCard.innerHTML = `
-    <div class="cart-product-card">
         <div class="left">
             <img src="${product.img}" alt="${product.label}" width="100" height="100">
         </div>
         <div class="right">
-            <button type="submit" class="add-to-cart-btn" id="action-btn">${actionText}</button>
+            <button type="submit" class="add-to-cart-btn">${actionText}</button>
         </div>
         ${!showSales ? `<div class="cart-img-container">
             <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         </div>` : ""}
-    </div>
     `;
 
-    const actionBtn = document.getElementById("action-btn");
+    // Add event listener to button
+    const actionBtn = productCard.querySelector(".add-to-cart-btn");
     actionBtn.addEventListener("click", function () {
         console.log(`${actionText} button clicked.`);
         actionFunction(productId, product.label, product.price);
 
         if (!showSales) {
-            const productCard = event.target.closest(".cart-product-card");
             const productImage = productCard.querySelector("img");
-
             if (productImage) {
                 animateImageToCart(productImage);
             } else {
@@ -659,7 +687,10 @@ function displayProductToAdd(product, productId) {
             }
         }
     });
+
+    productCardContainer.appendChild(productCard);
 }
+
 async function addToCart(productId, label, price) {
     if (!currentCartId) {
         console.error("No active cart found");
@@ -759,8 +790,6 @@ async function addToSales(productId, productLabel, productPrice) {
         console.error("Error adding to sales:", error);
     }
 }
-//
-
 //-------------//
 
 

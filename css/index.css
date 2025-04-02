@@ -562,8 +562,10 @@ footer {
 .cart-products-container{
   width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 5px;
 }
 .cart-img-container{
   max-height: 100%;
