@@ -562,12 +562,26 @@ footer {
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+}
+.cart-img-container{
+  max-height: 100%;
+  background-color: var(--input-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#cart-icon{
+  width: auto;
+  height: 100px;
+  filter: invert(86%) sepia(10%) saturate(300%) hue-rotate(210deg);
 }
 .flying-cart-image {
   position: absolute;
-  transition: transform 1s ease-in-out, opacity 1s ease;
+  transition: transform 1.7s ease-in-out;
   pointer-events: none;
   z-index: 1000;
+  opacity: 1 !important;
 }
 
 .cart-product-card {
@@ -596,6 +610,7 @@ footer {
   justify-content: center;
   width: 50%;
   height: auto;
+  border-right: 3px solid var(--accent-color);
 }
 
 .add-to-cart-btn {

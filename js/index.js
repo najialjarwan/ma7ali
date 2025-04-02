@@ -632,8 +632,10 @@ function displayProductToAdd(product, productId) {
             <div class="right">
                 <button type="submit" class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
             </div>
+            <div class="cart-img-container">
+            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
+            </div>
         </div>
-        <img src="images/buy-logo.webp" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         `;
     const addToCartBtn = document.getElementById("add-to-cart-btn");
     // Remove any previous event listeners by cloning the button
@@ -655,14 +657,13 @@ function displayProductToAdd(product, productId) {
     });
 }
 function animateImageToCart(sourceImageElement) {
-    // Ensure the cart icon exists
     const cartIcon = document.getElementById("cart-icon");
     if (!cartIcon) {
         console.error("Cart icon element not found.");
         return;
     }
 
-    // Clone the source image element
+    // Clone the source image
     const flyingImage = sourceImageElement.cloneNode(true);
     flyingImage.classList.add("flying-cart-image");
     document.body.appendChild(flyingImage);
@@ -677,17 +678,17 @@ function animateImageToCart(sourceImageElement) {
     // Get target position (cart icon)
     const targetRect = cartIcon.getBoundingClientRect();
 
-    // Calculate translation differences
+    // Calculate translation distances
     const translateX = targetRect.left - startRect.left;
-    const translateY = targetRect.top - startRect.top;
+    const translateY = targetRect.top - startRect.top -35;
 
-    // Force reflow to ensure the starting styles are applied
+    // Force reflow before applying the transform
     flyingImage.offsetWidth;
 
-    // Apply transform: translate and scale down to the cart icon's size (optional scaling factor)
-    const scaleFactor = 0.5; // Adjust scale if necessary
-    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor})`;
-    flyingImage.style.opacity = "0.5"; // Optionally fade out during transition
+    // Apply transformation: translate, shrink, and rotate
+    const scaleFactor = 0; // Adjust if necessary
+
+    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor}) rotate(360deg)`;
 
     // Remove the clone after the animation completes
     flyingImage.addEventListener("transitionend", () => {
