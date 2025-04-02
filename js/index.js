@@ -441,21 +441,36 @@ function showCartForm() {
     cancelCartBtn.addEventListener("click", cancelCart);
 }
 async function cancelCart() {
-
     try {
+        // Reference to the current cart document
         const cartDocRef = db.collection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
-
+        
+        // For each product in the cart, reverse the sales entry in the sales collection.
+        // It assumes that each cart product document has a "productId" and a "quantity" field.
+        for (let doc of cartProductsSnapshot.docs) {
+            const data = doc.data();
+            const productId = data.productId || doc.id; // Adjust this if necessary
+            const quantity = data.quantity || 1;
+            
+            // For each unit added in the cart, call cancelSale once.
+            for (let i = 0; i < quantity; i++) {
+                await cancelSale(productId, null);
+            }
+        }
+        
+        // Now delete all cart product documents in a batch operation.
         let batch = db.batch();
         cartProductsSnapshot.forEach(doc => {
             batch.delete(doc.ref);
         });
         await batch.commit();
 
+        // Delete the cart document.
         await cartDocRef.delete();
 
+        // Clear the current cart ID and update the UI.
         currentCartId = null;
-
         showCartForm();
     } catch (error) {
         console.error("Error canceling cart:", error);
@@ -546,6 +561,38 @@ function displayCart(cartId) {
         }
     });
 }
+async function addToCart(productId, label, price) {
+    if (!currentCartId) {
+        console.error("No active cart found");
+        return;
+    }
+
+    const cartDoc = db.collection("carts").doc(currentCartId);
+    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
+    const productSnap = await cartProductsRef.get();
+
+    if (productSnap.exists) {
+        const productData = productSnap.data();
+        await cartProductsRef.update({
+            quantity: productData.quantity + 1,
+            total: (productData.quantity + 1) * price
+        });
+    } else {
+        await cartProductsRef.set({
+            name: label,
+            quantity: 1,
+            price: price,
+            total: price
+        });
+    }
+
+    const cartProducts = await cartDoc.collection("cartProducts").get();
+    let totalCost = 0;
+    cartProducts.forEach(doc => {
+        totalCost += doc.data().total;
+    });
+    await cartDoc.update({ totalCost });
+}
 function animateImageToCart(sourceImageElement) {
     const cartIcon = document.getElementById("cart-icon");
     if (!cartIcon) {
@@ -585,7 +632,7 @@ function animateImageToCart(sourceImageElement) {
         flyingImage.remove();
     });
 }
-
+//
 let showSales = false;
 function showSalesForm() {
     showSales = true;
@@ -654,6 +701,7 @@ function displayProductToAdd(product, productId) {
         return;
     }
 
+    // Decide which action to use for the main button
     const actionText = showSales ? "Add to Sales" : "Add to Cart";
     const actionFunction = showSales ? addToSales : addToCart;
 
@@ -666,20 +714,22 @@ function displayProductToAdd(product, productId) {
         </div>
         <div class="right">
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
+            ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
         ${!showSales ? `<div class="cart-img-container">
             <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         </div>` : ""}
     `;
 
-    // Add event listener to button
+    // Add event listener to the primary action button
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
     actionBtn.addEventListener("click", function () {
         console.log(`${actionText} button clicked.`);
         actionFunction(productId, product.label, product.price);
-
+        // If not in sales mode, trigger additional UI animations if needed.
         if (!showSales) {
             const productImage = productCard.querySelector("img");
+            addToSales(productId, product.label, product.price);
             if (productImage) {
                 animateImageToCart(productImage);
             } else {
@@ -688,40 +738,18 @@ function displayProductToAdd(product, productId) {
         }
     });
 
+    // Add event listener to the cancel button (if in sales mode)
+    if (showSales) {
+        const cancelBtn = productCard.querySelector(".cancel-sale-btn");
+        cancelBtn.addEventListener("click", async function () {
+            console.log("Cancel Sale button clicked.");
+            await cancelSale(productId, productCard);
+            // If the sale record was decremented (quantity > 0), the product card remains.
+            // Optionally, update the card's UI with the new quantity if desired.
+        });
+    }
+
     productCardContainer.appendChild(productCard);
-}
-
-async function addToCart(productId, label, price) {
-    if (!currentCartId) {
-        console.error("No active cart found");
-        return;
-    }
-
-    const cartDoc = db.collection("carts").doc(currentCartId);
-    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
-    const productSnap = await cartProductsRef.get();
-
-    if (productSnap.exists) {
-        const productData = productSnap.data();
-        await cartProductsRef.update({
-            quantity: productData.quantity + 1,
-            total: (productData.quantity + 1) * price
-        });
-    } else {
-        await cartProductsRef.set({
-            name: label,
-            quantity: 1,
-            price: price,
-            total: price
-        });
-    }
-
-    const cartProducts = await cartDoc.collection("cartProducts").get();
-    let totalCost = 0;
-    cartProducts.forEach(doc => {
-        totalCost += doc.data().total;
-    });
-    await cartDoc.update({ totalCost });
 }
 async function addToSales(productId, productLabel, productPrice) {
     try {
@@ -788,6 +816,77 @@ async function addToSales(productId, productLabel, productPrice) {
         }
     } catch (error) {
         console.error("Error adding to sales:", error);
+    }
+}
+async function cancelSale(productId, productCard) {
+    try {
+        console.log("Attempting to cancel sale...");
+
+        const today = new Date();
+        const dateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+        const salesDocRef = db.collection("sales").doc(dateString);
+        const productRef = db.collection("products").doc(productId);
+        const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
+
+        // Fetch product sale data
+        const productSoldDoc = await productSoldRef.get();
+        if (!productSoldDoc.exists) {
+            console.log("No sale record found for this product today.");
+            return;
+        }
+
+        const productData = productSoldDoc.data();
+        const currentQuantity = productData.quantity;
+        const productPrice = productData.price;
+
+        if (currentQuantity > 1) {
+            // Decrement quantity and update total sale value
+            const newQuantity = currentQuantity - 1;
+            const newTotal = newQuantity * productPrice;
+
+            await productSoldRef.set({
+                name: productData.name,
+                quantity: newQuantity,
+                price: productPrice,
+                total: newTotal,
+                dateSold: firebase.firestore.Timestamp.now()
+            });
+            console.log("Decremented product sale record by one unit.");
+        } else {
+            // Quantity is 1: delete the document
+            await productSoldRef.delete();
+            console.log("Product sale record deleted as quantity reached zero.");
+            // Remove the product card from the UI if provided
+            if (productCard) {
+                productCard.remove();
+            }
+        }
+
+        // Update overall sales document (subtract one unit and its price)
+        const salesDoc = await salesDocRef.get();
+        if (salesDoc.exists) {
+            const salesData = salesDoc.data();
+            const newTotalProductsSold = Math.max(0, (salesData.totalProductsSold || 0) - 1);
+            const newTotalRevenue = Math.max(0, (salesData.totalRevenue || 0) - productPrice);
+            await salesDocRef.set({
+                totalProductsSold: newTotalProductsSold,
+                totalRevenue: newTotalRevenue
+            }, { merge: true });
+            console.log("Sales document updated.");
+        }
+
+        // Restore one unit of stock in the products collection
+        const productDoc = await productRef.get();
+        if (productDoc.exists) {
+            const productStock = productDoc.data().stock || 0;
+            const updatedStock = productStock + 1;
+            await productRef.update({ stock: updatedStock });
+            console.log("Product stock restored. New stock:", updatedStock);
+        } else {
+            console.error("Product not found in products collection.");
+        }
+    } catch (error) {
+        console.error("Error canceling sale:", error);
     }
 }
 //-------------//
