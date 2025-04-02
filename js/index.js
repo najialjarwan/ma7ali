@@ -440,6 +440,151 @@ function showCartForm() {
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
     cancelCartBtn.addEventListener("click", cancelCart);
 }
+async function cancelCart() {
+
+    try {
+        const cartDocRef = db.collection("carts").doc(currentCartId);
+        const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
+
+        let batch = db.batch();
+        cartProductsSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        await cartDocRef.delete();
+
+        currentCartId = null;
+
+        showCartForm();
+    } catch (error) {
+        console.error("Error canceling cart:", error);
+    }
+}
+let currentCartId = null;
+async function addCart() {
+    const cartName = document.getElementById("cartName").value.trim();
+    if (!cartName) {
+        showModalMessage("Please enter cart name to add a cart", false);
+        return;
+    }
+
+    const cartRef = db.collection("carts").doc();
+    const cartData = {
+        name: cartName,
+        dateCreated: firebase.firestore.Timestamp.now(),
+        totalCost: 0
+    };
+
+    try {
+        await cartRef.set(cartData);
+        // Store the cart ID globally
+        currentCartId = cartRef.id;
+        displayCart(cartRef.id);
+
+    } catch (error) {
+        console.error("Error adding cart:", error);
+    }
+}
+function displayCart(cartId) {
+    const cartDisplayContainer = document.getElementById("cart-display-container");
+    cartDisplayContainer.style.display = "block";
+    cartDisplayContainer.innerHTML = `
+        <div class="cart-details" id="cart-details"></div>
+        <div class="cart-products-list-container" id="cart-products-list"></div>
+    `;
+
+    db.collection("carts").doc(cartId).onSnapshot(doc => {
+        if (doc.exists) {
+            const cart = doc.data();
+            document.getElementById("cart-details").innerHTML = `
+                <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
+                <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
+                <p><strong>Total Cost: </strong>$${cart.totalCost.toFixed(2)}</p>
+            `;
+        }
+    });
+
+    db.collection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
+        let cartProductsHTML = "";
+
+        snapshot.forEach(doc => {
+            const product = doc.data();
+            cartProductsHTML += `
+                <div class="cart-products-list">
+                    <p style="font-weight: bold; text-decoration: underline;">${product.name}</p>
+                    <p><strong>Quantity: </strong>${product.quantity}</p>
+                    <p><strong>Price: $</strong>${product.price}</p>
+                    <p><strong>Total: $</strong>${product.total}</p>
+                </div>
+            `;
+        });
+
+        const cartProductsList = document.getElementById("cart-products-list");
+        if (cartProductsList) {
+            cartProductsList.innerHTML = cartProductsHTML;
+
+            if (!snapshot.empty) {
+                let exportBtn = document.getElementById("export-cart");
+                if (!exportBtn) {
+                    exportBtn = document.createElement("button");
+                    exportBtn.id = "export-cart";
+                    exportBtn.className = "export-product-btn";
+                    exportBtn.textContent = "Export Cart";
+                    exportBtn.style.padding = "20px";
+                    exportBtn.addEventListener("click", exportCartToPDF);
+                    cartDisplayContainer.appendChild(exportBtn);
+                }
+            } else {
+                const existingExportBtn = document.getElementById("export-cart");
+                if (existingExportBtn) {
+                    existingExportBtn.remove();
+                }
+            }
+        } else {
+            console.error("cart-products-list container not found!");
+        }
+    });
+}
+function animateImageToCart(sourceImageElement) {
+    const cartIcon = document.getElementById("cart-icon");
+    if (!cartIcon) {
+        console.error("Cart icon element not found.");
+        return;
+    }
+
+    // Clone the source image
+    const flyingImage = sourceImageElement.cloneNode(true);
+    flyingImage.classList.add("flying-cart-image");
+    document.body.appendChild(flyingImage);
+
+    // Get starting position of the source image
+    const startRect = sourceImageElement.getBoundingClientRect();
+    flyingImage.style.left = `${startRect.left}px`;
+    flyingImage.style.top = `${startRect.top}px`;
+    flyingImage.style.width = `${startRect.width}px`;
+    flyingImage.style.height = `${startRect.height}px`;
+
+    // Get target position (cart icon)
+    const targetRect = cartIcon.getBoundingClientRect();
+
+    // Calculate translation distances
+    const translateX = targetRect.left - startRect.left;
+    const translateY = targetRect.top - startRect.top - 25;
+
+    // Force reflow before applying the transform
+    flyingImage.offsetWidth;
+
+    // Apply transformation: translate, shrink, and rotate
+    const scaleFactor = 0; // Adjust if necessary
+
+    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor}) rotate(360deg)`;
+
+    // Remove the clone after the animation completes
+    flyingImage.addEventListener("transitionend", () => {
+        flyingImage.remove();
+    });
+}
 let showSales = false;
 function showSalesForm() {
     showSales = true;
@@ -452,6 +597,100 @@ function showSalesForm() {
         <div class="cart-products-container" id="cart-products-container"></div>
     `;
     fetchProductToAdd();
+}
+async function fetchProductToAdd() {
+
+    const searchInput = document.getElementById("search-customers");
+    searchInput.addEventListener("input", async function () {
+        const searchValue = searchInput.value.toLowerCase();
+        if (!searchValue) {
+            return;
+        }
+
+        try {
+            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
+
+            if (!querySnapshot.empty) {
+                const product = querySnapshot.docs[0].data();
+                displayProductToAdd(product, querySnapshot.docs[0].id);
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    });
+}
+function displayProductToAdd(product, productId) {
+    const productCard = document.getElementById("cart-products-container");
+    if (!productCard) {
+        console.error("Product display container not found.");
+        return;
+    }
+
+    const actionText = showSales ? "Add to Sales" : "Add to Cart";
+    const actionFunction = showSales ? addToSales : addToCart;
+
+    productCard.innerHTML = `
+    <div class="cart-product-card">
+        <div class="left">
+            <img src="${product.img}" alt="${product.label}" width="100" height="100">
+        </div>
+        <div class="right">
+            <button type="submit" class="add-to-cart-btn" id="action-btn">${actionText}</button>
+        </div>
+        ${!showSales ? `<div class="cart-img-container">
+            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
+        </div>` : ""}
+    </div>
+    `;
+
+    const actionBtn = document.getElementById("action-btn");
+    actionBtn.addEventListener("click", function () {
+        console.log(`${actionText} button clicked.`);
+        actionFunction(productId, product.label, product.price);
+
+        if (!showSales) {
+            const productCard = event.target.closest(".cart-product-card");
+            const productImage = productCard.querySelector("img");
+
+            if (productImage) {
+                animateImageToCart(productImage);
+            } else {
+                console.error("Product image not found in the product card.");
+            }
+        }
+    });
+}
+async function addToCart(productId, label, price) {
+    if (!currentCartId) {
+        console.error("No active cart found");
+        return;
+    }
+
+    const cartDoc = db.collection("carts").doc(currentCartId);
+    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
+    const productSnap = await cartProductsRef.get();
+
+    if (productSnap.exists) {
+        const productData = productSnap.data();
+        await cartProductsRef.update({
+            quantity: productData.quantity + 1,
+            total: (productData.quantity + 1) * price
+        });
+    } else {
+        await cartProductsRef.set({
+            name: label,
+            quantity: 1,
+            price: price,
+            total: price
+        });
+    }
+
+    const cartProducts = await cartDoc.collection("cartProducts").get();
+    let totalCost = 0;
+    cartProducts.forEach(doc => {
+        totalCost += doc.data().total;
+    });
+    await cartDoc.update({ totalCost });
 }
 async function addToSales(productId, productLabel, productPrice) {
     try {
@@ -519,246 +758,6 @@ async function addToSales(productId, productLabel, productPrice) {
     } catch (error) {
         console.error("Error adding to sales:", error);
     }
-}
-
-async function cancelCart() {
-
-    try {
-        const cartDocRef = db.collection("carts").doc(currentCartId);
-        const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
-
-        let batch = db.batch();
-        cartProductsSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-
-        await cartDocRef.delete();
-
-        currentCartId = null;
-
-        showCartForm();
-    } catch (error) {
-        console.error("Error canceling cart:", error);
-    }
-}
-let currentCartId = null;
-async function addCart() {
-    const cartName = document.getElementById("cartName").value.trim();
-    if (!cartName) {
-        showModalMessage("Please enter cart name to add a cart", false);
-        return;
-    }
-
-    const cartRef = db.collection("carts").doc();
-    const cartData = {
-        name: cartName,
-        dateCreated: firebase.firestore.Timestamp.now(),
-        totalCost: 0
-    };
-
-    try {
-        await cartRef.set(cartData);
-        // Store the cart ID globally
-        currentCartId = cartRef.id;
-        displayCart(cartRef.id);
-
-    } catch (error) {
-        console.error("Error adding cart:", error);
-    }
-}
-async function addToCart(productId, label, price) {
-    if (!currentCartId) {
-        console.error("No active cart found");
-        return;
-    }
-
-    const cartDoc = db.collection("carts").doc(currentCartId);
-    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
-    const productSnap = await cartProductsRef.get();
-
-    if (productSnap.exists) {
-        const productData = productSnap.data();
-        await cartProductsRef.update({
-            quantity: productData.quantity + 1,
-            total: (productData.quantity + 1) * price
-        });
-    } else {
-        await cartProductsRef.set({
-            name: label,
-            quantity: 1,
-            price: price,
-            total: price
-        });
-    }
-
-    const cartProducts = await cartDoc.collection("cartProducts").get();
-    let totalCost = 0;
-    cartProducts.forEach(doc => {
-        totalCost += doc.data().total;
-    });
-    await cartDoc.update({ totalCost });
-}
-function displayCart(cartId) {
-    const cartDisplayContainer = document.getElementById("cart-display-container");
-    cartDisplayContainer.style.display = "block";
-    cartDisplayContainer.innerHTML = `
-        <div class="cart-details" id="cart-details"></div>
-        <div class="cart-products-list-container" id="cart-products-list"></div>
-    `;
-
-    db.collection("carts").doc(cartId).onSnapshot(doc => {
-        if (doc.exists) {
-            const cart = doc.data();
-            document.getElementById("cart-details").innerHTML = `
-                <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
-                <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
-                <p><strong>Total Cost: </strong>$${cart.totalCost.toFixed(2)}</p>
-            `;
-        }
-    });
-
-    db.collection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
-        let cartProductsHTML = "";
-
-        snapshot.forEach(doc => {
-            const product = doc.data();
-            cartProductsHTML += `
-                <div class="cart-products-list">
-                    <p style="font-weight: bold; text-decoration: underline;">${product.name}</p>
-                    <p><strong>Quantity: </strong>${product.quantity}</p>
-                    <p><strong>Price: $</strong>${product.price}</p>
-                    <p><strong>Total: $</strong>${product.total}</p>
-                </div>
-            `;
-        });
-
-        const cartProductsList = document.getElementById("cart-products-list");
-        if (cartProductsList) {
-            cartProductsList.innerHTML = cartProductsHTML;
-
-            if (!snapshot.empty) {
-                let exportBtn = document.getElementById("export-cart");
-                if (!exportBtn) {
-                    exportBtn = document.createElement("button");
-                    exportBtn.id = "export-cart";
-                    exportBtn.className = "export-product-btn";
-                    exportBtn.textContent = "Export Cart";
-                    exportBtn.style.padding = "20px";
-                    exportBtn.addEventListener("click", exportCartToPDF);
-                    cartDisplayContainer.appendChild(exportBtn);
-                }
-            } else {
-                const existingExportBtn = document.getElementById("export-cart");
-                if (existingExportBtn) {
-                    existingExportBtn.remove();
-                }
-            }
-        } else {
-            console.error("cart-products-list container not found!");
-        }
-    });
-}
-async function fetchProductToAdd() {
-
-    const searchInput = document.getElementById("search-customers");
-    searchInput.addEventListener("input", async function () {
-        const searchValue = searchInput.value.toLowerCase();
-        if (!searchValue) {
-            return;
-        }
-
-        try {
-            const querySnapshot = await db.collection("products").orderBy("label").startAt(searchValue).endAt(searchValue + "\uf8ff").limit(1).get();
-
-            if (!querySnapshot.empty) {
-                const product = querySnapshot.docs[0].data();
-                displayProductToAdd(product, querySnapshot.docs[0].id);
-            }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    });
-}
-function displayProductToAdd(product, productId) {
-    const productCard = document.getElementById("cart-products-container");
-    if (!productCard) {
-        console.error("Product display container not found.");
-        return;
-    }
-
-    const actionText = showSales ? "Add to Sales" : "Add to Cart";
-    const actionFunction = showSales ? addToSales : addToCart;
-
-    productCard.innerHTML = `
-    <div class="cart-product-card">
-        <div class="left">
-            <img src="${product.img}" alt="${product.label}" width="100" height="100">
-        </div>
-        <div class="right">
-            <button type="submit" class="add-to-cart-btn" id="action-btn">${actionText}</button>
-        </div>
-        ${!showSales ? `<div class="cart-img-container">
-            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
-        </div>` : ""}
-    </div>
-    `;
-
-    const actionBtn = document.getElementById("action-btn");
-    actionBtn.addEventListener("click", function () {
-        console.log(`${actionText} button clicked.`);
-        actionFunction(productId, product.label, product.price);
-
-        if (!showSales) {
-            const productCard = event.target.closest(".cart-product-card");
-            const productImage = productCard.querySelector("img");
-
-            if (productImage) {
-                animateImageToCart(productImage);
-            } else {
-                console.error("Product image not found in the product card.");
-            }
-        }
-    });
-}
-function animateImageToCart(sourceImageElement) {
-    const cartIcon = document.getElementById("cart-icon");
-    if (!cartIcon) {
-        console.error("Cart icon element not found.");
-        return;
-    }
-
-    // Clone the source image
-    const flyingImage = sourceImageElement.cloneNode(true);
-    flyingImage.classList.add("flying-cart-image");
-    document.body.appendChild(flyingImage);
-
-    // Get starting position of the source image
-    const startRect = sourceImageElement.getBoundingClientRect();
-    flyingImage.style.left = `${startRect.left}px`;
-    flyingImage.style.top = `${startRect.top}px`;
-    flyingImage.style.width = `${startRect.width}px`;
-    flyingImage.style.height = `${startRect.height}px`;
-
-    // Get target position (cart icon)
-    const targetRect = cartIcon.getBoundingClientRect();
-
-    // Calculate translation distances
-    const translateX = targetRect.left - startRect.left;
-    const translateY = targetRect.top - startRect.top - 25;
-
-    // Force reflow before applying the transform
-    flyingImage.offsetWidth;
-
-    // Apply transformation: translate, shrink, and rotate
-    const scaleFactor = 0; // Adjust if necessary
-
-    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor}) rotate(360deg)`;
-
-    // Remove the clone after the animation completes
-    flyingImage.addEventListener("transitionend", () => {
-        flyingImage.remove();
-    });
 }
 //
 
