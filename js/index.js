@@ -144,6 +144,9 @@ async function loadContent(section) {
         if (section === "addCart") {
             showCartForm();
         }
+        if (section === "addSales") {
+            showSalesForm();
+        }
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
@@ -393,6 +396,7 @@ async function addProduct() {
 }
 //
 function showCartForm() {
+    showSales = false;
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <form id="cart-form" class="product-form">
@@ -436,6 +440,87 @@ function showCartForm() {
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
     cancelCartBtn.addEventListener("click", cancelCart);
 }
+let showSales = false;
+function showSalesForm() {
+    showSales = true;
+    const mainContent = document.getElementById("main-content");
+    mainContent.innerHTML = `
+        <div class="search-customer-container search-container-main" >
+            <input type="text" class="search-bar" id="search-customers" placeholder="Search Product To Add"/>
+            <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+        </div>
+        <div class="cart-products-container" id="cart-products-container"></div>
+    `;
+    fetchProductToAdd();
+}
+async function addToSales(productId, productLabel, productPrice) {
+    try {
+        console.log("Attempting to add to sales...");
+
+        const today = new Date();
+        const dateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+        const salesDocRef = db.collection("sales").doc(dateString);
+        const productRef = db.collection("products").doc(productId);
+
+        // Fetch the sales document for today
+        const salesDoc = await salesDocRef.get();
+        let totalProductsSold = 0;
+        let totalRevenue = 0;
+
+        if (salesDoc.exists) {
+            const data = salesDoc.data();
+            totalProductsSold = data.totalProductsSold || 0;
+            totalRevenue = data.totalRevenue || 0;
+        }
+
+        // Check if product already exists in today's sales
+        const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
+        const productSoldDoc = await productSoldRef.get();
+
+        let newQuantity = 1;
+        let newTotal = productPrice;
+
+        if (productSoldDoc.exists) {
+            const productData = productSoldDoc.data();
+            newQuantity = productData.quantity + 1;
+            newTotal = newQuantity * productPrice;
+        }
+
+        // Update product in sales
+        await productSoldRef.set({
+            name: productLabel,
+            quantity: newQuantity,
+            price: productPrice,
+            total: newTotal,
+            dateSold: firebase.firestore.Timestamp.now()
+        });
+
+        console.log("Product added/updated in sales.");
+
+        // Update total sales data
+        await salesDocRef.set({
+            createdAt: firebase.firestore.Timestamp.now(),
+            totalProductsSold: totalProductsSold + 1,
+            totalRevenue: totalRevenue + productPrice
+        }, { merge: true });
+
+        console.log("Sales document updated.");
+
+        // Reduce stock in products collection
+        const productDoc = await productRef.get();
+        if (productDoc.exists) {
+            const productData = productDoc.data();
+            const newStock = (productData.stock || 0) - 1;
+            await productRef.update({ stock: newStock >= 0 ? newStock : 0 });
+            console.log("Product stock updated. New stock:", newStock);
+        } else {
+            console.error("Product not found in products collection.");
+        }
+    } catch (error) {
+        console.error("Error adding to sales:", error);
+    }
+}
+
 async function cancelCart() {
 
     try {
@@ -602,35 +687,37 @@ function displayProductToAdd(product, productId) {
         return;
     }
 
-    productCard.innerHTML = `
-        <div class="cart-product-card">
-            <div class="left">
-                <img src="${product.img}" alt="${product.label}" width="100" height="100">
-            </div>
-            <div class="right">
-                <button type="submit" class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
-            </div>
-            <div class="cart-img-container">
-            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
-            </div>
-        </div>
-        `;
-    const addToCartBtn = document.getElementById("add-to-cart-btn");
-    // Remove any previous event listeners by cloning the button
-    const newAddToCartBtn = addToCartBtn.cloneNode(true);
-    addToCartBtn.parentNode.replaceChild(newAddToCartBtn, addToCartBtn);
+    const actionText = showSales ? "Add to Sales" : "Add to Cart";
+    const actionFunction = showSales ? addToSales : addToCart;
 
-    // Attach a new event listener to the newly created button
-    newAddToCartBtn.addEventListener("click", function () {
-        addToCart(productId, product.label, product.price);
-        const productCard = event.target.closest(".cart-product-card");
-        const productImage = productCard.querySelector("img");
-        
-        if (productImage) {
-            animateImageToCart(productImage);
-        }
-        else {
-            console.error("Product image not found in the product card.");
+    productCard.innerHTML = `
+    <div class="cart-product-card">
+        <div class="left">
+            <img src="${product.img}" alt="${product.label}" width="100" height="100">
+        </div>
+        <div class="right">
+            <button type="submit" class="add-to-cart-btn" id="action-btn">${actionText}</button>
+        </div>
+        ${!showSales ? `<div class="cart-img-container">
+            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
+        </div>` : ""}
+    </div>
+    `;
+
+    const actionBtn = document.getElementById("action-btn");
+    actionBtn.addEventListener("click", function () {
+        console.log(`${actionText} button clicked.`);
+        actionFunction(productId, product.label, product.price);
+
+        if (!showSales) {
+            const productCard = event.target.closest(".cart-product-card");
+            const productImage = productCard.querySelector("img");
+
+            if (productImage) {
+                animateImageToCart(productImage);
+            } else {
+                console.error("Product image not found in the product card.");
+            }
         }
     });
 }
@@ -658,7 +745,7 @@ function animateImageToCart(sourceImageElement) {
 
     // Calculate translation distances
     const translateX = targetRect.left - startRect.left;
-    const translateY = targetRect.top - startRect.top -25;
+    const translateY = targetRect.top - startRect.top - 25;
 
     // Force reflow before applying the transform
     flyingImage.offsetWidth;
@@ -672,7 +759,10 @@ function animateImageToCart(sourceImageElement) {
     flyingImage.addEventListener("transitionend", () => {
         flyingImage.remove();
     });
-}//-------------//
+}
+//
+
+//-------------//
 
 
 //Products Section//
