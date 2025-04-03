@@ -129,25 +129,22 @@ async function loadContent(section) {
         mainContent.innerHTML = html;
 
         //<Bot sections>//
-        if (section === "products") {
+        if (section === "products")
             initProductPage();
-        }
-        if (section === "customers") {
+        if (section === "customers")
             initCustomersPage();
-        }
+        if (section === "cartAndSales")
+            initCartAndSalesSection();
         //<Pop sections>//
-        if (section === "addProduct") {
+        if (section === "addProduct") 
             showProductForm();
-        }
-        if (section === "addCustomer") {
+        if (section === "addCustomer")
             showCustomerForm();
-        }
-        if (section === "addCart") {
+        if (section === "addCart")
             showCartForm();
-        }
-        if (section === "addSales") {
+        if (section === "addSales")
             showSalesForm();
-        }
+
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
@@ -1296,7 +1293,7 @@ $(document).ready(function () {
 }); //---------------//
 
 
-//Customers Section//
+//<Customers Section>//
 function initCustomersPage() {
 
     const mainContent = document.querySelector(".main-content");
@@ -1533,6 +1530,17 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
     });
 }//----------------//
+
+//<CartAndSales Section>//
+function initCartAndSalesSection(){
+    const mainContent = document.getElementById("main-content");
+    mainContent.innerHTML = `
+        <div class="cart-and-sales-container" id="card-and-sales-container">
+            <div class="sales-container" id="sales-container"></div>
+            <div class="carts-container" id="carts-container"></div>
+        </div>
+                            `;
+}
 
 //<Aside Section>//
 function toggleSidebar() {
