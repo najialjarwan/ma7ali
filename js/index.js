@@ -90,7 +90,6 @@ function initializeEventListeners() {
         });
     });
 
-
     document.querySelector(".menu-btn").addEventListener("click", toggleSidebar);
     document.querySelector("#close-btn").addEventListener("click", closeSidebar);
 
@@ -129,17 +128,19 @@ async function loadContent(section) {
         const html = await response.text();
         mainContent.innerHTML = html;
 
+        //<Bot sections>//
         if (section === "products") {
             initProductPage();
         }
         if (section === "customers") {
             initCustomersPage();
         }
-        if (section === "addCustomer") {
-            showCustomerForm();
-        }
+        //<Pop sections>//
         if (section === "addProduct") {
             showProductForm();
+        }
+        if (section === "addCustomer") {
+            showCustomerForm();
         }
         if (section === "addCart") {
             showCartForm();
@@ -153,79 +154,8 @@ async function loadContent(section) {
     }
 }
 
-//Adder Section//
-function showCustomerForm() {
-    const mainContent = document.getElementById("main-content");
-    mainContent.innerHTML = `
-            <h1>Add Customer</h1>
-            <form id="customer-form" class="product-form">
-                <label for="name">Name: </label>
-                <input type="text" id="name" name="name" required><br>
-
-                <label for="phoneNumber">Phone Number: </label>
-                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
-
-                <button type="submit">Add</button>
-            </form>
-        `;
-
-    const customerForm = document.getElementById("customer-form");
-
-    customerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        addCustomer();
-    });
-
-}
-async function addCustomer() {
-    const name = document.getElementById("name").value.trim().toLowerCase();
-    const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
-
-
-    const phoneNumberRegex = /^[0-9]+$/;
-    if (!phoneNumberRegex.test(phoneNumber)) {
-        showModalMessage("Invalid input, please try again!", false);
-        return;
-    }
-
-    try {
-        const customersSnapshot = await db.collection("customers").get();
-        let nameExists = false;
-        let phoneNumberExists = false;
-
-        customersSnapshot.forEach((doc) => {
-            const customer = doc.data();
-
-
-            if (customer.name.toLowerCase() === name.toLowerCase()) {
-                nameExists = true;
-            }
-            if (customer.phoneNumber === phoneNumber) {
-                phoneNumberExists = true;
-            }
-        });
-
-        if (nameExists || phoneNumberExists) {
-            let errorMessage = "Failed to add customer: ";
-            if (nameExists && phoneNumberExists) {
-                errorMessage += "Name and Phone Number already exist!";
-            } else if (nameExists) {
-                errorMessage += "Name already exist!";
-            } else if (phoneNumberExists) {
-                errorMessage += "Phone Number already exist!";
-            }
-            showModalMessage(errorMessage, false);
-        } else {
-            await db.collection("customers").add({ name, phoneNumber });
-            showModalMessage("Customer added successfully!", true);
-            const customerForm = document.getElementById("customer-form");
-            customerForm.reset();
-        }
-    } catch (error) {
-        showModalMessage(`Error checking for duplicates: ${error.message}`, false);
-    }
-}
-//
+//<Adder Section>//
+//>addproduct//
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -394,7 +324,79 @@ async function addProduct() {
         }
     });
 }
-//
+//>AddCustomer//
+function showCustomerForm() {
+    const mainContent = document.getElementById("main-content");
+    mainContent.innerHTML = `
+            <h1>Add Customer</h1>
+            <form id="customer-form" class="product-form">
+                <label for="name">Name: </label>
+                <input type="text" id="name" name="name" required><br>
+
+                <label for="phoneNumber">Phone Number: </label>
+                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
+
+                <button type="submit">Add</button>
+            </form>
+        `;
+
+    const customerForm = document.getElementById("customer-form");
+
+    customerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        addCustomer();
+    });
+
+}
+async function addCustomer() {
+    const name = document.getElementById("name").value.trim().toLowerCase();
+    const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
+
+
+    const phoneNumberRegex = /^[0-9]+$/;
+    if (!phoneNumberRegex.test(phoneNumber)) {
+        showModalMessage("Invalid input, please try again!", false);
+        return;
+    }
+
+    try {
+        const customersSnapshot = await db.collection("customers").get();
+        let nameExists = false;
+        let phoneNumberExists = false;
+
+        customersSnapshot.forEach((doc) => {
+            const customer = doc.data();
+
+
+            if (customer.name.toLowerCase() === name.toLowerCase()) {
+                nameExists = true;
+            }
+            if (customer.phoneNumber === phoneNumber) {
+                phoneNumberExists = true;
+            }
+        });
+
+        if (nameExists || phoneNumberExists) {
+            let errorMessage = "Failed to add customer: ";
+            if (nameExists && phoneNumberExists) {
+                errorMessage += "Name and Phone Number already exist!";
+            } else if (nameExists) {
+                errorMessage += "Name already exist!";
+            } else if (phoneNumberExists) {
+                errorMessage += "Phone Number already exist!";
+            }
+            showModalMessage(errorMessage, false);
+        } else {
+            await db.collection("customers").add({ name, phoneNumber });
+            showModalMessage("Customer added successfully!", true);
+            const customerForm = document.getElementById("customer-form");
+            customerForm.reset();
+        }
+    } catch (error) {
+        showModalMessage(`Error checking for duplicates: ${error.message}`, false);
+    }
+}
+//>addCart//
 function showCartForm() {
     showSales = false;
     const mainContent = document.getElementById("main-content");
@@ -632,7 +634,7 @@ function animateImageToCart(sourceImageElement) {
         flyingImage.remove();
     });
 }
-//
+//>addSales//
 let showSales = false;
 function showSalesForm() {
     showSales = true;
@@ -889,11 +891,10 @@ async function cancelSale(productId, productCard) {
     } catch (error) {
         console.error("Error canceling sale:", error);
     }
-}
-//-------------//
+}//-------------//
 
 
-//Products Section//
+//<Products Section>//
 function initProductPage() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -1533,7 +1534,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 }//----------------//
 
-
+//<Aside Section>//
 function toggleSidebar() {
     document.getElementById("sidebar").classList.add("show");
 }
@@ -1647,6 +1648,7 @@ function showModalMessage(message, isSuccess) {
     // Append modal to the body
     document.body.appendChild(modalContainer);
 }
+//*Exporting Functions*//
 async function exportToPDF(data) {
     try {
         const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded from the CDN
