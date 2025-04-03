@@ -55,7 +55,6 @@ function initializeEventListeners() {
         });
         document.getElementById("add-sales-btn").addEventListener("click", function () {
             const section = this.getAttribute("data-section");
-            console.log('add sales btn clicked', section);
             if (section) {
                 removeActive();
                 loadContent(section);
@@ -167,8 +166,8 @@ function showProductForm() {
             <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
             <button type="button" id="customFileButton">Choose File</button>
 
-            <label for="price">Price ($): </label>
-            <input type="number" id="price" name="price" ><br>
+            <label for="costPrice">Cost Price($): </label>
+            <input type="number" id="costPrice" name="costPrice" ><br>
 
             <label for="category">Category: </label>
             <input type="text" id="category" name="category"><br>
@@ -181,7 +180,7 @@ function showProductForm() {
     `;
     addProduct();
     document.getElementById("customFileButton").addEventListener("click", () => {
-        document.getElementById("img").click(); // Trigger the file input
+        document.getElementById("img").click();
     });
     document.getElementById("img").addEventListener("change", (event) => {
         const fileName = event.target.files[0]?.name || "No file selected";
@@ -261,7 +260,7 @@ async function addProduct() {
             barcode: formData.get("barcode"),
             label: formData.get("label").toLowerCase(),
             img: imgUrl,
-            price: parseFloat(formData.get("price")),
+            costPrice: parseFloat(formData.get("costPrice")),
             category: formData.get("category"),
             stock: parseInt(formData.get("stock"), 10),
         };
@@ -269,7 +268,7 @@ async function addProduct() {
         if (
             !productData.barcode ||
             !productData.label ||
-            isNaN(productData.price) ||
+            isNaN(productData.costPrice) ||
             isNaN(productData.stock) ||
             !formData.get("img")
         ) {
@@ -527,7 +526,7 @@ function displayCart(cartId) {
                 <div class="cart-products-list">
                     <p style="font-weight: bold; text-decoration: underline;">${product.name}</p>
                     <p><strong>Quantity: </strong>${product.quantity}</p>
-                    <p><strong>Price: $</strong>${product.price}</p>
+                    <p><strong>costPrice: $</strong>${product.costPrice}</p>
                     <p><strong>Total: $</strong>${product.total}</p>
                 </div>
             `;
@@ -559,7 +558,7 @@ function displayCart(cartId) {
         }
     });
 }
-async function addToCart(productId, label, price) {
+async function addToCart(productId, label, costPrice) {
     if (!currentCartId) {
         console.error("No active cart found");
         return;
@@ -573,14 +572,14 @@ async function addToCart(productId, label, price) {
         const productData = productSnap.data();
         await cartProductsRef.update({
             quantity: productData.quantity + 1,
-            total: (productData.quantity + 1) * price
+            total: (productData.quantity + 1) * costPrice
         });
     } else {
         await cartProductsRef.set({
             name: label,
             quantity: 1,
-            price: price,
-            total: price
+            costPrice: costPrice,
+            total: costPrice
         });
     }
 
@@ -720,15 +719,14 @@ function displayProductToAdd(product, productId) {
         </div>` : ""}
     `;
 
-    // Add event listener to the primary action button
+
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
+
     actionBtn.addEventListener("click", function () {
-        console.log(`${actionText} button clicked.`);
-        actionFunction(productId, product.label, product.price);
-        // If not in sales mode, trigger additional UI animations if needed.
+        actionFunction(productId, product.label, product.costPrice);
         if (!showSales) {
             const productImage = productCard.querySelector("img");
-            addToSales(productId, product.label, product.price);
+            addToSales(productId, product.label, product.costPrice);
             if (productImage) {
                 animateImageToCart(productImage);
             } else {
@@ -737,14 +735,10 @@ function displayProductToAdd(product, productId) {
         }
     });
 
-    // Add event listener to the cancel button (if in sales mode)
     if (showSales) {
         const cancelBtn = productCard.querySelector(".cancel-sale-btn");
         cancelBtn.addEventListener("click", async function () {
-            console.log("Cancel Sale button clicked.");
             await cancelSale(productId, productCard);
-            // If the sale record was decremented (quantity > 0), the product card remains.
-            // Optionally, update the card's UI with the new quantity if desired.
         });
     }
 
@@ -752,14 +746,13 @@ function displayProductToAdd(product, productId) {
 }
 async function addToSales(productId, productLabel, productPrice) {
     try {
-        console.log("Attempting to add to sales...");
 
         const today = new Date();
-        const dateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+        const dateString = today.toISOString().split("T")[0];
         const salesDocRef = db.collection("sales").doc(dateString);
         const productRef = db.collection("products").doc(productId);
 
-        // Fetch the sales document for today
+
         const salesDoc = await salesDocRef.get();
         let totalProductsSold = 0;
         let totalRevenue = 0;
@@ -770,7 +763,7 @@ async function addToSales(productId, productLabel, productPrice) {
             totalRevenue = data.totalRevenue || 0;
         }
 
-        // Check if product already exists in today's sales
+
         const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
         const productSoldDoc = await productSoldRef.get();
 
@@ -783,27 +776,23 @@ async function addToSales(productId, productLabel, productPrice) {
             newTotal = newQuantity * productPrice;
         }
 
-        // Update product in sales
         await productSoldRef.set({
             name: productLabel,
             quantity: newQuantity,
-            price: productPrice,
+            costPrice: productPrice,
             total: newTotal,
             dateSold: firebase.firestore.Timestamp.now()
         });
 
         console.log("Product added/updated in sales.");
 
-        // Update total sales data
         await salesDocRef.set({
-            createdAt: firebase.firestore.Timestamp.now(),
             totalProductsSold: totalProductsSold + 1,
             totalRevenue: totalRevenue + productPrice
         }, { merge: true });
 
         console.log("Sales document updated.");
 
-        // Reduce stock in products collection
         const productDoc = await productRef.get();
         if (productDoc.exists) {
             const productData = productDoc.data();
@@ -819,8 +808,6 @@ async function addToSales(productId, productLabel, productPrice) {
 }
 async function cancelSale(productId, productCard) {
     try {
-        console.log("Attempting to cancel sale...");
-
         const today = new Date();
         const dateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
         const salesDocRef = db.collection("sales").doc(dateString);
@@ -836,7 +823,7 @@ async function cancelSale(productId, productCard) {
 
         const productData = productSoldDoc.data();
         const currentQuantity = productData.quantity;
-        const productPrice = productData.price;
+        const productPrice = productData.costPrice;
 
         if (currentQuantity > 1) {
             // Decrement quantity and update total sale value
@@ -846,7 +833,7 @@ async function cancelSale(productId, productCard) {
             await productSoldRef.set({
                 name: productData.name,
                 quantity: newQuantity,
-                price: productPrice,
+                costPrice: productPrice,
                 total: newTotal,
                 dateSold: firebase.firestore.Timestamp.now()
             });
@@ -861,7 +848,7 @@ async function cancelSale(productId, productCard) {
             }
         }
 
-        // Update overall sales document (subtract one unit and its price)
+        // Update overall sales document (subtract one unit and its costPrice)
         const salesDoc = await salesDocRef.get();
         if (salesDoc.exists) {
             const salesData = salesDoc.data();
@@ -902,7 +889,7 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="sort-select">Sort by Price:</label>
+                <label for="sort-select">Sort by costPrice:</label>
                 <select id="sort-select">
                     <option value="asc">Lowest to Highest</option>
                     <option value="desc">Highest to Lowest</option>
@@ -1000,7 +987,7 @@ async function fetchProducts() {
             const sortOrder = sortSelect.value;
             if (sortOrder) {
                 filteredProducts = filteredProducts.sort((a, b) =>
-                    sortOrder === "asc" ? a.price - b.price : b.price - a.price
+                    sortOrder === "asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
                 );
             }
             renderProducts(filteredProducts);
@@ -1020,7 +1007,7 @@ async function fetchProducts() {
                     <div class="product-details">
                         <p><strong>Label:</strong> ${product.label}</p>
                         <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Price:</strong> $${product.price.toFixed(2)}</p>
+                        <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
                         <p><strong>Category:</strong> ${product.category}</p>
                         <p><strong>Stock:</strong> ${product.stock}</p>
                         <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1055,7 +1042,7 @@ $(document).ready(function () {
                     id: doc.id,
                     label: data.label,
                     barcode: data.barcode,
-                    price: data.price || 0,
+                    costPrice: data.costPrice || 0,
                     category: data.category || "Unknown",
                     stock: data.stock || 0,
                     img: data.img || "placeholder.jpg",
@@ -1078,7 +1065,7 @@ $(document).ready(function () {
             <div class="product-details">
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
-                <p><strong>Price:</strong> $${product.price.toFixed(2)}</p>
+                <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1113,8 +1100,8 @@ $(document).ready(function () {
                     <button type="button" id="customFileButton">Update Image:</button>
                 </div>
                 
-                <label for="price">Price:</label>
-                <input type="number" id="price" name="price" value="${product.price}">
+                <label for="costPrice">Cost Price:</label>
+                <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
                 
                 <label for="category">Category:</label>
                 <input type="text" id="category" name="category" value="${product.category}">
@@ -1153,7 +1140,7 @@ $(document).ready(function () {
             const updatedProduct = {
                 label: $("#label").val(),
                 barcode: $("#barcode").val(),
-                price: parseFloat($("#price").val()),
+                costPrice: parseFloat($("#costPrice").val()),
                 category: $("#category").val(),
                 stock: parseInt($("#stock").val(), 10),
             };
@@ -1664,7 +1651,7 @@ function renderSalesTable(salesData) {
             <tr>
                 <th>Product Name</th>
                 <th>Date Sold</th>
-                <th>Price</th>
+                <th>costPrice</th>
                 <th>Quantity</th>
                 <th>Total</th>
             </tr>
@@ -1678,7 +1665,7 @@ function renderSalesTable(salesData) {
                 row.innerHTML = `
                     <td>${product.name}</td>
                     <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
-                    <td>$${product.price.toFixed(2)}</td>
+                    <td>$${product.costPrice.toFixed(2)}</td>
                     <td>${product.quantity}</td>
                     <td>$${product.total.toFixed(2)}</td>
                 `;
@@ -1823,11 +1810,11 @@ async function exportToPDF(data) {
         pdf.text("Product List", 10, 10);
 
         // Define table headers and rows
-        const columns = ["Label", "Barcode", "Price ($)", "Category", "Stock", "Created At"];
+        const columns = ["Label", "Barcode", "costPrice ($)", "Category", "Stock", "Created At"];
         const rows = data.map(product => [
             product.label,
             product.barcode,
-            product.price.toFixed(2),
+            product.costPrice.toFixed(2),
             product.category,
             product.stock,
             product.createdAt
@@ -1854,7 +1841,7 @@ async function fetchProductsforExporting() {
             return {
                 label: data.label,
                 barcode: data.barcode,
-                price: data.price,
+                costPrice: data.costPrice,
                 category: data.category,
                 stock: data.stock,
                 createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
@@ -1925,7 +1912,7 @@ async function exportCartToPDF() {
         return {
             name: data.name,
             quantity: data.quantity,
-            price: data.price,
+            costPrice: data.costPrice,
             total: data.total
         };
     });
@@ -1957,11 +1944,11 @@ async function exportCartToPDF() {
     // Determine the starting Y position after the first table
     const finalY = pdf.lastAutoTable.finalY + 10;
 
-    const columns = ["Product Name", "Quantity", "Price ($)", "Total ($)"];
+    const columns = ["Product Name", "Quantity", "costPrice ($)", "Total ($)"];
     const rows = cartProducts.map(product => [
         product.name,
         product.quantity,
-        product.price.toFixed(2),
+        product.costPrice.toFixed(2),
         product.total.toFixed(2)
     ]);
 
