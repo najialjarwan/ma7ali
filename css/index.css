@@ -703,33 +703,28 @@ aside {
   color: var(--text-color);
   padding: 5px;
   font-size: 0.8em;
-  word-wrap: break-word; 
-  word-break: break-word; 
-  white-space: normal; 
-  max-width: 100px;
-  padding: 2px;
+  word-wrap: break-word;
+  max-width: 120px;
+  padding: 4px;
   border: 1px solid #000;
   height: auto;          
   box-sizing: border-box;
 }
 
 .customer-table td:last-child {
-  padding: 0; 
   height: 100%; 
   position: relative;
-  height: 100%;
   background-color: lightgray;
 }
 
 .customer-table .remove-debt-btn {
-  width: 100% !important;
-  height: 100% !important;
   display: flex;
   justify-content: center;
   align-items: center;
   color: red;
   border: none;
-  font-size: 0.8em;
+  padding: 15px;
+  font-size: 0.7em;
   background-color: lightgray;
 }
 
