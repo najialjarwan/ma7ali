@@ -71,7 +71,6 @@ function initializeEventListeners() {
     });
 
     const indicator = document.querySelector(".active-indicator");
-    loadContent("dashboard");
     document.querySelectorAll(".nav-btn").forEach((button) => {
         button.addEventListener("click", function () {
             const section = this.getAttribute("data-section");
@@ -136,7 +135,7 @@ async function loadContent(section) {
         if (section === "cartAndSales")
             initCartAndSalesSection();
         //<Pop sections>//
-        if (section === "addProduct") 
+        if (section === "addProduct")
             showProductForm();
         if (section === "addCustomer")
             showCustomerForm();
@@ -444,20 +443,20 @@ async function cancelCart() {
         // Reference to the current cart document
         const cartDocRef = db.collection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
-        
+
         // For each product in the cart, reverse the sales entry in the sales collection.
         // It assumes that each cart product document has a "productId" and a "quantity" field.
         for (let doc of cartProductsSnapshot.docs) {
             const data = doc.data();
             const productId = data.productId || doc.id; // Adjust this if necessary
             const quantity = data.quantity || 1;
-            
+
             // For each unit added in the cart, call cancelSale once.
             for (let i = 0; i < quantity; i++) {
                 await cancelSale(productId, null);
             }
         }
-        
+
         // Now delete all cart product documents in a batch operation.
         let batch = db.batch();
         cartProductsSnapshot.forEach(doc => {
@@ -715,8 +714,8 @@ function displayProductToAdd(product, productId) {
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
             ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
-        ${!showSales ? 
-        `<div class="cart-img-container">
+        ${!showSales ?
+            `<div class="cart-img-container">
             <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         </div>` : ""}
     `;
@@ -1532,7 +1531,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 }//----------------//
 
 //<CartAndSales Section>//
-function initCartAndSalesSection(){
+function initCartAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <div class="cart-and-sales-container" id="card-and-sales-container">
@@ -1540,6 +1539,165 @@ function initCartAndSalesSection(){
             <div class="carts-container" id="carts-container"></div>
         </div>
                             `;
+    setTimeout(() => {
+        loadSalesData();
+    }, 0)
+}
+// Initialize Sales Section
+async function loadSalesData() {
+    const salesContainer = document.getElementById("sales-container");
+
+    salesContainer.innerHTML = `
+        <div id="filter-sales" class="filter-options"> 
+            <div class="filter-group">
+                <label for="sales-date-select">Filter by Category:</label> 
+                <select id="sales-date-select">
+                    <option value="all">All Sales</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="thisWeek">This Week</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="thisYear">This Year</option>
+                </select>
+            </div>
+        </div>
+        <div id="sales-table-container"></div>
+    `;
+
+    // Get sales data and populate the dropdown
+    const salesData = await fetchSalesData();
+    populateDropdown(salesData);
+    renderSalesTable(salesData);
+
+    // Event Listener for Filtering
+    document.getElementById("sales-date-select").addEventListener("change", function () {
+        const filterValue = this.value;
+        const filteredData = filterSales(salesData, filterValue);
+        renderSalesTable(filteredData);
+    });
+}
+
+// Fetch Sales Data from Firestore
+async function fetchSalesData() {
+    const salesCollection = db.collection("sales");
+    const snapshot = await salesCollection.get();
+    const salesData = [];
+
+    for (const doc of snapshot.docs) {
+        const salesDate = doc.id; // Sales date is the document ID (e.g., "2025-04-02")
+        const salesInfo = doc.data();
+        const productsSnapshot = await salesCollection.doc(salesDate).collection("productsSold").get();
+
+        const productsSold = productsSnapshot.docs.map(productDoc => ({
+            id: productDoc.id,
+            ...productDoc.data()
+        }));
+
+        salesData.push({
+            salesDate,
+            createdAt: salesInfo.createdAt,
+            totalProductsSold: salesInfo.totalProductsSold,
+            totalRevenue: salesInfo.totalRevenue,
+            productsSold
+        });
+    }
+
+    return salesData;
+}
+
+// Populate Dropdown with Available Sales Dates
+function populateDropdown(salesData) {
+    const select = document.getElementById("sales-date-select");
+
+    // Add each unique date to the dropdown
+    salesData.forEach(sale => {
+        const option = document.createElement("option");
+        option.value = sale.salesDate;
+        option.textContent = sale.salesDate;
+        select.appendChild(option);
+    });
+}
+
+// Filter Sales Data
+function filterSales(salesData, filterType) {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    if (filterType === "today") {
+        return salesData.filter(sale => sale.salesDate === todayStr);
+    }
+    if (filterType === "yesterday") {
+        return salesData.filter(sale => sale.salesDate === yesterdayStr);
+    }
+    if (filterType === "thisWeek") {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Get Monday
+        return salesData.filter(sale => new Date(sale.salesDate) >= startOfWeek);
+    }
+    if (filterType === "thisMonth") {
+        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 7))); // Match YYYY-MM
+    }
+    if (filterType === "thisYear") {
+        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 4))); // Match YYYY
+    }
+    return salesData; // Return all sales if "All Sales" is selected
+}
+
+// Render Sales Table
+function renderSalesTable(salesData) {
+    const container = document.getElementById("sales-table-container");
+    container.innerHTML = "";
+
+    if (salesData.length === 0) {
+        container.innerHTML = "<p>No sales data available.</p>";
+        return;
+    }
+
+    salesData.forEach(sale => {
+        const table = document.createElement("table");
+        table.classList.add("customer-table");
+        table.id = "sales-table";
+
+        const thead = document.createElement("thead");
+        thead.innerHTML = `
+            <tr>
+                <th>Date Sold</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        `;
+
+        const tbody = document.createElement("tbody");
+
+        if (sale.productsSold.length > 0) {
+            sale.productsSold.forEach(product => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
+                    <td>${product.name}</td>
+                    <td>$${product.price.toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>$${product.total.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            const emptyRow = document.createElement("tr");
+            emptyRow.innerHTML = `<td colspan="5">No products sold on this date.</td>`;
+            tbody.appendChild(emptyRow);
+        }
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        container.appendChild(document.createElement("hr"));
+        container.appendChild(document.createElement("h3")).textContent = `Sales on ${sale.salesDate}`;
+        container.appendChild(table);
+    });
 }
 
 //<Aside Section>//
