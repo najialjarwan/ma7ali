@@ -716,7 +716,8 @@ function displayProductToAdd(product, productId) {
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
             ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
-        ${!showSales ? `<div class="cart-img-container">
+        ${!showSales ? 
+        `<div class="cart-img-container">
             <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
         </div>` : ""}
     `;
@@ -1300,11 +1301,11 @@ function initCustomersPage() {
     const mainContent = document.querySelector(".main-content");
 
     mainContent.innerHTML = `
-            <div class="customers-grid" id="customers-grid"></div>
             <div class="search-customer-container search-container-main">
                 <input type="text" class="search-bar" id="search-customers" placeholder="Search Customer"/>
                 <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon" />
             </div>
+            <div class="customers-grid" id="customers-grid"></div>
         `;
     fetchCustomers();
 }
