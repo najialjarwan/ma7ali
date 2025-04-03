@@ -1539,11 +1539,8 @@ function initCartAndSalesSection() {
             <div class="carts-container" id="carts-container"></div>
         </div>
                             `;
-    setTimeout(() => {
-        loadSalesData();
-    }, 0)
+    loadSalesData();
 }
-// Initialize Sales Section
 async function loadSalesData() {
     const salesContainer = document.getElementById("sales-container");
 
@@ -1558,6 +1555,7 @@ async function loadSalesData() {
                     <option value="thisWeek">This Week</option>
                     <option value="thisMonth">This Month</option>
                     <option value="thisYear">This Year</option>
+                    <optgroup label="Choose a Specific Date" id="specific-dates-group"></optgroup>
                 </select>
             </div>
         </div>
@@ -1576,8 +1574,6 @@ async function loadSalesData() {
         renderSalesTable(filteredData);
     });
 }
-
-// Fetch Sales Data from Firestore
 async function fetchSalesData() {
     const salesCollection = db.collection("sales");
     const snapshot = await salesCollection.get();
@@ -1604,21 +1600,22 @@ async function fetchSalesData() {
 
     return salesData;
 }
-
-// Populate Dropdown with Available Sales Dates
 function populateDropdown(salesData) {
     const select = document.getElementById("sales-date-select");
+    const optGroup = document.getElementById("specific-dates-group");
 
-    // Add each unique date to the dropdown
+    // Clear previous dates if needed
+    optGroup.innerHTML = "";
+
+    // Add each salesDate inside the optgroup
     salesData.forEach(sale => {
         const option = document.createElement("option");
         option.value = sale.salesDate;
         option.textContent = sale.salesDate;
-        select.appendChild(option);
+        optGroup.appendChild(option);
     });
 }
 
-// Filter Sales Data
 function filterSales(salesData, filterType) {
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -1643,10 +1640,11 @@ function filterSales(salesData, filterType) {
     if (filterType === "thisYear") {
         return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 4))); // Match YYYY
     }
+    if (salesData.some(sale => sale.salesDate === filterType)) {
+        return salesData.filter(sale => sale.salesDate === filterType);
+    }
     return salesData; // Return all sales if "All Sales" is selected
 }
-
-// Render Sales Table
 function renderSalesTable(salesData) {
     const container = document.getElementById("sales-table-container");
     container.innerHTML = "";
@@ -1664,8 +1662,8 @@ function renderSalesTable(salesData) {
         const thead = document.createElement("thead");
         thead.innerHTML = `
             <tr>
-                <th>Date Sold</th>
                 <th>Product Name</th>
+                <th>Date Sold</th>
                 <th>Price</th>
                 <th>Quantity</th>
                 <th>Total</th>
@@ -1678,8 +1676,8 @@ function renderSalesTable(salesData) {
             sale.productsSold.forEach(product => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
                     <td>${product.name}</td>
+                    <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
                     <td>$${product.price.toFixed(2)}</td>
                     <td>${product.quantity}</td>
                     <td>$${product.total.toFixed(2)}</td>
