@@ -710,6 +710,7 @@ function displayProductToAdd(product, productId) {
     // Create product card element
     const productCard = document.createElement("div");
     productCard.classList.add("cart-product-card");
+    productCard.setAttribute("data-product-id", productId);
     productCard.innerHTML = `
         <div class="left">
             <img src="${product.img}" alt="${product.label}" width="100" height="100">
@@ -752,39 +753,33 @@ function displayProductToAdd(product, productId) {
 }
 async function addToSales(productId, productLabel, productPrice, productProfit) {
     try {
+        const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+        const actionBtn = productCard.querySelector(".add-to-cart-btn");
 
+        // Disable button and show loading overlay
+        actionBtn.disabled = true;
+        const overlay = document.createElement("div");
+        overlay.classList.add("product-loading-overlay");
+        productCard.appendChild(overlay);
+        setTimeout(() => overlay.style.opacity = "1", 10);
+
+        // Firestore operations
         const today = new Date();
         const dateString = today.toISOString().split("T")[0];
         const salesDocRef = db.collection("sales").doc(dateString);
         const productRef = db.collection("products").doc(productId);
-
-
+        
         const salesDoc = await salesDocRef.get();
-        let totalProductsSold = 0;
-        let totalRevenue = 0;
-        let totalProfit = 0;
-
-        if (salesDoc.exists) {
-            const data = salesDoc.data();
-            totalProductsSold = data.totalProductsSold || 0;
-            totalRevenue = data.totalRevenue || 0;
-            totalProfit = data.totalProfit;
-        }
-
+        let totalProductsSold = salesDoc.exists ? (salesDoc.data().totalProductsSold || 0) : 0;
+        let totalRevenue = salesDoc.exists ? (salesDoc.data().totalRevenue || 0) : 0;
+        let totalProfit = salesDoc.exists ? (salesDoc.data().totalProfit || 0) : 0;
 
         const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
         const productSoldDoc = await productSoldRef.get();
 
-        let newQuantity = 1;
-        let newTotal = productPrice;
-        let newProfit = productProfit;
-
-        if (productSoldDoc.exists) {
-            const productData = productSoldDoc.data();
-            newQuantity = productData.quantity + 1;
-            newTotal = newQuantity * productPrice;
-            newProfit = newQuantity * productProfit;
-        }
+        let newQuantity = productSoldDoc.exists ? productSoldDoc.data().quantity + 1 : 1;
+        let newTotal = newQuantity * productPrice;
+        let newProfit = newQuantity * productProfit;
 
         await productSoldRef.set({
             name: productLabel,
@@ -796,25 +791,27 @@ async function addToSales(productId, productLabel, productPrice, productProfit) 
             dateSold: firebase.firestore.Timestamp.now()
         });
 
-        console.log("Product added/updated in sales.");
-
         await salesDocRef.set({
             totalProductsSold: totalProductsSold + 1,
             totalRevenue: totalRevenue + productPrice,
             totalProfit: totalProfit + productProfit,
         }, { merge: true });
 
-        console.log("Sales document updated.");
-
         const productDoc = await productRef.get();
         if (productDoc.exists) {
-            const productData = productDoc.data();
-            const newStock = (productData.stock || 0) - 1;
-            await productRef.update({ stock: newStock >= 0 ? newStock : 0 });
-            console.log("Product stock updated. New stock:", newStock);
-        } else {
-            console.error("Product not found in products collection.");
+            const newStock = Math.max(0, (productDoc.data().stock || 0) - 1);
+            await productRef.update({ stock: newStock });
         }
+
+        // Remove overlay and apply success glow effect
+        setTimeout(() => {
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.remove(), 300);
+            productCard.classList.add("glow-success");
+            setTimeout(() => productCard.classList.remove("glow-success"), 1000);
+            actionBtn.disabled = false;
+        }, 500);
+
     } catch (error) {
         console.error("Error adding to sales:", error);
     }
