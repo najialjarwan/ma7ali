@@ -690,7 +690,7 @@ aside {
   background-color: var(--accent-color);
   color: var(--text-color);
   font-size: 1em;
-  text-align: left;
+  text-align: center;
   border: 1px solid black;
   padding: 5px;
 }
@@ -730,6 +730,59 @@ aside {
 
 .customer-table .remove-debt-btn:active {
   transform: scale(0.90);
+}
+
+/* CartsAndSales Section */
+.sales-container{
+  width: 100%;
+  max-width: 100%;
+}
+
+.sales-table-container{
+  width: 100%;
+}
+
+.sales-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-table th{
+  border: 1px solid var(--text-color);
+  background-color: var(--accent-color);
+  font-size: 0.7em;
+  padding: 0 5px;
+}
+
+.sales-table tr {
+  background-color: var(--input-color);
+}
+
+.sales-table tr:nth-child(even) {
+  background-color: lightgoldenrodyellow;
+}
+
+.sales-table tr, .sales-table td {
+  border: 1px solid var(--text-color);
+  font-size: 0.9em;
+}
+
+.table-actions{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background-color: var(--accent-color);
+  border: 1px solid var(--text-color);
+  padding: 5px;
+}
+.table-actions button{
+  background-color: var(--input-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  width: 50%;
 }
 
 /* Adder Section */

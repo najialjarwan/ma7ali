@@ -169,6 +169,9 @@ function showProductForm() {
             <label for="costPrice">Cost Price($): </label>
             <input type="number" id="costPrice" name="costPrice" ><br>
 
+            <label for="profit">Profit($): </label>
+            <input type="number" id="profit" name="profit" ><br>
+
             <label for="category">Category: </label>
             <input type="text" id="category" name="category"><br>
 
@@ -261,6 +264,7 @@ async function addProduct() {
             label: formData.get("label").toLowerCase(),
             img: imgUrl,
             costPrice: parseFloat(formData.get("costPrice")),
+            profit: parseFloat(formData.get("profit")),
             category: formData.get("category"),
             stock: parseInt(formData.get("stock"), 10),
         };
@@ -269,6 +273,7 @@ async function addProduct() {
             !productData.barcode ||
             !productData.label ||
             isNaN(productData.costPrice) ||
+            isNaN(productData.profit) ||
             isNaN(productData.stock) ||
             !formData.get("img")
         ) {
@@ -723,10 +728,11 @@ function displayProductToAdd(product, productId) {
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
 
     actionBtn.addEventListener("click", function () {
-        actionFunction(productId, product.label, product.costPrice);
+        console.log('product profit',product.profit);
+        actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
             const productImage = productCard.querySelector("img");
-            addToSales(productId, product.label, product.costPrice);
+            addToSales(productId, product.label, product.costPrice, product.profit);
             if (productImage) {
                 animateImageToCart(productImage);
             } else {
@@ -744,7 +750,7 @@ function displayProductToAdd(product, productId) {
 
     productCardContainer.appendChild(productCard);
 }
-async function addToSales(productId, productLabel, productPrice) {
+async function addToSales(productId, productLabel, productPrice, productProfit) {
     try {
 
         const today = new Date();
@@ -756,11 +762,13 @@ async function addToSales(productId, productLabel, productPrice) {
         const salesDoc = await salesDocRef.get();
         let totalProductsSold = 0;
         let totalRevenue = 0;
+        let totalProfit = 0;
 
         if (salesDoc.exists) {
             const data = salesDoc.data();
             totalProductsSold = data.totalProductsSold || 0;
             totalRevenue = data.totalRevenue || 0;
+            totalProfit = data.totalProfit;
         }
 
 
@@ -769,18 +777,22 @@ async function addToSales(productId, productLabel, productPrice) {
 
         let newQuantity = 1;
         let newTotal = productPrice;
+        let newProfit = productProfit;
 
         if (productSoldDoc.exists) {
             const productData = productSoldDoc.data();
             newQuantity = productData.quantity + 1;
             newTotal = newQuantity * productPrice;
+            newProfit = newQuantity * productProfit;
         }
 
         await productSoldRef.set({
             name: productLabel,
             quantity: newQuantity,
             costPrice: productPrice,
-            total: newTotal,
+            profit: productProfit,
+            totalRevenu: newTotal,
+            totalProfit: newProfit,
             dateSold: firebase.firestore.Timestamp.now()
         });
 
@@ -788,7 +800,8 @@ async function addToSales(productId, productLabel, productPrice) {
 
         await salesDocRef.set({
             totalProductsSold: totalProductsSold + 1,
-            totalRevenue: totalRevenue + productPrice
+            totalRevenue: totalRevenue + productPrice,
+            totalProfit: totalProfit + productProfit,
         }, { merge: true });
 
         console.log("Sales document updated.");
@@ -809,12 +822,12 @@ async function addToSales(productId, productLabel, productPrice) {
 async function cancelSale(productId, productCard) {
     try {
         const today = new Date();
-        const dateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+        const dateString = today.toISOString().split("T")[0];
         const salesDocRef = db.collection("sales").doc(dateString);
         const productRef = db.collection("products").doc(productId);
         const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
 
-        // Fetch product sale data
+
         const productSoldDoc = await productSoldRef.get();
         if (!productSoldDoc.exists) {
             console.log("No sale record found for this product today.");
@@ -824,39 +837,43 @@ async function cancelSale(productId, productCard) {
         const productData = productSoldDoc.data();
         const currentQuantity = productData.quantity;
         const productPrice = productData.costPrice;
+        const productProfit = productData.profit;
 
         if (currentQuantity > 1) {
-            // Decrement quantity and update total sale value
+
             const newQuantity = currentQuantity - 1;
             const newTotal = newQuantity * productPrice;
+            const newProfit = newQuantity * productProfit;
 
             await productSoldRef.set({
                 name: productData.name,
                 quantity: newQuantity,
                 costPrice: productPrice,
-                total: newTotal,
+                profit: productProfit,
+                totalRevenu: newTotal,
+                totalProfit: newProfit,
                 dateSold: firebase.firestore.Timestamp.now()
             });
             console.log("Decremented product sale record by one unit.");
         } else {
-            // Quantity is 1: delete the document
             await productSoldRef.delete();
             console.log("Product sale record deleted as quantity reached zero.");
-            // Remove the product card from the UI if provided
             if (productCard) {
                 productCard.remove();
             }
         }
 
-        // Update overall sales document (subtract one unit and its costPrice)
+
         const salesDoc = await salesDocRef.get();
         if (salesDoc.exists) {
             const salesData = salesDoc.data();
             const newTotalProductsSold = Math.max(0, (salesData.totalProductsSold || 0) - 1);
             const newTotalRevenue = Math.max(0, (salesData.totalRevenue || 0) - productPrice);
+            const newTotalProfit = Math.max(0, (salesData.totalProfit || 0) - productProfit);
             await salesDocRef.set({
                 totalProductsSold: newTotalProductsSold,
-                totalRevenue: newTotalRevenue
+                totalRevenue: newTotalRevenue,
+                totalProfit: newTotalProfit
             }, { merge: true });
             console.log("Sales document updated.");
         }
@@ -889,7 +906,7 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="sort-select">Sort by costPrice:</label>
+                <label for="sort-select">Sort by Cost Price:</label>
                 <select id="sort-select">
                     <option value="asc">Lowest to Highest</option>
                     <option value="desc">Highest to Lowest</option>
@@ -1008,6 +1025,7 @@ async function fetchProducts() {
                         <p><strong>Label:</strong> ${product.label}</p>
                         <p><strong>Barcode:</strong> ${product.barcode}</p>
                         <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
+                        <p><strong>Profit</strong> $${product.profit.toFixed(2)}</p>
                         <p><strong>Category:</strong> ${product.category}</p>
                         <p><strong>Stock:</strong> ${product.stock}</p>
                         <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1102,6 +1120,9 @@ $(document).ready(function () {
                 
                 <label for="costPrice">Cost Price:</label>
                 <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
+
+                <label for="profit">Cost Price:</label>
+                <input type="number" id="profit" name="profit" value="${product.profit}">
                 
                 <label for="category">Category:</label>
                 <input type="text" id="category" name="category" value="${product.category}">
@@ -1141,6 +1162,7 @@ $(document).ready(function () {
                 label: $("#label").val(),
                 barcode: $("#barcode").val(),
                 costPrice: parseFloat($("#costPrice").val()),
+                profit: parseFloat($("profit").val()),
                 category: $("#category").val(),
                 stock: parseInt($("#stock").val(), 10),
             };
@@ -1276,7 +1298,7 @@ $(document).ready(function () {
 
         displayProducts(products); // Initial display
     });
-}); //---------------//
+}); //<--------------->//
 
 
 //<Customers Section>//
@@ -1515,16 +1537,14 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
     });
-}//----------------//
+}//<---------------->//
 
 //<CartAndSales Section>//
 function initCartAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
-        <div class="cart-and-sales-container" id="card-and-sales-container">
-            <div class="sales-container" id="sales-container"></div>
-            <div class="carts-container" id="carts-container"></div>
-        </div>
+        <div class="sales-container" id="sales-container"></div>
+        <div class="carts-container" id="carts-container"></div>
                             `;
     loadSalesData();
 }
@@ -1581,6 +1601,7 @@ async function fetchSalesData() {
             createdAt: salesInfo.createdAt,
             totalProductsSold: salesInfo.totalProductsSold,
             totalRevenue: salesInfo.totalRevenue,
+            totalProfit: salesInfo.totalProfit,
             productsSold
         });
     }
@@ -1602,7 +1623,6 @@ function populateDropdown(salesData) {
         optGroup.appendChild(option);
     });
 }
-
 function filterSales(salesData, filterType) {
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -1643,7 +1663,7 @@ function renderSalesTable(salesData) {
 
     salesData.forEach(sale => {
         const table = document.createElement("table");
-        table.classList.add("customer-table");
+        table.classList.add("sales-table");
         table.id = "sales-table";
 
         const thead = document.createElement("thead");
@@ -1653,11 +1673,13 @@ function renderSalesTable(salesData) {
                 <th>Date Sold</th>
                 <th>costPrice</th>
                 <th>Quantity</th>
-                <th>Total</th>
+                <th>Total Revenu</th>
+                <th>Total Profit</th>
             </tr>
         `;
 
         const tbody = document.createElement("tbody");
+        let tableActions = null;
 
         if (sale.productsSold.length > 0) {
             sale.productsSold.forEach(product => {
@@ -1667,11 +1689,19 @@ function renderSalesTable(salesData) {
                     <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
                     <td>$${product.costPrice.toFixed(2)}</td>
                     <td>${product.quantity}</td>
-                    <td>$${product.total.toFixed(2)}</td>
+                    <td>$${product.totalRevenu.toFixed(2)}</td>
+                    <td>$${product.totalProfit.toFixed(2)}</td>
                 `;
                 tbody.appendChild(row);
             });
-        } else {
+            tableActions = document.createElement("div");
+            tableActions.classList.add("table-actions");
+            tableActions.id = "table-actions";
+            tableActions.innerHTML = `
+                <button type="button" class="export" id="export">Export</button>
+            `;
+        } 
+        else {
             const emptyRow = document.createElement("tr");
             emptyRow.innerHTML = `<td colspan="5">No products sold on this date.</td>`;
             tbody.appendChild(emptyRow);
@@ -1682,6 +1712,8 @@ function renderSalesTable(salesData) {
         container.appendChild(document.createElement("hr"));
         container.appendChild(document.createElement("h3")).textContent = `Sales on ${sale.salesDate}`;
         container.appendChild(table);
+        if (tableActions)
+            container.appendChild(tableActions);
     });
 }
 
@@ -1798,7 +1830,8 @@ function showModalMessage(message, isSuccess) {
 
     // Append modal to the body
     document.body.appendChild(modalContainer);
-}
+}//<--------------->//
+
 //*Exporting Functions*//
 async function exportToPDF(data) {
     try {
@@ -1810,11 +1843,12 @@ async function exportToPDF(data) {
         pdf.text("Product List", 10, 10);
 
         // Define table headers and rows
-        const columns = ["Label", "Barcode", "costPrice ($)", "Category", "Stock", "Created At"];
+        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
         const rows = data.map(product => [
             product.label,
             product.barcode,
             product.costPrice.toFixed(2),
+            product.profit.toFixed(2),
             product.category,
             product.stock,
             product.createdAt
@@ -1842,6 +1876,7 @@ async function fetchProductsforExporting() {
                 label: data.label,
                 barcode: data.barcode,
                 costPrice: data.costPrice,
+                profit: data.profit,
                 category: data.category,
                 stock: data.stock,
                 createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
@@ -1944,7 +1979,7 @@ async function exportCartToPDF() {
     // Determine the starting Y position after the first table
     const finalY = pdf.lastAutoTable.finalY + 10;
 
-    const columns = ["Product Name", "Quantity", "costPrice ($)", "Total ($)"];
+    const columns = ["Product Name", "Quantity", "Cost Price ($)", "Total ($)"];
     const rows = cartProducts.map(product => [
         product.name,
         product.quantity,
