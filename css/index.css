@@ -778,7 +778,7 @@ aside {
   padding: 5px;
 }
 .table-actions button{
-  background-color: var(--input-color);
+  background: linear-gradient(to right, white, rgb(255, 243, 177));
   color: var(--text-color);
   border: none;
   border-radius: 5px;
@@ -995,7 +995,7 @@ aside {
 .progress-container {
   width: 50%;
   max-width: 300px;
-  height: 15px;
+  height: 30px;
   background-color: #ddd;
   overflow: hidden;
 }
@@ -1005,7 +1005,7 @@ aside {
   width: 0%;
   height: 100%;
   background-color: #4CAF50; /* green */
-  transition: width 1s ease;
+  transition: width 1.5s ease-in-out;
 }
 
 
@@ -1019,11 +1019,6 @@ aside {
   border-radius: 10px;
   background-color: var(--input-color);
   gap: 5px;
-  transform: scaleX(0);
-  transition: transform 0.2s ease-in;
-}
-.cart-display-container.show {
-  transform: scaleX(1);
 }
 
 .cart-display-container p{

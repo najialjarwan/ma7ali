@@ -438,7 +438,7 @@ function showCartForm() {
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
-        <div class="cart-display-container" id="cart-display-container"></div>
+        <div class="cart-display-container" id="cart-display-container" style="display: none"></div>
     `;
     fetchProductToAdd();
 
@@ -518,15 +518,14 @@ async function addCart() {
         // Store the cart ID globally
         currentCartId = cartRef.id;
         displayCart(cartRef.id);
-
     } catch (error) {
         console.error("Error adding cart:", error);
     }
 }
-function displayCart(cartId) {
+async function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
-
-    cartDisplayContainer.classList.add('show');
+    await showLoadingOverlay(1400);
+    cartDisplayContainer.style.display = "block";
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
         <div class="cart-products-list-container" id="cart-products-list-container"></div>
@@ -639,7 +638,7 @@ function animateImageToCart(sourceImageElement) {
     const targetRect = cartIcon.getBoundingClientRect();
 
     // Calculate translation distances
-    const translateX = targetRect.left - startRect.left;
+    const translateX = targetRect.left - startRect.left - 50;
     const translateY = targetRect.top - startRect.top - 15;
 
     // Force reflow before applying the transform
@@ -753,14 +752,14 @@ function displayProductToAdd(product, productId) {
             animateImageToCart(productImage);
         }
         else {
-            showLoadingOverlay(1000);
+            showLoadingOverlay(1500);
         }
     });
 
     if (showSales) {
         const cancelBtn = productCard.querySelector(".cancel-sale-btn");
         cancelBtn.addEventListener("click", async function () {
-            showLoadingOverlay(1000);
+            showLoadingOverlay(1500);
             await cancelSale(productId);
         });
     }
@@ -885,34 +884,31 @@ async function cancelSale(productId) {
         console.error("Error canceling sale:", error);
     }
 }
-function showLoadingOverlay(duration = 1000) {
-    const overlay = document.getElementById("loading-overlay");
-    const progressBar = document.getElementById("progress-bar");
+function showLoadingOverlay(duration = 1500) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById("loading-overlay");
+        const progressBar = document.getElementById("progress-bar");
 
-    // Reset initial state
-    overlay.style.display = "flex";
-    overlay.style.opacity = "0";
-    progressBar.style.width = "0%";
-
-    // Trigger reflow to ensure transition kicks in
-    void overlay.offsetWidth;
-
-    // Animate overlay fade-in
-    overlay.style.opacity = "1";
-
-    // Animate progress bar filling after a short delay
-    setTimeout(() => {
-        progressBar.style.width = "100%";
-    }, 50);
-
-    // Hide overlay after it fills
-    setTimeout(() => {
+        overlay.style.display = "flex";
         overlay.style.opacity = "0";
+        progressBar.style.width = "0%";
+        void overlay.offsetWidth;
+
+        overlay.style.opacity = "1";
         setTimeout(() => {
-            overlay.style.display = "none";
-        }, 500); // fade-out time
-    }, duration);
-}//-------------//
+            progressBar.style.width = "100%";
+        }, 50);
+
+        setTimeout(() => {
+            overlay.style.opacity = "0";
+            setTimeout(() => {
+                overlay.style.display = "none";
+                resolve(); // Animation complete
+            }, 400); // Fade-out time
+        }, duration);
+    });
+}
+//-------------//
 
 
 //<Products Section>//
@@ -1516,7 +1512,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
-        document.getElementById("view-customers-btn").click();
     });
 
     document.getElementById("add-debt").addEventListener("click", () => {
@@ -1692,15 +1687,14 @@ function renderSalesTable(salesData) {
             <tr>
                 <th>Product Name</th>
                 <th>Date Sold</th>
-                <th>costPrice</th>
+                <th>Cost Price</th>
                 <th>Quantity</th>
-                <th>Total Revenu</th>
+                <th>Total Revenue</th>
                 <th>Total Profit</th>
             </tr>
         `;
 
         const tbody = document.createElement("tbody");
-        let tableActions = null;
 
         if (sale.productsSold.length > 0) {
             sale.productsSold.forEach(product => {
@@ -1715,28 +1709,42 @@ function renderSalesTable(salesData) {
                 `;
                 tbody.appendChild(row);
             });
-            tableActions = document.createElement("div");
-            tableActions.classList.add("table-actions");
-            tableActions.id = "table-actions";
-            tableActions.innerHTML = `
-                <button type="button" class="export" id="export">Export</button>
-            `;
-        }
-        else {
+        } else {
             const emptyRow = document.createElement("tr");
-            emptyRow.innerHTML = `<td colspan="5">No products sold on this date.</td>`;
+            emptyRow.innerHTML = `<td colspan="6">No products sold on this date.</td>`;
             tbody.appendChild(emptyRow);
         }
 
+        const tfoot = document.createElement("tfoot");
+        tfoot.innerHTML = `
+            <tr class="sales-summary">
+                <td colspan="3"><strong>Totals:</strong></td>
+                <td><strong>${sale.totalProductsSold}</strong></td>
+                <td><strong>$${sale.totalRevenue.toFixed(2)}</strong></td>
+                <td><strong>$${sale.totalProfit.toFixed(2)}</strong></td>
+            </tr>
+        `;
+
+        const tableActions = document.createElement("div");
+        tableActions.classList.add("table-actions");
+        tableActions.id = "table-actions";
+        tableActions.innerHTML = `
+            <button type="button" class="export" id="export">Export</button>
+        `;
+
         table.appendChild(thead);
         table.appendChild(tbody);
+        table.appendChild(tfoot);
+
         container.appendChild(document.createElement("hr"));
-        container.appendChild(document.createElement("h3")).textContent = `Sales on ${sale.salesDate}`;
+        const header = document.createElement("h3");
+        header.textContent = `Sales on ${sale.salesDate}`;
+        container.appendChild(header);
         container.appendChild(table);
-        if (tableActions)
-            container.appendChild(tableActions);
+        container.appendChild(tableActions);
     });
-}
+}//<--------------->//
+
 
 //<Aside Section>//
 function toggleSidebar() {
