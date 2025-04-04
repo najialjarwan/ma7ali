@@ -908,7 +908,7 @@ aside {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
 }
 .cart-img-container{
   max-height: 100%;
@@ -1016,7 +1016,6 @@ aside {
   border-radius: 5px;
 }
 
-/* Overlay for loading effect */
 .product-loading-overlay {
   position: absolute;
   top: 0;
@@ -1032,7 +1031,6 @@ aside {
   transition: opacity 0.3s ease-in-out;
 }
 
-/* Loading spinner */
 .product-loading-overlay::after {
   content: "";
   width: 40px;
@@ -1043,7 +1041,6 @@ aside {
   animation: spin 1s linear infinite;
 }
 
-/* Glow effect on success */
 .glow-success {
   animation: glow 1s ease-in-out;
 }
@@ -1054,7 +1051,7 @@ aside {
 }
 
 @keyframes glow {
-  0% { box-shadow: 0 0 5px #3498db; }
-  50% { box-shadow: 0 0 20px #3498db; }
-  100% { box-shadow: 0 0 5px #3498db; }
+  0% { box-shadow: 0 0 5px #34db3c; }
+  50% { box-shadow: 0 0 20px #34db3c; }
+  100% { box-shadow: 0 0 60px #34db3c; }
 }

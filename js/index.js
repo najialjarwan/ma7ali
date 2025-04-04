@@ -13,6 +13,32 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 window.db = db;
 
+firebase.firestore().enablePersistence()
+    .then(() => {
+        console.log("Offline mode enabled!");
+    })
+    .catch((err) => {
+        console.error("Failed to enable offline mode:", err);
+    });
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/js/sw.js")
+        .then(() => console.log("🔥 Service Worker Registered!"))
+        .catch((err) => console.error("Service Worker Failed:", err));
+}
+
+function updateOnlineStatus() {
+    if (navigator.onLine) {
+        console.log("You are online!");
+    } else {
+        console.log("You are offline!");
+    }
+}
+
+window.addEventListener("load", updateOnlineStatus);
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+
 db.collection("test")
     .get()
     .then((snapshot) => {
@@ -729,7 +755,7 @@ function displayProductToAdd(product, productId) {
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
 
     actionBtn.addEventListener("click", function () {
-        console.log('product profit',product.profit);
+        console.log('product profit', product.profit);
         actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
             const productImage = productCard.querySelector("img");
@@ -756,19 +782,17 @@ async function addToSales(productId, productLabel, productPrice, productProfit) 
         const productCard = document.querySelector(`[data-product-id="${productId}"]`);
         const actionBtn = productCard.querySelector(".add-to-cart-btn");
 
-        // Disable button and show loading overlay
         actionBtn.disabled = true;
         const overlay = document.createElement("div");
         overlay.classList.add("product-loading-overlay");
         productCard.appendChild(overlay);
         setTimeout(() => overlay.style.opacity = "1", 10);
 
-        // Firestore operations
         const today = new Date();
         const dateString = today.toISOString().split("T")[0];
         const salesDocRef = db.collection("sales").doc(dateString);
         const productRef = db.collection("products").doc(productId);
-        
+
         const salesDoc = await salesDocRef.get();
         let totalProductsSold = salesDoc.exists ? (salesDoc.data().totalProductsSold || 0) : 0;
         let totalRevenue = salesDoc.exists ? (salesDoc.data().totalRevenue || 0) : 0;
@@ -803,14 +827,12 @@ async function addToSales(productId, productLabel, productPrice, productProfit) 
             await productRef.update({ stock: newStock });
         }
 
-        // Remove overlay and apply success glow effect
-        setTimeout(() => {
-            overlay.style.opacity = "0";
-            setTimeout(() => overlay.remove(), 300);
-            productCard.classList.add("glow-success");
-            setTimeout(() => productCard.classList.remove("glow-success"), 1000);
-            actionBtn.disabled = false;
-        }, 500);
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.remove(), 300);
+        productCard.classList.add("glow-success");
+        setTimeout(() => productCard.classList.remove("glow-success"), 1000);
+        actionBtn.disabled = false;
+
 
     } catch (error) {
         console.error("Error adding to sales:", error);
@@ -1697,7 +1719,7 @@ function renderSalesTable(salesData) {
             tableActions.innerHTML = `
                 <button type="button" class="export" id="export">Export</button>
             `;
-        } 
+        }
         else {
             const emptyRow = document.createElement("tr");
             emptyRow.innerHTML = `<td colspan="5">No products sold on this date.</td>`;
