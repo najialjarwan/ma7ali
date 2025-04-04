@@ -968,18 +968,46 @@ aside {
   border: none;
   background-color: lightgreen;
 }
-.add-to-cart-btn:active{
-  transform: scale(1.1);
-}
+
 .cancel-sale-btn{
   border: none;
   height: 50%;
   width: 100%;
   background-color: rgb(252, 47, 47);
 }
-.cancel-sale-btn:active{
-  transform: scale(1.1);
+
+/* Overlay styling */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
 }
+
+/* Progress container (centered) */
+.progress-container {
+  width: 50%;
+  max-width: 300px;
+  height: 15px;
+  background-color: #ddd;
+  overflow: hidden;
+}
+
+/* Actual progress bar (starts from left) */
+#progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: #4CAF50; /* green */
+  transition: width 1s ease;
+}
+
 
 .cart-display-container{
   width: 100%;
@@ -991,6 +1019,11 @@ aside {
   border-radius: 10px;
   background-color: var(--input-color);
   gap: 5px;
+  transform: scaleX(0);
+  transition: transform 0.2s ease-in;
+}
+.cart-display-container.show {
+  transform: scaleX(1);
 }
 
 .cart-display-container p{

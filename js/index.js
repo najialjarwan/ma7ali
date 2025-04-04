@@ -438,7 +438,7 @@ function showCartForm() {
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
-        <div class="cart-display-container" id="cart-display-container" style="display: none;"></div>
+        <div class="cart-display-container" id="cart-display-container"></div>
     `;
     fetchProductToAdd();
 
@@ -525,10 +525,11 @@ async function addCart() {
 }
 function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
-    cartDisplayContainer.style.display = "block";
+
+    cartDisplayContainer.classList.add('show');
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
-        <div class="cart-products-list-container" id="cart-products-list"></div>
+        <div class="cart-products-list-container" id="cart-products-list-container"></div>
     `;
 
     db.collection("carts").doc(cartId).onSnapshot(doc => {
@@ -557,7 +558,7 @@ function displayCart(cartId) {
             `;
         });
 
-        const cartProductsList = document.getElementById("cart-products-list");
+        const cartProductsList = document.getElementById("cart-products-list-container");
         if (cartProductsList) {
             cartProductsList.innerHTML = cartProductsHTML;
 
@@ -700,8 +701,8 @@ async function fetchProductToAdd() {
         // Listen for search input changes
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
-
-
+            if (searchValue === "" && !showSales)
+                return;
             const filteredProducts = allProducts.filter(product =>
                 product.label.toLowerCase().includes(searchValue)
             );
@@ -747,20 +748,20 @@ function displayProductToAdd(product, productId) {
         console.log('product profit', product.profit);
         actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
-            const productImage = productCard.querySelector("img");
             addToSales(productId, product.label, product.costPrice, product.profit);
-            if (productImage) {
-                animateImageToCart(productImage);
-            } else {
-                console.error("Product image not found in the product card.");
-            }
+            const productImage = productCard.querySelector("img");
+            animateImageToCart(productImage);
+        }
+        else {
+            showLoadingOverlay(1000);
         }
     });
 
     if (showSales) {
         const cancelBtn = productCard.querySelector(".cancel-sale-btn");
         cancelBtn.addEventListener("click", async function () {
-            await cancelSale(productId, productCard);
+            showLoadingOverlay(1000);
+            await cancelSale(productId);
         });
     }
 
@@ -812,7 +813,7 @@ async function addToSales(productId, productLabel, productPrice, productProfit) 
         console.error("Error adding to sales:", error);
     }
 }
-async function cancelSale(productId, productCard) {
+async function cancelSale(productId) {
     try {
         const today = new Date();
         const dateString = today.toISOString().split("T")[0];
@@ -852,7 +853,7 @@ async function cancelSale(productId, productCard) {
             await productSoldRef.delete();
             showModalMessage(`Product sale record deleted as quantity sold reached zero.
                 <p style='color: red;'>Canceling this item now will reduce the product stock!!</p>`, true);
-                showSalesForm();
+            showSalesForm();
         }
 
 
@@ -883,6 +884,34 @@ async function cancelSale(productId, productCard) {
     } catch (error) {
         console.error("Error canceling sale:", error);
     }
+}
+function showLoadingOverlay(duration = 1000) {
+    const overlay = document.getElementById("loading-overlay");
+    const progressBar = document.getElementById("progress-bar");
+
+    // Reset initial state
+    overlay.style.display = "flex";
+    overlay.style.opacity = "0";
+    progressBar.style.width = "0%";
+
+    // Trigger reflow to ensure transition kicks in
+    void overlay.offsetWidth;
+
+    // Animate overlay fade-in
+    overlay.style.opacity = "1";
+
+    // Animate progress bar filling after a short delay
+    setTimeout(() => {
+        progressBar.style.width = "100%";
+    }, 50);
+
+    // Hide overlay after it fills
+    setTimeout(() => {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.style.display = "none";
+        }, 500); // fade-out time
+    }, duration);
 }//-------------//
 
 
@@ -1113,7 +1142,7 @@ $(document).ready(function () {
                 <label for="costPrice">Cost Price:</label>
                 <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
-                <label for="profit">Cost Price:</label>
+                <label for="profit">Profit: </label>
                 <input type="number" id="profit" name="profit" value="${product.profit}">
                 
                 <label for="category">Category:</label>
