@@ -483,19 +483,13 @@ async function cancelCart() {
 
             // For each unit added in the cart, call cancelSale once.
             for (let i = 0; i < quantity; i++) {
-                await cancelSale(productId, null);
+                cancelSale(productId, null);
             }
         }
 
         // Now delete all cart product documents in a batch operation.
-        let batch = db.batch();
-        cartProductsSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
 
-        // Delete the cart document.
-        await cartDocRef.delete();
+        cartDocRef.delete();
 
         // Clear the current cart ID and update the UI.
         currentCartId = null;
@@ -645,7 +639,7 @@ function animateImageToCart(sourceImageElement) {
 
     // Calculate translation distances
     const translateX = targetRect.left - startRect.left;
-    const translateY = targetRect.top - startRect.top - 25;
+    const translateY = targetRect.top - startRect.top - 15;
 
     // Force reflow before applying the transform
     flyingImage.offsetWidth;
@@ -707,10 +701,6 @@ async function fetchProductToAdd() {
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
 
-            if (!searchValue) {
-                displayProducts(allProducts); // Show all products if search is empty
-                return;
-            }
 
             const filteredProducts = allProducts.filter(product =>
                 product.label.toLowerCase().includes(searchValue)
@@ -736,7 +726,6 @@ function displayProductToAdd(product, productId) {
     // Create product card element
     const productCard = document.createElement("div");
     productCard.classList.add("cart-product-card");
-    productCard.setAttribute("data-product-id", productId);
     productCard.innerHTML = `
         <div class="left">
             <img src="${product.img}" alt="${product.label}" width="100" height="100">
@@ -779,14 +768,6 @@ function displayProductToAdd(product, productId) {
 }
 async function addToSales(productId, productLabel, productPrice, productProfit) {
     try {
-        const productCard = document.querySelector(`[data-product-id="${productId}"]`);
-        const actionBtn = productCard.querySelector(".add-to-cart-btn");
-
-        actionBtn.disabled = true;
-        const overlay = document.createElement("div");
-        overlay.classList.add("product-loading-overlay");
-        productCard.appendChild(overlay);
-        setTimeout(() => overlay.style.opacity = "1", 10);
 
         const today = new Date();
         const dateString = today.toISOString().split("T")[0];
@@ -826,13 +807,6 @@ async function addToSales(productId, productLabel, productPrice, productProfit) 
             const newStock = Math.max(0, (productDoc.data().stock || 0) - 1);
             await productRef.update({ stock: newStock });
         }
-
-        overlay.style.opacity = "0";
-        setTimeout(() => overlay.remove(), 300);
-        productCard.classList.add("glow-success");
-        setTimeout(() => productCard.classList.remove("glow-success"), 1000);
-        actionBtn.disabled = false;
-
 
     } catch (error) {
         console.error("Error adding to sales:", error);
@@ -876,10 +850,9 @@ async function cancelSale(productId, productCard) {
             console.log("Decremented product sale record by one unit.");
         } else {
             await productSoldRef.delete();
-            console.log("Product sale record deleted as quantity reached zero.");
-            if (productCard) {
-                productCard.remove();
-            }
+            showModalMessage(`Product sale record deleted as quantity sold reached zero.
+                <p style='color: red;'>Canceling this item now will reduce the product stock!!</p>`, true);
+                showSalesForm();
         }
 
 
