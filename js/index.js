@@ -467,6 +467,7 @@ function showCartForm() {
     });
 
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
+    showLoadingOverlay(1500);
     cancelCartBtn.addEventListener("click", cancelCart);
 }
 async function cancelCart() {
@@ -1975,7 +1976,7 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
             {
                 content: "Customer Name:",
                 styles: {
-                    fillColor: [200, 200, 220], // Same as even row
+                    fillColor: [255, 255, 255], // Same as even row
                     fontStyle: "bold",
                     halign: "left",
                     cellWidth: 35
@@ -1995,7 +1996,7 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
             {
                 content: "Phone Number:",
                 styles: {
-                    fillColor: [200, 200, 220], // Same as even row
+                    fillColor: [255, 255, 255], // Same as even row
                     fontStyle: "bold",
                     halign: "left",
                     cellWidth: 35
@@ -2030,14 +2031,14 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
         alternateRowStyles: false,
         didParseCell: data => {
             if (data.section === "head") {
-                data.cell.styles.fillColor = [200, 200, 220];
+                data.cell.styles.fillColor = [255, 255, 255];
                 data.cell.styles.fontStyle = "bold";
                 data.cell.styles.textColor = [0, 0, 0];
             } else if (data.section === "body") {
                 if (data.row.index % 2 === 0) {
                     data.cell.styles.fillColor = [250, 250, 210]; // Even
                 } else {
-                    data.cell.styles.fillColor = [255, 255, 255]; // Odd
+                    data.cell.styles.fillColor = [255, 240 ,100]; // Odd
                 }
             }
         },
@@ -2335,4 +2336,5 @@ async function exportSalesTableToPDF(event) {
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
+    showLoadingOverlay(1500);
 });
