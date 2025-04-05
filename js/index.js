@@ -1875,9 +1875,12 @@ async function exportToPDF(data) {
         const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded from the CDN
         const pdf = new jsPDF();
 
+        pdf.setFillColor(255, 255, 255); // RGB color
+        pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
+
         // Add title
         pdf.setFontSize(16);
-        pdf.text("Product List", 10, 10);
+        pdf.text("Products List", 10, 10);
 
         // Define table headers and rows
         const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
@@ -1891,11 +1894,34 @@ async function exportToPDF(data) {
             product.createdAt
         ]);
 
-        // Use autoTable to create the table
         pdf.autoTable({
             head: [columns],
             body: rows,
-            startY: 20, // Start below the title
+            startY: 20,
+            theme: "grid",
+            styles: {
+                valign: "middle",
+                halign: "center",
+                fontSize: 10,
+                lineWidth: 0.3,
+                lineColor: [0, 0, 0]
+            },
+            alternateRowStyles: false, // We'll handle this manually
+            didParseCell: data => {
+                if (data.section === "head") {
+                    data.cell.styles.fillColor = [200, 200, 220]; // Header background
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.textColor = [0, 0, 0];
+                } else if (data.section === "body") {
+                    if (data.row.index % 2 === 0) {
+                        // Even rows
+                        data.cell.styles.fillColor = [250, 250, 210]; // Light background
+                    } else {
+                        // Odd rows
+                        data.cell.styles.fillColor = [255, 255, 255]; // White background
+                    }
+                }
+            }
         });
 
         // Save the PDF
@@ -1925,23 +1951,110 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
+
 function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
+    pdf.setFillColor(200, 200, 220); // RGB color
+    pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
+    // Title
     pdf.setFontSize(16);
     pdf.text("Customer Debt Details", 10, 10);
-    pdf.setFontSize(12);
-    pdf.text(`Customer Name: ${customerName}`, 10, 20);
-    pdf.text(`Phone Number: ${customerPhone}`, 10, 30);
 
+    // Prepare columns and rows
     const columns = ["Details", "Balance ($)", "Created At"];
-    const rows = debtDetails.map(debt => [debt.details, debt.balance, debt.createdAt]);
+    const rows = debtDetails.map(debt => [
+        debt.details,
+        debt.balance,
+        debt.createdAt
+    ]);
 
+    const customerInfo = [
+        [
+            {
+                content: "Customer Name:",
+                styles: {
+                    fillColor: [200, 200, 220], // Same as even row
+                    fontStyle: "bold",
+                    halign: "left",
+                    cellWidth: 35
+                }
+            },
+            {
+                content: customerName,
+                styles: {
+                    fillColor: [250, 250, 210],
+                    fontStyle: "normal",
+                    halign: "left",
+                    cellWidth: 84
+                }
+            }
+        ],
+        [
+            {
+                content: "Phone Number:",
+                styles: {
+                    fillColor: [200, 200, 220], // Same as even row
+                    fontStyle: "bold",
+                    halign: "left",
+                    cellWidth: 35
+                }
+            },
+            {
+                content: customerPhone,
+                styles: {
+                    fillColor: [250, 250, 210],
+                    fontStyle: "normal",
+                    halign: "left",
+                    cellWidth: 84
+                }
+            }
+        ]
+    ];
+
+    // Generate the table with styled headers and rows
     pdf.autoTable({
         head: [columns],
         body: rows,
-        startY: 40,
+        startY: 50,
+        margin: { top: 10 },
+        theme: "grid",
+        styles: {
+            valign: "middle",
+            halign: "center",
+            fontSize: 10,
+            lineWidth: 0.3,
+            lineColor: [0, 0, 0],
+        },
+        alternateRowStyles: false,
+        didParseCell: data => {
+            if (data.section === "head") {
+                data.cell.styles.fillColor = [200, 200, 220];
+                data.cell.styles.fontStyle = "bold";
+                data.cell.styles.textColor = [0, 0, 0];
+            } else if (data.section === "body") {
+                if (data.row.index % 2 === 0) {
+                    data.cell.styles.fillColor = [250, 250, 210]; // Even
+                } else {
+                    data.cell.styles.fillColor = [255, 255, 255]; // Odd
+                }
+            }
+        },
+        didDrawPage: function (data) {
+            // Insert customer info table above the main table
+            pdf.autoTable({
+                body: customerInfo,
+                startY: 20,
+                theme: "plain",
+                styles: {
+                    fontSize: 11,
+                    textColor: [0, 0, 0],
+                    lineWidth: 0.3,
+                    lineColor: [0, 0, 0],
+                }
+            });
+        }
     });
 
     // Save the PDF
@@ -1959,6 +2072,7 @@ async function fetchDebtDetailsForExport(customerId) {
     });
     return debts;
 }
+
 async function exportCartToPDF() {
     if (!currentCartId) {
         console.error("No active cart to export.");
@@ -1971,6 +2085,7 @@ async function exportCartToPDF() {
         console.error("Cart does not exist.");
         return;
     }
+
     const cartData = cartSnapshot.data();
 
     // Fetch cart products from the subcollection
@@ -1979,6 +2094,7 @@ async function exportCartToPDF() {
         alert("Cart is empty. Please add products before exporting.");
         return;
     }
+
     const cartProducts = cartProductsSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -1989,33 +2105,100 @@ async function exportCartToPDF() {
         };
     });
 
-    // Create PDF using jsPDF and autoTable
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
-    // Title for the PDF
-    pdf.setFontSize(16);
-    pdf.text("Cart Export", 10, 10);
+    pdf.setFillColor(180, 180, 250); // RGB color
+    pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
 
-    // --- Cart Details Table ---
-    // Prepare cart details in a table-friendly format
+    // Title
+    pdf.setFontSize(16);
+    pdf.text("Cart Details", 10, 10);
+
+    // --- Styled Cart Details Table ---
     const cartDetails = [
-        ["Cart Name", cartData.name],
-        ["Date Created", cartData.dateCreated.toDate().toLocaleString()],
-        ["Total Cost", `$${cartData.totalCost.toFixed(2)}`]
+        [
+            {
+                content: "Cart Name:",
+                styles: {
+                    fillColor: [200, 200, 220], // Even row color
+                    fontStyle: "bold",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 30
+                }
+            },
+            {
+                content: cartData.name,
+                styles: {
+                    fillColor: [250, 250, 210],
+                    fontStyle: "normal",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 63
+                }
+            }
+        ],
+        [
+            {
+                content: "Date Created:",
+                styles: {
+                    fillColor: [200, 200, 220],
+                    fontStyle: "bold",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 30
+                }
+            },
+            {
+                content: cartData.dateCreated.toDate().toLocaleString(),
+                styles: {
+                    fillColor: [250, 250, 210],
+                    fontStyle: "normal",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 63
+                }
+            }
+        ],
+        [
+            {
+                content: "Total Cost:",
+                styles: {
+                    fillColor: [200, 200, 220],
+                    fontStyle: "bold",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 30
+                }
+            },
+            {
+                content: `$${cartData.totalCost.toFixed(2)}`,
+                styles: {
+                    fillColor: [250, 250, 210],
+                    fontStyle: "normal",
+                    halign: "left",
+                    textColor: [0, 0, 0],
+                    cellWidth: 63
+                }
+            }
+        ]
     ];
 
     pdf.autoTable({
-        head: [["Cart Detail", "Value"]],
         body: cartDetails,
         startY: 20,
-        theme: "grid"
+        theme: "grid",
+        styles: {
+            fontSize: 11,
+            valign: "middle",
+            lineWidth: 0.3,
+            lineColor: [0, 0, 0]
+        }
     });
 
-    // --- Cart Products Table ---
-    // Determine the starting Y position after the first table
+    // --- Styled Cart Products Table ---
     const finalY = pdf.lastAutoTable.finalY + 10;
-
     const columns = ["Product Name", "Quantity", "Cost Price ($)", "Total ($)"];
     const rows = cartProducts.map(product => [
         product.name,
@@ -2028,16 +2211,40 @@ async function exportCartToPDF() {
         head: [columns],
         body: rows,
         startY: finalY,
-        theme: "grid"
+        theme: "grid",
+        styles: {
+            valign: "middle",
+            halign: "center",
+            fontSize: 10,
+            lineWidth: 0.3,
+            lineColor: [0, 0, 0]
+        },
+        alternateRowStyles: false,
+        didParseCell: data => {
+            if (data.section === "head") {
+                data.cell.styles.fillColor = [200, 200, 220];
+                data.cell.styles.fontStyle = "bold";
+                data.cell.styles.textColor = [0, 0, 0];
+            } else if (data.section === "body") {
+                data.cell.styles.fillColor = data.row.index % 2 === 0
+                    ? [250, 250, 210]
+                    : [255, 255, 255];
+                data.cell.styles.textColor = [0, 0, 0];
+            }
+        }
     });
 
-    // Save the PDF file; using the cart name in the filename
+    // Save PDF
     pdf.save(`${cartData.name}_export.pdf`);
 }
+
 async function exportSalesTableToPDF(event) {
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
+
+        pdf.setFillColor(250, 250, 210); // RGB color
+        pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
 
         // Locate the button that triggered the export
         const button = event.target;
@@ -2088,7 +2295,7 @@ async function exportSalesTableToPDF(event) {
             body: rowsWithFooter,
             startY: 20,
             theme: "grid",
-            styles: { 
+            styles: {
                 valign: "middle", // Vertically center content in all cells
                 halign: "center", // Horizontally center content in all cells
                 fontSize: 10,
@@ -2116,7 +2323,7 @@ async function exportSalesTableToPDF(event) {
                     }
                 }
             }
-        });        
+        });
 
         // Save the PDF
         pdf.save(`sales-report-${salesDate}.pdf`);
