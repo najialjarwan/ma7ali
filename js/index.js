@@ -48,6 +48,7 @@ db.collection("test")
         console.error("Error connecting to Firestore:", error);
     });
 
+
 function initializeEventListeners() {
 
     const popButton = document.getElementById("pop");
@@ -141,7 +142,6 @@ function initializeEventListeners() {
         popButton.classList.remove("active");
     }
 }
-
 async function loadContent(section) {
 
     const mainContent = document.querySelector(".main-content");
@@ -174,6 +174,7 @@ async function loadContent(section) {
         console.error(error);
     }
 }
+
 
 //<Adder Section>//
 //>addproduct//
@@ -1435,7 +1436,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 </thead>
                 <tbody id="debt-details-table"></tbody>
             </table>
-            <p>Total Balance: <span id="total-balance">0</span></p>
+            <p><strong>Total Balance: <span id="total-balance">0</span></strong></p>
             <div class="debt-actions" id="debt-actions">
                 <button type="button" class="add-debt" id="add-debt">Add</button>
                 <button type="button" class="export" id="export">Export</button>
@@ -1554,6 +1555,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
     });
 }//<---------------->//
+
 
 //<CartAndSales Section>//
 function initCartAndSalesSection() {
@@ -1729,7 +1731,7 @@ function renderSalesTable(salesData) {
         tableActions.classList.add("table-actions");
         tableActions.id = "table-actions";
         tableActions.innerHTML = `
-            <button type="button" class="export" id="export">Export</button>
+            <button type="button" class="export-sales">Export</button>
         `;
 
         table.appendChild(thead);
@@ -1742,6 +1744,11 @@ function renderSalesTable(salesData) {
         container.appendChild(header);
         container.appendChild(table);
         container.appendChild(tableActions);
+
+        const exportButtons = container.querySelectorAll(".export-sales");
+        exportButtons.forEach((button, index) => {
+            button.addEventListener("click", event => exportSalesTableToPDF(event, index));
+        });
     });
 }//<--------------->//
 
@@ -1860,6 +1867,7 @@ function showModalMessage(message, isSuccess) {
     // Append modal to the body
     document.body.appendChild(modalContainer);
 }//<--------------->//
+
 
 //*Exporting Functions*//
 async function exportToPDF(data) {
@@ -2026,6 +2034,97 @@ async function exportCartToPDF() {
     // Save the PDF file; using the cart name in the filename
     pdf.save(`${cartData.name}_export.pdf`);
 }
+async function exportSalesTableToPDF(event) {
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        // Locate the button that triggered the export
+        const button = event.target;
+
+        // Find the associated table and its header
+        const table = button.closest(".table-actions").previousElementSibling; // <table>
+        const salesHeader = table.previousElementSibling; // <h3>Sales on DATE
+
+        if (!table || !salesHeader) {
+            console.error("Table or header not found.");
+            return;
+        }
+
+        const salesDate = salesHeader.textContent.replace("Sales on ", "").trim();
+
+        // Set PDF title
+        pdf.setFontSize(16);
+        pdf.text(`Sales Report - ${salesDate}`, 10, 10);
+
+        // Extract headers from <thead>
+        const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText);
+
+        // Extract rows from <tbody>
+        const bodyRows = Array.from(table.querySelectorAll("tbody tr")).map(row =>
+            Array.from(row.querySelectorAll("td")).map(td => td.innerText)
+        );
+
+        // Extract the footer row from <tfoot>
+        const footerRow = table.querySelector("tfoot tr");
+        const footerCells = Array.from(footerRow.querySelectorAll("td")).map((td, index) => {
+            if (index === 0) {
+                return {
+                    content: td.innerText,
+                    colSpan: 3,
+                    styles: { halign: "center", fontStyle: "bold" }
+                };
+            } else {
+                return { content: td.innerText, styles: { fontStyle: "bold" } };
+            }
+        });
+
+        // Combine body rows and footer row
+        const rowsWithFooter = [...bodyRows, footerCells];
+
+        // Generate the table in the PDF with row styling
+        pdf.autoTable({
+            head: [headers],
+            body: rowsWithFooter,
+            startY: 20,
+            theme: "grid",
+            styles: { 
+                valign: "middle", // Vertically center content in all cells
+                halign: "center", // Horizontally center content in all cells
+                fontSize: 10,
+                lineWidth: 0.3, // Set border thickness to 3 pixels for all cells
+                lineColor: [0, 0, 0] // Border color (black in RGB)
+            },
+            alternateRowStyles: false, // Disable default row styling
+            didParseCell: data => {
+                if (data.section === "head") {
+                    // Apply specific styles for header cells
+                    data.cell.styles.fillColor = [200, 200, 220]; // Background color for headers
+                    data.cell.styles.fontStyle = "bold"; // Bold font for headers
+                    data.cell.styles.textColor = [0, 0, 0]; // Black text for headers
+                } else if (data.section === "body") {
+                    if (data.row.index === bodyRows.length) {
+                        // Styling for totals row (footer)
+                        data.cell.styles.fillColor = [211, 211, 211]; // Light goldenrod yellow
+                        data.cell.styles.fontStyle = "bold"; // Bold font
+                    } else if (data.row.index % 2 === 0) {
+                        // Even row styling
+                        data.cell.styles.fillColor = [250, 250, 210]; // Light gray
+                    } else {
+                        // Odd row styling
+                        data.cell.styles.fillColor = [255, 255, 255]; // White background
+                    }
+                }
+            }
+        });        
+
+        // Save the PDF
+        pdf.save(`sales-report-${salesDate}.pdf`);
+    } catch (error) {
+        console.error("Error exporting sales table:", error);
+    }
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();

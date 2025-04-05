@@ -649,11 +649,66 @@ aside {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
 }
 
+.customer-table table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+}
+
 .customer-table p{
   border: 1px solid black;
   background-color: var(--accent-color);
   color: var(--text-color);
   margin: 0px;
+}
+
+.customer-table th {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  font-size: 1em;
+  text-align: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+#debt-details-table tr:nth-child(odd){
+  background-color: var(--input-color);
+}
+#debt-details-table tr:nth-child(even) {
+  background-color: lightgoldenrodyellow;
+}
+
+.customer-table td {
+  text-align: center;
+  border: 1px solid var(--text-color);
+  color: var(--text-color);
+  padding: 5px;
+  font-size: 0.8em;
+  word-wrap: break-word;
+  max-width: 120px;
+  padding: 4px;
+  height: 100%;
+  border: 1px solid #000;
+  box-sizing: border-box;
+}
+
+#debt-details-table tr td:last-child{
+  background-color: lightgray;
+  padding: 0;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+#debt-details-table .remove-debt-btn {
+  color: red;
+  width: 100%;
+  height: 100%;
+  background-color: lightgray;
+  border: none;
+}
+
+.customer-table .remove-debt-btn:active {
+  transform: scaleY(0.8);
 }
 
 .customer-table .debt-actions{
@@ -664,7 +719,6 @@ aside {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-
 }
 
 .customer-table .debt-actions button{
@@ -677,59 +731,7 @@ aside {
 }
 
 .add-debt:active, .export:active{
-  transform: scale(0.90);
-}
-
-.customer-table table {
-  width: 100%;
-  max-width: 100%;
-  border-collapse: collapse;
-}
-
-.customer-table th {
-  background-color: var(--accent-color);
-  color: var(--text-color);
-  font-size: 1em;
-  text-align: center;
-  border: 1px solid black;
-  padding: 5px;
-}
-
-.customer-table td {
-  text-align: left;
-  vertical-align: top; 
-  background-color: var(--input-color);
-  border: 1px solid var(--text-color);
-  color: var(--text-color);
-  padding: 5px;
-  font-size: 0.8em;
-  word-wrap: break-word;
-  max-width: 120px;
-  padding: 4px;
-  border: 1px solid #000;
-  height: auto;          
-  box-sizing: border-box;
-}
-
-.customer-table td:last-child {
-  height: 100%; 
-  position: relative;
-  background-color: lightgray;
-}
-
-.customer-table .remove-debt-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: red;
-  border: none;
-  padding: 15px;
-  font-size: 0.7em;
-  background-color: lightgray;
-}
-
-.customer-table .remove-debt-btn:active {
-  transform: scale(0.90);
+  transform: scaleY(0.8);
 }
 
 /* CartsAndSales Section */
@@ -767,7 +769,11 @@ aside {
   border: 1px solid var(--text-color);
   font-size: 0.9em;
 }
-
+.sales-table tfoot tr{
+  background-color: lightgrey;
+  color: var(--text-color);
+  font-size: 0.9em;
+}
 .table-actions{
   display: flex;
   justify-content: center;
@@ -777,12 +783,15 @@ aside {
   border: 1px solid var(--text-color);
   padding: 5px;
 }
-.table-actions button{
+.export-sales{
   background: linear-gradient(to right, white, rgb(255, 243, 177));
-  color: var(--text-color);
-  border: none;
+  border: 1px solid var(--text-color);
+  color: var(--btnText-color);
   border-radius: 5px;
   width: 50%;
+}
+.export-sales:active{
+  transform: scaleY(0.8);
 }
 
 /* Adder Section */
