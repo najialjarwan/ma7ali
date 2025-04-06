@@ -1453,8 +1453,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     document.getElementById("export").addEventListener("click", async () => {
         try {
-            const debtDetails = await fetchDebtDetailsForExport(customerId);
-            exportDebtDetailsToPDF(debtDetails, customerName, customerPhone);
+            const { debts, total } = await fetchDebtDetailsForExport(customerId);
+            exportDebtDetailsToPDF(debts, customerName, customerPhone, total);
         } catch (error) {
             console.error("Error exporting debt details:", error);
         }
@@ -1634,7 +1634,6 @@ async function fetchSalesData() {
     return salesData;
 }
 function populateDropdown(salesData) {
-    const select = document.getElementById("sales-date-select");
     const optGroup = document.getElementById("specific-dates-group");
 
     // Clear previous dates if needed
@@ -1949,20 +1948,28 @@ async function fetchProductsforExporting() {
         if (categoryFilter) {
             query = query.where("category", "==", categoryFilter);
         }
-        
+
         // Filter by stock level
-        if (stockFilter === "low-stock") {
-            query = query.where("stock", ">=", 1).where("stock", "<=", 10);
-        } else if (stockFilter === "medium-stock") {
-            query = query.where("stock", ">=", 11).where("stock", "<=", 50);
-        } else if (stockFilter === "high-stock") {
-            query = query.where("stock", ">=", 51);
+        if (stockFilter) {
+            if (stockFilter === "low-stock") {
+                query = query.where("stock", "<=", 10);
+            } else if (stockFilter === "medium-stock") {
+                query = query.where("stock", ">=", 11).where("stock", "<=", 50);
+            } else if (stockFilter === "high-stock") {
+                query = query.where("stock", ">=", 51);
+            }
         }
-        
+
         // Sort by cost price
         if (sortFilter) {
             query = query.orderBy("costPrice", sortFilter);
-        }        
+        }
+
+        // Ensure that Firestore orders by category as well to allow the filters to work
+        query = query.orderBy("category");
+
+        // Finally, ensure correct ordering by document ID (__name__) if needed
+        query = query.orderBy("__name__");
 
         const snapshot = await query.get();
         const products = snapshot.docs.map(doc => {
@@ -1985,17 +1992,32 @@ async function fetchProductsforExporting() {
     }
 }
 
-function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
+async function fetchDebtDetailsForExport(customerId) {
+    const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
+    let total = 0;
+
+    const debts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        total += data.balance;
+        return {
+            details: data.details,
+            balance: data.balance.toFixed(2),
+            createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Unknown Date",
+        };
+    });
+
+    return { debts, total: total.toFixed(2) };
+}
+function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
-    pdf.setFillColor(200, 200, 220); // RGB color
+    pdf.setFillColor(200, 200, 220);
     pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
-    // Title
+
     pdf.setFontSize(16);
     pdf.text("Customer Debt Details", 10, 10);
 
-    // Prepare columns and rows
     const columns = ["Details", "Balance ($)", "Created At"];
     const rows = debtDetails.map(debt => [
         debt.details,
@@ -2003,50 +2025,22 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
         debt.createdAt
     ]);
 
+    // Add final total row with merged cells
+    rows.push([
+        { content: `Total Balance: $${totalBalance}`, colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 210] } }
+    ]);
+
     const customerInfo = [
         [
-            {
-                content: "Customer Name:",
-                styles: {
-                    fillColor: [255, 255, 255], // Same as even row
-                    fontStyle: "bold",
-                    halign: "left",
-                    cellWidth: 35
-                }
-            },
-            {
-                content: customerName,
-                styles: {
-                    fillColor: [250, 250, 210],
-                    fontStyle: "normal",
-                    halign: "left",
-                    cellWidth: 84
-                }
-            }
+            { content: "Customer Name:", styles: { fillColor: [255, 255, 255], fontStyle: "bold", halign: "left", cellWidth: 35 } },
+            { content: customerName, styles: { fillColor: [250, 250, 210], halign: "left", cellWidth: 84 } }
         ],
         [
-            {
-                content: "Phone Number:",
-                styles: {
-                    fillColor: [255, 255, 255], // Same as even row
-                    fontStyle: "bold",
-                    halign: "left",
-                    cellWidth: 35
-                }
-            },
-            {
-                content: customerPhone,
-                styles: {
-                    fillColor: [250, 250, 210],
-                    fontStyle: "normal",
-                    halign: "left",
-                    cellWidth: 84
-                }
-            }
+            { content: "Phone Number:", styles: { fillColor: [255, 255, 255], fontStyle: "bold", halign: "left", cellWidth: 35 } },
+            { content: customerPhone, styles: { fillColor: [250, 250, 210], halign: "left", cellWidth: 84 } }
         ]
     ];
 
-    // Generate the table with styled headers and rows
     pdf.autoTable({
         head: [columns],
         body: rows,
@@ -2068,14 +2062,13 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
                 data.cell.styles.textColor = [0, 0, 0];
             } else if (data.section === "body") {
                 if (data.row.index % 2 === 0) {
-                    data.cell.styles.fillColor = [250, 250, 210]; // Even
+                    data.cell.styles.fillColor = [250, 250, 210];
                 } else {
-                    data.cell.styles.fillColor = [255, 240, 100]; // Odd
+                    data.cell.styles.fillColor = [255, 240, 100];
                 }
             }
         },
-        didDrawPage: function (data) {
-            // Insert customer info table above the main table
+        didDrawPage: function () {
             pdf.autoTable({
                 body: customerInfo,
                 startY: 20,
@@ -2090,21 +2083,9 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
         }
     });
 
-    // Save the PDF
     pdf.save(`${customerName}_debt_details.pdf`);
 }
-async function fetchDebtDetailsForExport(customerId) {
-    const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
-    const debts = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            details: data.details,
-            balance: data.balance.toFixed(2),
-            createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Unknown Date",
-        };
-    });
-    return debts;
-}
+
 
 async function exportCartToPDF() {
     if (!currentCartId) {
