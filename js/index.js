@@ -1671,6 +1671,7 @@ function setupCartClickListeners() {
             if (productsContainer.dataset.loaded === "true") {
                 console.log(`Showing cached products for cart: ${cartId}`);
                 productsContainer.classList.add("show");
+
                 return;
             }
 
