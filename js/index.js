@@ -221,7 +221,7 @@ async function addProduct() {
     const form = document.getElementById("product-form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-
+        showLoadingOverlay(1500);
         const formData = new FormData(form);
         const convertToJPEG = (file) => {
             return new Promise((resolve, reject) => {
@@ -318,7 +318,7 @@ async function addProduct() {
                 .get();
 
             if (!snapshot.empty || !labelSnapshot.empty) {
-                showModalMessage("Item already exists. Please update the item instead.", false);
+                showModalMessage("Item already exists. update or check the item details.", false);
                 form.reset();
                 return;
             }
@@ -335,10 +335,9 @@ async function addProduct() {
 
                 allProducts.push({
                     ...newProductData,
-                    id: docRef.id, // Firestore-generated ID
-                    createdAt: newProductData.createdAt.toDate().toLocaleDateString() // ✅ Get proper date
+                    id: docRef.id,
+                    createdAt: newProductData.createdAt.toDate().toLocaleDateString()
                 });
-
                 showModalMessage("Product added successfully!", true);
                 form.reset();
             } catch (error) {
@@ -457,6 +456,7 @@ function showCartForm() {
         cartName.disabled = true;
 
         try {
+            showLoadingOverlay(1500);
             await addCart();
             document.getElementById("search-customers").disabled = false;
         } catch (error) {
@@ -467,7 +467,6 @@ function showCartForm() {
     });
 
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
-    showLoadingOverlay(1500);
     cancelCartBtn.addEventListener("click", cancelCart);
 }
 async function cancelCart() {
@@ -526,8 +525,9 @@ async function addCart() {
 }
 async function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
-    await showLoadingOverlay(1400);
-    cartDisplayContainer.style.display = "block";
+    setTimeout(() => {
+        cartDisplayContainer.style.display = "block";
+    }, 1300);
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
         <div class="cart-products-list-container" id="cart-products-list-container"></div>
@@ -687,13 +687,23 @@ async function fetchProductToAdd() {
             ...doc.data()
         }));
 
-        // Function to display products (filtered or all)
         function displayProducts(filteredProducts) {
             productCardContainer.innerHTML = ""; // Clear previous content
+
+            if (filteredProducts.length === 0) {
+                productCardContainer.innerHTML = `
+                <div class="no-products-message">
+                    No products found. Check Product name!
+                </div>
+                `;
+                return;
+            }
+
             filteredProducts.forEach(product => {
                 displayProductToAdd(product, product.id);
             });
         }
+
 
         // Display all products initially
         if (showSales)
@@ -702,10 +712,8 @@ async function fetchProductToAdd() {
         // Listen for search input changes
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
-            if (searchValue === "" && !showSales)
-                return;
             const filteredProducts = allProducts.filter(product =>
-                product.label.toLowerCase().includes(searchValue)
+                product.label.toLowerCase() === searchValue
             );
             displayProducts(filteredProducts); // Show filtered products
         });
@@ -1068,8 +1076,6 @@ async function fetchProducts() {
 let allProducts = [];
 $(document).ready(function () {
 
-    const db = firebase.firestore();
-
     function fetchProducts() {
         return db.collection("products").get().then((querySnapshot) => {
             let products = [];
@@ -1309,7 +1315,7 @@ $(document).ready(function () {
         $(".search-bar").on("input", function () {
             let searchText = $(this).val().toLowerCase().trim();
             let filtered = allProducts.filter(product =>
-                product.label.toLowerCase().includes(searchText)
+                product.label.toLowerCase() === (searchText)
             );
 
             displayProducts(filtered);
@@ -1505,15 +1511,15 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     document.getElementById("remove-customer-btn").addEventListener("click", async () => {
         try {
+            setTimeout(() => initCustomersPage(), 10);
             await db.collection("customers").doc(customerId).delete();
-            showModalMessage("Customer removed successfully!", true);
-            setTimeout(() => document.getElementById("view-customers-btn").click(), 10);
         } catch (error) {
             showModalMessage(`Error removing customer: ${error.message}`, false);
         }
     });
 
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
+        initCustomersPage();
     });
 
     document.getElementById("add-debt").addEventListener("click", () => {
@@ -1933,7 +1939,32 @@ async function exportToPDF(data) {
 }
 async function fetchProductsforExporting() {
     try {
-        const snapshot = await db.collection("products").get();
+        const categoryFilter = document.getElementById("category-select").value;
+        const stockFilter = document.getElementById("stock-select").value;
+        const sortFilter = document.getElementById("sort-select").value;
+
+        let query = db.collection("products");
+
+        // Filter by category
+        if (categoryFilter) {
+            query = query.where("category", "==", categoryFilter);
+        }
+        
+        // Filter by stock level
+        if (stockFilter === "low-stock") {
+            query = query.where("stock", ">=", 1).where("stock", "<=", 10);
+        } else if (stockFilter === "medium-stock") {
+            query = query.where("stock", ">=", 11).where("stock", "<=", 50);
+        } else if (stockFilter === "high-stock") {
+            query = query.where("stock", ">=", 51);
+        }
+        
+        // Sort by cost price
+        if (sortFilter) {
+            query = query.orderBy("costPrice", sortFilter);
+        }        
+
+        const snapshot = await query.get();
         const products = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -1946,6 +1977,7 @@ async function fetchProductsforExporting() {
                 createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
             };
         });
+
         return products;
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -2038,7 +2070,7 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone) {
                 if (data.row.index % 2 === 0) {
                     data.cell.styles.fillColor = [250, 250, 210]; // Even
                 } else {
-                    data.cell.styles.fillColor = [255, 240 ,100]; // Odd
+                    data.cell.styles.fillColor = [255, 240, 100]; // Odd
                 }
             }
         },
@@ -2332,7 +2364,6 @@ async function exportSalesTableToPDF(event) {
         console.error("Error exporting sales table:", error);
     }
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
