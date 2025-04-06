@@ -1028,7 +1028,7 @@ aside {
   height: 100%;
   width: 0%;
   background-color: #4CAF50;
-  transition: width 1s ease;
+  transition: width 0.8s ease;
   z-index: 1;
 }
 

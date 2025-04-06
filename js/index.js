@@ -769,7 +769,7 @@ function displayProductToAdd(product, productId) {
     if (showSales) {
         const cancelBtn = productCard.querySelector(".cancel-sale-btn");
         cancelBtn.addEventListener("click", async function () {
-            showLoadingOverlay(1500);
+            showLoadingOverlay();
             await cancelSale(productId);
         });
     }
@@ -894,7 +894,7 @@ async function cancelSale(productId) {
         console.error("Error canceling sale:", error);
     }
 }
-function showLoadingOverlay(duration = 1500) {
+function showLoadingOverlay(duration = 900) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("loading-overlay");
         const progressBar = document.getElementById("progress-bar");
@@ -914,7 +914,7 @@ function showLoadingOverlay(duration = 1500) {
             setTimeout(() => {
                 overlay.style.display = "none";
                 resolve(); // Animation complete
-            }, 400); // Fade-out time
+            }, 10); // Fade-out time
         }, duration);
     });
 }
