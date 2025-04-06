@@ -735,6 +735,7 @@ aside {
 }
 
 /* CartsAndSales Section */
+/* Sales Section */
 .sales-container{
   width: 100%;
   max-width: 100%;
@@ -793,6 +794,61 @@ aside {
 .export-sales:active{
   transform: scaleY(0.8);
 }
+
+/* Carts Section */
+.carts-container{
+  width: 100%;
+  max-width: 100%;
+  overflow-y: scroll;
+}
+
+.cart-entry {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0;
+  margin-top: 10px;
+  background-color: var(--accent-color);
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+.cart-summary{
+  border-bottom: 3px solid var(--input-color);
+}
+.cart-summary p {
+  margin: 0px;
+}
+
+.hidden-products {
+  max-height: 0;
+  width: 100%;
+  overflow: hidden;
+  transition: max-height 1.1s linear;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+}
+
+/* This class will be added when we want to show products */
+.hidden-products.show {
+  max-height: 1000px;
+  width: 100%; /* Adjust based on expected size */
+}
+
+.product-item {
+  background-color: #f1f1f1;
+  border-radius: 6px;
+  width: 100%;
+  padding: 0;
+}
+
+.product-item p{
+  padding: 0;
+  margin: 0;
+}
+
 
 /* Adder Section */
 /* addProduct - addCustomer - Edit Customer*/
@@ -1047,8 +1103,6 @@ aside {
   z-index: 2; /* Make sure it's above the green bar */
   pointer-events: none; /* Don't block clicks */
 }
-
-
 
 .cart-display-container{
   width: 100%;

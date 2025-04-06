@@ -1568,11 +1568,151 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 function initCartAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
+        <h2>Sales and Carts</h2>
+        <button type="submit" id="view-carts-btn" class="func-btn">View Carts</button>
         <div class="sales-container" id="sales-container"></div>
-        <div class="carts-container" id="carts-container"></div>
                             `;
     loadSalesData();
+
+    const viewCartsBtn = document.getElementById("view-carts-btn");
+    viewCartsBtn.addEventListener("click", async () => {
+
+        mainContent.innerHTML = `
+            <div class="carts-container" id="carts-container">
+
+                <div class="search-customer-container search-container-main" >
+                    <input type="text" class="search-bar" id="search-cart" disabled placeholder="Search Cart"/>
+                    <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+                </div>
+
+                <div class="carts-table" id="carts-table"></div>
+            </div>`;
+
+        const cartsData = await fetchCartsData();
+        renderCartsTable(cartsData);
+    });
 }
+//carts sections//
+async function fetchCartsData() {
+    console.log("Fetching carts data...");
+    try {
+        const cartsSnapshot = await firebase.firestore().collection("carts").get();
+        const carts = [];
+
+        cartsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            carts.push({
+                id: doc.id,
+                name: data.name,
+                totalCost: data.totalCost,
+                dateCreated: data.dateCreated.toDate(), // Convert Firestore Timestamp to JS Date
+            });
+        });
+
+        console.log(`Fetched ${carts.length} carts.`);
+        return carts;
+    } catch (error) {
+        console.error("Error fetching carts:", error);
+        return [];
+    }
+}
+function renderCartsTable(carts) {
+    console.log("Rendering carts table...");
+    const cartsTable = document.getElementById("carts-table");
+    cartsTable.innerHTML = "";
+
+    if (carts.length === 0) {
+        cartsTable.innerHTML = "<p>No carts found.</p>";
+        return;
+    }
+
+    carts.forEach(cart => {
+        const cartDiv = document.createElement("div");
+        cartDiv.className = "cart-entry";
+        cartDiv.dataset.cartId = cart.id;
+
+        const formattedDate = cart.dateCreated.toLocaleDateString();
+
+        cartDiv.innerHTML = `
+            <div class="cart-summary">
+                <p><strong>Name:</strong> ${cart.name}</p>
+                <p><strong>Total Cost:</strong> $${cart.totalCost.toFixed(2)}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+            </div>
+            <div class="hidden-products" id="products-${cart.id}">
+            </div>
+        `;
+
+        // Later we’ll add click listeners to toggle product visibility and fetch
+        cartsTable.appendChild(cartDiv);
+    });
+
+    console.log("Carts table rendered.");
+
+    setupCartClickListeners();
+}
+function setupCartClickListeners() {
+    const cartEntries = document.querySelectorAll(".cart-entry");
+
+    cartEntries.forEach(cartDiv => {
+        cartDiv.addEventListener("click", async () => {
+            const cartId = cartDiv.dataset.cartId;
+            const productsContainer = document.getElementById(`products-${cartId}`);
+
+            // Toggle visibility
+            const isVisible = productsContainer.classList.contains("show");
+            if (isVisible) {
+                console.log(`Hiding products for cart: ${cartId}`);
+                productsContainer.classList.remove("show");
+                return;
+            }
+
+            // If already loaded once, just show
+            if (productsContainer.dataset.loaded === "true") {
+                console.log(`Showing cached products for cart: ${cartId}`);
+                productsContainer.classList.add("show");
+                return;
+            }
+
+            console.log(`Fetching products for cart: ${cartId}...`);
+            try {
+                const productsSnapshot = await firebase.firestore()
+                    .collection("carts")
+                    .doc(cartId)
+                    .collection("cartProducts")
+                    .get();
+
+                if (productsSnapshot.empty) {
+                    productsContainer.innerHTML = "<p>No products in this cart.</p>";
+                } else {
+                    const productListHTML = Array.from(productsSnapshot.docs).map(doc => {
+                        const p = doc.data();
+                        return `
+                            <div class="product-item">
+                                <p><strong>${p.name}</strong></p>
+                                <p>Quantity: ${p.quantity}</p>
+                                <p>Cost Price: $${p.costPrice.toFixed(2)}</p>
+                                <p>Total: $${p.total.toFixed(2)}</p>
+                            </div>
+                        `;
+                    }).join("");
+
+                    productsContainer.innerHTML = productListHTML;
+                }
+
+                productsContainer.classList.add("show");
+                productsContainer.dataset.loaded = "true";
+                console.log(`Products loaded for cart: ${cartId}`);
+            } catch (error) {
+                console.error(`Error loading products for cart ${cartId}:`, error);
+                productsContainer.innerHTML = "<p>Error loading products.</p>";
+            }
+        });
+    });
+
+    console.log("Cart click listeners set up.");
+}
+//sales sections//
 async function loadSalesData() {
     const salesContainer = document.getElementById("sales-container");
 
