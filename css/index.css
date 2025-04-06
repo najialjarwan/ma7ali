@@ -858,12 +858,14 @@ aside {
 .hidden-products.show {
   max-height: 300px; /* or whatever height fits */
   padding-bottom: 10px;
+  overflow-x: auto; /* hide overflow */
+  position: relative;
 }
 
 /* Each Product */
 .product-item {
   background-color: #f1f1f1;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px;
   min-width: 150px;
   scroll-snap-align: start;
@@ -875,6 +877,28 @@ aside {
   margin: 0;
   padding: 0;
   font-size: 0.8em;
+}
+
+.product-scroller {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  animation: scroll-loop 10s linear infinite;
+  width: max-content;
+}
+
+@keyframes scroll-loop {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.hidden-products.show:hover .product-scroller,
+.hidden-products.show:active .product-scroller {
+  animation-play-state: paused;
 }
 
 

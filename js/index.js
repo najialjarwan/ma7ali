@@ -1686,7 +1686,7 @@ function setupCartClickListeners() {
                 if (productsSnapshot.empty) {
                     productsContainer.innerHTML = "<p>No products in this cart.</p>";
                 } else {
-                    const productListHTML = Array.from(productsSnapshot.docs).map(doc => {
+                    const productItems = Array.from(productsSnapshot.docs).map(doc => {
                         const p = doc.data();
                         return `
                             <div class="product-item">
@@ -1697,8 +1697,14 @@ function setupCartClickListeners() {
                             </div>
                         `;
                     }).join("");
+                    
+                    const repeatedItems = productItems + productItems; // duplicate for seamless loop
 
-                    productsContainer.innerHTML = productListHTML;
+                    productsContainer.innerHTML = `
+                        <div class="product-scroller">
+                            ${repeatedItems}
+                        </div>
+                    `;
                 }
 
                 productsContainer.classList.add("show");
