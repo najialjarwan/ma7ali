@@ -194,7 +194,7 @@ function showProductForm() {
             <button type="button" id="customFileButton">Choose File</button>
 
             <label for="costPrice">Cost Price($): </label>
-            <input type="number" id="costPrice" name="costPrice" ><br>
+            <input type="text" id="costPrice" name="costPrice" ><br>
 
             <label for="profit">Profit($): </label>
             <input type="number" id="profit" name="profit" ><br>
@@ -933,9 +933,18 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="sort-select">Sort by Cost Price:</label>
-                <select id="sort-select">
-                    <option value="">All prices</option>
+                <label for="price-select">Filter by Price:</label>
+                <select id="price-select">
+                    <option value="">All Prices</option>
+                    <option value="low-price">Low Price (0-10)</option>
+                    <option value="medium-price">Medium Price (11-50)</option>
+                    <option value="high-price">High Price (51+)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="price-sort">Sort by Price:</label>
+                <select id="price-sort">
+                    <option value="">No Price Sort</option>
                     <option value="asc">Lowest to Highest</option>
                     <option value="desc">Highest to Lowest</option>
                 </select>
@@ -947,6 +956,14 @@ function initProductPage() {
                     <option value="low-stock">Low Stock (0-10)</option>
                     <option value="medium-stock">Medium Stock (11-50)</option>
                     <option value="high-stock">High Stock (51+)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="stock-sort">Sort by Stock:</label>
+                <select id="stock-sort">
+                    <option value="">No Stock Sort</option>
+                    <option value="asc">Lowest to Highest</option>
+                    <option value="desc">Highest to Lowest</option>
                 </select>
             </div>
             <button class="export-product-btn" id="export-product-btn">EXPORT PRODUCTS</button>
@@ -977,8 +994,10 @@ function initProductPage() {
 async function fetchProducts() {
     const productsGrid = document.getElementById("products-grid");
     const categorySelect = document.getElementById("category-select");
-    const sortSelect = document.getElementById("sort-select");
+    const priceSelect = document.getElementById("price-select");
+    const priceSort = document.getElementById("price-sort");
     const stockSelect = document.getElementById("stock-select");
+    const stockSort = document.getElementById("stock-sort");
 
     try {
         const snapshot = await db.collection("products").get();
@@ -1029,12 +1048,38 @@ async function fetchProducts() {
                 }
             }
 
-            const sortOrder = sortSelect.value;
-            if (sortOrder) {
+            const priceRange = priceSelect.value;
+            console.log(priceRange);
+            if (priceRange) {
+                switch (priceRange) {
+                    case "low-price":
+                        console.log(priceRange);
+                        filteredProducts = filteredProducts.filter(product => product.costPrice >= 0 && product.costPrice <= 10);
+                        break;
+                    case "medium-price":
+                        filteredProducts = filteredProducts.filter(product => product.costPrice >= 11 && product.costPrice <= 50);
+                        break;
+                    case "high-price":
+                        filteredProducts = filteredProducts.filter(product => product.costPrice > 50);
+                        break;
+                }
+            }
+
+            const sortPriceOrder = priceSort.value;
+            const sortStockOrder = stockSort.value;
+
+            if (sortPriceOrder) {
+                console.log("sorting by price: ");
                 filteredProducts = filteredProducts.sort((a, b) =>
-                    sortOrder === "asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
+                    sortPriceOrder === "asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
+                );
+            } else if (sortStockOrder) {
+                console.log("sorting by stock: ");
+                filteredProducts = filteredProducts.sort((a, b) =>
+                    sortStockOrder === "asc" ? a.stock - b.stock : b.stock - a.stock
                 );
             }
+
             renderProducts(filteredProducts);
         };
 
@@ -1065,8 +1110,10 @@ async function fetchProducts() {
         };
 
         categorySelect.addEventListener("change", applyFilters);
+        priceSelect.addEventListener("change", applyFilters);
+        priceSort.addEventListener("change", applyFilters);
         stockSelect.addEventListener("change", applyFilters);
-        sortSelect.addEventListener("change", applyFilters);
+        stockSort.addEventListener("change", applyFilters);
 
         renderProducts(products);
     } catch (error) {
@@ -1341,7 +1388,7 @@ function initCustomersPage() {
         `;
     fetchCustomers();
 }
-async function fetchCustomers() {1803
+async function fetchCustomers() {
     const searchInput = document.getElementById("search-customers");
     const customersGrid = document.getElementById("customers-grid");
 
@@ -1713,7 +1760,7 @@ function setupCartClickListeners() {
                             </div>
                         `;
                     }).join("");
-                    
+
                     const repeatedItems = productItems + productItems; // duplicate for seamless loop
 
                     productsContainer.innerHTML = `
@@ -2101,7 +2148,7 @@ async function fetchProductsforExporting() {
     try {
         const categoryFilter = document.getElementById("category-select").value;
         const stockFilter = document.getElementById("stock-select").value;
-        const sortFilter = document.getElementById("sort-select").value;
+        const sortFilter = document.getElementById("price-sort").value;
 
         let query = db.collection("products");
 
