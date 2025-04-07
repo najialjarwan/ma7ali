@@ -768,7 +768,9 @@ aside {
 
 .sales-table tr, .sales-table td {
   border: 1px solid var(--text-color);
-  font-size: 0.9em;
+  font-size: 0.8em;
+  word-break: break-all;
+  padding: 6px;
 }
 .sales-table tfoot tr{
   background-color: lightgrey;

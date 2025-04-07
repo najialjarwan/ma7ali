@@ -935,6 +935,7 @@ function initProductPage() {
             <div class="filter-group">
                 <label for="sort-select">Sort by Cost Price:</label>
                 <select id="sort-select">
+                    <option value="">All prices</option>
                     <option value="asc">Lowest to Highest</option>
                     <option value="desc">Highest to Lowest</option>
                 </select>
@@ -943,7 +944,7 @@ function initProductPage() {
                 <label for="stock-select">Filter by Stock:</label>
                 <select id="stock-select">
                     <option value="">All Stock Levels</option>
-                    <option value="low-stock">Low Stock (1-10)</option>
+                    <option value="low-stock">Low Stock (0-10)</option>
                     <option value="medium-stock">Medium Stock (11-50)</option>
                     <option value="high-stock">High Stock (51+)</option>
                 </select>
@@ -1017,7 +1018,7 @@ async function fetchProducts() {
             if (stockRange) {
                 switch (stockRange) {
                     case "low-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 1 && product.stock <= 10);
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 0 && product.stock <= 10);
                         break;
                     case "medium-stock":
                         filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
@@ -1383,7 +1384,10 @@ async function fetchCustomers() {
                     customersGrid.appendChild(customerCard);
                 });
             } else {
-                customersGrid.innerHTML = "<p>No customers found.</p>";
+                customersGrid.innerHTML = `                
+                    <div class="no-products-message">
+                        No Customers Found. Check Customer Name!
+                    </div>`;
             }
         } catch (error) {
             customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
@@ -1581,7 +1585,7 @@ function initCartAndSalesSection() {
             <div class="carts-container" id="carts-container">
 
                 <div class="search-customer-container search-container-main" >
-                    <input type="text" class="search-bar" id="search-cart" disabled placeholder="Search Cart"/>
+                    <input type="text" class="search-bar" id="search-cart" placeholder="Search Cart"/>
                     <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
                 </div>
 
@@ -1590,6 +1594,15 @@ function initCartAndSalesSection() {
 
         const cartsData = await fetchCartsData();
         renderCartsTable(cartsData);
+
+        const searchInput = document.getElementById("search-cart");
+        searchInput.addEventListener("input", function () {
+            const searchValue = searchInput.value.trim().toLowerCase();
+            const filteredCarts = searchValue === ""
+                ? cartsData
+                : cartsData.filter(cart => cart.name.toLowerCase().startsWith(searchValue));
+            renderCartsTable(filteredCarts);
+        });
     });
 }
 //carts sections//
@@ -1605,12 +1618,12 @@ async function fetchCartsData() {
                 id: doc.id,
                 name: data.name,
                 totalCost: data.totalCost,
-                dateCreated: data.dateCreated.toDate(), // Convert Firestore Timestamp to JS Date
+                dateCreated: data.dateCreated.toDate(),
             });
         });
 
-        console.log(`Fetched ${carts.length} carts.`);
         return carts;
+
     } catch (error) {
         console.error("Error fetching carts:", error);
         return [];
@@ -1622,7 +1635,10 @@ function renderCartsTable(carts) {
     cartsTable.innerHTML = "";
 
     if (carts.length === 0) {
-        cartsTable.innerHTML = "<p>No carts found.</p>";
+        cartsTable.innerHTML = `                
+            <div class="no-products-message">
+                No Carts Found. Check Cart Name!
+            </div>`;
         return;
     }
 
@@ -2091,12 +2107,10 @@ async function fetchProductsforExporting() {
 
         let query = db.collection("products");
 
-        // Filter by category
         if (categoryFilter) {
             query = query.where("category", "==", categoryFilter);
         }
 
-        // Filter by stock level
         if (stockFilter) {
             if (stockFilter === "low-stock") {
                 query = query.where("stock", "<=", 10);
@@ -2107,16 +2121,9 @@ async function fetchProductsforExporting() {
             }
         }
 
-        // Sort by cost price
-        if (sortFilter) {
+        if (sortFilter)
             query = query.orderBy("costPrice", sortFilter);
-        }
 
-        // Ensure that Firestore orders by category as well to allow the filters to work
-        query = query.orderBy("category");
-
-        // Finally, ensure correct ordering by document ID (__name__) if needed
-        query = query.orderBy("__name__");
 
         const snapshot = await query.get();
         const products = snapshot.docs.map(doc => {
