@@ -158,7 +158,7 @@ async function loadContent(section) {
         if (section === "customers")
             initCustomersPage();
         if (section === "cartAndSales")
-            initCartAndSalesSection();
+            initCartsAndSalesSection();
         //<Pop sections>//
         if (section === "addProduct")
             showProductForm();
@@ -942,31 +942,31 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="price-sort">Sort by Price:</label>
-                <select id="price-sort">
-                    <option value="">No Price Sort</option>
-                    <option value="asc">Lowest to Highest</option>
-                    <option value="desc">Highest to Lowest</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="stock-select">Filter by Stock:</label>
+                <label for="stock-select">Sort by Stock:</label>
                 <select id="stock-select">
-                    <option value="">All Stock Levels</option>
-                    <option value="low-stock">Low Stock (0-10)</option>
-                    <option value="medium-stock">Medium Stock (11-50)</option>
-                    <option value="high-stock">High Stock (51+)</option>
+                        <option value="">All Stocks</option>
+                        <option value="low-stock">Low Stock (0-10)</option>
+                        <option value="medium-stock">Medium Stock (11-50)</option>
+                        <option value="high-stock">High Stock (51+)</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label for="stock-sort">Sort by Stock:</label>
-                <select id="stock-sort">
-                    <option value="">No Stock Sort</option>
-                    <option value="asc">Lowest to Highest</option>
-                    <option value="desc">Highest to Lowest</option>
+                <label for="sort-by-price-or-stock">Sort by Price or Stock:</label>
+                <select id="sort-by-price-or-stock">
+                    <option value="">No Sort</option>
+                    <optgroup label="Sort by Price">
+                        <option value="price-asc">Lowest to Highest</option>
+                        <option value="price-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Stock">
+                        <option value="stock-asc">Lowest to Highest</option>
+                        <option value="stock-desc">Highest to Lowest</option>
+                    </optgroup>
                 </select>
             </div>
-            <button class="export-product-btn" id="export-product-btn">EXPORT PRODUCTS</button>
+
+            <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>
+            <button class="func-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT PRODUCTS</button>
         </div>
         <div id="products-grid" class="products-grid"></div>
     `;
@@ -995,9 +995,8 @@ async function fetchProducts() {
     const productsGrid = document.getElementById("products-grid");
     const categorySelect = document.getElementById("category-select");
     const priceSelect = document.getElementById("price-select");
-    const priceSort = document.getElementById("price-sort");
     const stockSelect = document.getElementById("stock-select");
-    const stockSort = document.getElementById("stock-sort");
+    const sortByPriceOrStock = document.getElementById("sort-by-price-or-stock");
 
     try {
         const snapshot = await db.collection("products").get();
@@ -1026,30 +1025,13 @@ async function fetchProducts() {
         const applyFilters = () => {
             let filteredProducts = [...products];
 
-            // Filter by category
+
             const selectedCategory = categorySelect.value;
             if (selectedCategory) {
                 filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
             }
 
-            // Filter by stock range
-            const stockRange = stockSelect.value;
-            if (stockRange) {
-                switch (stockRange) {
-                    case "low-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 0 && product.stock <= 10);
-                        break;
-                    case "medium-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
-                        break;
-                    case "high-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock > 50);
-                        break;
-                }
-            }
-
             const priceRange = priceSelect.value;
-            console.log(priceRange);
             if (priceRange) {
                 switch (priceRange) {
                     case "low-price":
@@ -1065,18 +1047,32 @@ async function fetchProducts() {
                 }
             }
 
-            const sortPriceOrder = priceSort.value;
-            const sortStockOrder = stockSort.value;
+            const stockRange = stockSelect.value;
+            if (stockRange) {
+                switch (stockRange) {
+                    case "low-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 0 && product.stock <= 10);
+                        break;
+                    case "medium-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
+                        break;
+                    case "high-stock":
+                        filteredProducts = filteredProducts.filter(product => product.stock > 50);
+                        break;
+                }
+            }
 
-            if (sortPriceOrder) {
+            const sort = sortByPriceOrStock.value;
+
+            if (sort === "price-asc" || sort === "price-desc") {
                 console.log("sorting by price: ");
                 filteredProducts = filteredProducts.sort((a, b) =>
-                    sortPriceOrder === "asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
+                    sort === "price-asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
                 );
-            } else if (sortStockOrder) {
+            } else if (sort === "stock-asc" || sort === "stock-desc") {
                 console.log("sorting by stock: ");
                 filteredProducts = filteredProducts.sort((a, b) =>
-                    sortStockOrder === "asc" ? a.stock - b.stock : b.stock - a.stock
+                    sort === "stock-asc" ? a.stock - b.stock : b.stock - a.stock
                 );
             }
 
@@ -1109,11 +1105,18 @@ async function fetchProducts() {
             });
         };
 
+        document.getElementById("reset-filters").addEventListener("click", () => {
+            document.getElementById("category-select").value = "";
+            document.getElementById("price-select").value = "";
+            document.getElementById("stock-select").value = "";
+            document.getElementById("sort-by-price-or-stock").value = "";
+            applyFilters();
+        });
+
         categorySelect.addEventListener("change", applyFilters);
         priceSelect.addEventListener("change", applyFilters);
-        priceSort.addEventListener("change", applyFilters);
         stockSelect.addEventListener("change", applyFilters);
-        stockSort.addEventListener("change", applyFilters);
+        sortByPriceOrStock.addEventListener("change", applyFilters);
 
         renderProducts(products);
     } catch (error) {
@@ -1615,8 +1618,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 }//<---------------->//
 
 
-//<CartAndSales Section>//
-function initCartAndSalesSection() {
+//<CartsAndSales Section>//
+function initCartsAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <h2>Sales and Carts</h2>
@@ -2147,8 +2150,9 @@ async function exportToPDF(data) {
 async function fetchProductsforExporting() {
     try {
         const categoryFilter = document.getElementById("category-select").value;
-        const stockFilter = document.getElementById("stock-select").value;
-        const sortFilter = document.getElementById("price-sort").value;
+        const priceSelect = document.getElementById("price-select").value;
+        const stockSelect = document.getElementById("stock-select").value;
+        const sort = document.getElementById("sort-by-price-or-stock").value;
 
         let query = db.collection("products");
 
@@ -2156,19 +2160,35 @@ async function fetchProductsforExporting() {
             query = query.where("category", "==", categoryFilter);
         }
 
-        if (stockFilter) {
-            if (stockFilter === "low-stock") {
+        if (priceSelect) {
+            if (priceSelect === "low-price") {
+                query = query.where("costPrice", "<=", 10);
+            } else if (priceSelect === "medium-price") {
+                query = query.where("costPrice", ">=", 11).where("costPrice", "<=", 50);
+            } else if (priceSelect === "high-price") {
+                query = query.where("costPrice", ">=", 51);
+            }
+        }
+
+        if (stockSelect) {
+            if (stockSelect === "low-stock") {
                 query = query.where("stock", "<=", 10);
-            } else if (stockFilter === "medium-stock") {
+            } else if (stockSelect === "medium-stock") {
                 query = query.where("stock", ">=", 11).where("stock", "<=", 50);
-            } else if (stockFilter === "high-stock") {
+            } else if (stockSelect === "high-stock") {
                 query = query.where("stock", ">=", 51);
             }
         }
 
-        if (sortFilter)
-            query = query.orderBy("costPrice", sortFilter);
-
+        if (sort === "price-asc") {
+            query = query.orderBy("costPrice", "asc");
+        } else if (sort === "price-desc") {
+            query = query.orderBy("costPrice", "desc");
+        } else if (sort === "stock-asc") {
+            query = query.orderBy("stock", "asc");
+        } else if (sort === "stock-desc") {
+            query = query.orderBy("stock", "desc");
+        }
 
         const snapshot = await query.get();
         const products = snapshot.docs.map(doc => {
