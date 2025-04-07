@@ -1341,7 +1341,7 @@ function initCustomersPage() {
         `;
     fetchCustomers();
 }
-async function fetchCustomers() {
+async function fetchCustomers() {1803
     const searchInput = document.getElementById("search-customers");
     const customersGrid = document.getElementById("customers-grid");
 
@@ -1799,10 +1799,8 @@ async function fetchSalesData() {
 function populateDropdown(salesData) {
     const optGroup = document.getElementById("specific-dates-group");
 
-    // Clear previous dates if needed
     optGroup.innerHTML = "";
 
-    // Add each salesDate inside the optgroup
     salesData.forEach(sale => {
         const option = document.createElement("option");
         option.value = sale.salesDate;
@@ -1857,7 +1855,7 @@ function renderSalesTable(salesData) {
         thead.innerHTML = `
             <tr>
                 <th>Product Name</th>
-                <th>Date Sold</th>
+                <th>Last Date Sold</th>
                 <th>Cost Price</th>
                 <th>Quantity</th>
                 <th>Total Revenue</th>

@@ -770,12 +770,12 @@ aside {
   border: 1px solid var(--text-color);
   font-size: 0.8em;
   word-break: break-all;
-  padding: 6px;
+  padding: 3px;
 }
 .sales-table tfoot tr{
   background-color: lightgrey;
   color: var(--text-color);
-  font-size: 0.9em;
+  font-size: 0.8em;
 }
 .table-actions{
   display: flex;
