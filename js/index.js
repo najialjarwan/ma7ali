@@ -437,6 +437,9 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
+        <div id="cart-icon">
+            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="40" height="40">
+        </div>
         <div class="cart-products-container" id="cart-products-container"></div>
         <div class="cart-display-container" id="cart-display-container" style="display: none"></div>
     `;
@@ -685,10 +688,6 @@ async function fetchProductToAdd() {
 }
 function displayProductToAdd(product, productId) {
     const productCardContainer = document.getElementById("cart-products-container");
-    if (!productCardContainer) {
-        console.error("Product display container not found.");
-        return;
-    }
 
     // Decide which action to use for the main button
     const actionText = showSales ? "Add to Sales" : "Add to Cart";
@@ -705,16 +704,44 @@ function displayProductToAdd(product, productId) {
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
             ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
-    `;
+        `;
 
 
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
-
     actionBtn.addEventListener("click", function () {
         console.log('product profit', product.profit);
         actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
             addToSales(productId, product.label, product.costPrice, product.profit);
+
+            const productImage = productCard.querySelector("img");
+            const cartIcon = document.getElementById("cart-icon");
+
+            if (productImage && cartIcon) {
+                const clonedImage = productImage.cloneNode(true);
+                const imageRect = productImage.getBoundingClientRect();
+                const cartRect = cartIcon.getBoundingClientRect();
+
+                clonedImage.classList.add("fly-img");
+                clonedImage.style.left = `${imageRect.left}px`;
+                clonedImage.style.top = `${imageRect.top}px`;
+                clonedImage.style.width = `${imageRect.width}px`;
+                clonedImage.style.height = `${imageRect.height}px`;
+
+                document.body.appendChild(clonedImage);
+
+                requestAnimationFrame(() => {
+                    clonedImage.style.left = `${cartRect.left + cartRect.width / 2 - imageRect.width / 2}px`;
+                    clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2}px`;
+                
+                    clonedImage.style.transform = "scale(0.1)";
+                    clonedImage.style.opacity = "1";
+                });
+
+                setTimeout(() => {
+                    clonedImage.remove();
+                }, 900);
+            }
         }
         else {
             showLoadingOverlay(1500);
