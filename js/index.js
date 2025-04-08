@@ -437,10 +437,10 @@ function showCartForm() {
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div id="cart-icon">
-            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="40" height="40">
-        </div>
         <div class="cart-products-container" id="cart-products-container"></div>
+        <div id="cart-icon">
+            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="100" height="100">
+        </div>
         <div class="cart-display-container" id="cart-display-container" style="display: none"></div>
     `;
     fetchProductToAdd();
@@ -704,11 +704,11 @@ function displayProductToAdd(product, productId) {
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
             ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
-        `;
-
+    `;
 
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
     actionBtn.addEventListener("click", function () {
+
         console.log('product profit', product.profit);
         actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
@@ -716,7 +716,7 @@ function displayProductToAdd(product, productId) {
 
             const productImage = productCard.querySelector("img");
             const cartIcon = document.getElementById("cart-icon");
-
+            cartIcon.classList.remove("pulse");
             if (productImage && cartIcon) {
                 const clonedImage = productImage.cloneNode(true);
                 const imageRect = productImage.getBoundingClientRect();
@@ -732,16 +732,17 @@ function displayProductToAdd(product, productId) {
 
                 requestAnimationFrame(() => {
                     clonedImage.style.left = `${cartRect.left + cartRect.width / 2 - imageRect.width / 2}px`;
-                    clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2}px`;
-                
+                    clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2 - 15}px`;
                     clonedImage.style.transform = "scale(0.1)";
                     clonedImage.style.opacity = "1";
                 });
 
                 setTimeout(() => {
                     clonedImage.remove();
-                }, 900);
+                }, 700);
             }
+
+            cartIcon.classList.add("pulse");
         }
         else {
             showLoadingOverlay(1500);
