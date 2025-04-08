@@ -515,10 +515,6 @@ aside {
   padding: 5px 0;
 }
 
-#export-product-btn {
-  
-  
-}
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1020,10 +1016,24 @@ aside {
 #cart-icon {
   width: 100px;
   height: 100px;
-  display: flex;
+  display: inline-block;
   justify-content: center;
   align-items: center;
+  position: relative;
   filter: invert(86%) sepia(10%) saturate(300%) hue-rotate(210deg);
+}
+
+.cart-badge {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background: red;
+  color: white;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  z-index: 1;
 }
 
 .fly-img {
@@ -1111,7 +1121,7 @@ aside {
   height:100%;
   border: none;
   background-color: lightgreen;
-  touch-action: manipulation
+
 }
 
 .cancel-sale-btn{
@@ -1119,59 +1129,6 @@ aside {
   height: 50%;
   width: 100%;
   background-color: rgb(252, 47, 47);
-}
-
-/* Overlay styling */
-#loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease;
-}
-
-.progress-container {
-  width: 80%;
-  max-width: 300px;
-  height: 30px;
-  position: relative;
-  background-color: #ddd;
-  border-radius: 6px;
-  overflow: hidden;
-  font-family: sans-serif;
-}
-
-#progress-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 0%;
-  background-color: #4CAF50;
-  transition: width 0.8s ease;
-  z-index: 1;
-}
-
-.progress-text {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: black;
-  z-index: 2; /* Make sure it's above the green bar */
-  pointer-events: none; /* Don't block clicks */
 }
 
 .cart-display-container{
@@ -1207,4 +1164,69 @@ aside {
   align-items: center;
   border-top: 3px solid var(--accent-color);
   border-radius: 5px;
+}
+
+.export-product-btn {
+  background-color: var(--accent-color);
+  color: var(--btnText-color);
+  border: none;
+  border-radius: 10px;
+  width: 90%;
+  padding: 0;
+  margin: 10px;
+  height: 30px;
+  text-align: center;
+}
+
+/* Overlay styling */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+
+.progress-container {
+  width: 80%;
+  max-width: 300px;
+  height: 30px;
+  position: relative;
+  background-color: #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+#progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background-color: #4CAF50;
+  transition: width 0.4s ease;
+  z-index: 1;
+}
+
+.progress-text {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: black;
+  z-index: 2; /* Make sure it's above the green bar */
+  pointer-events: none; /* Don't block clicks */
 }

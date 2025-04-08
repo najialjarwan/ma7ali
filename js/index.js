@@ -439,6 +439,7 @@ function showCartForm() {
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
         <div id="cart-icon">
+            <span id="cart-quantity" class="cart-badge">0</span>
             <img src="icons/cart-shopping-solid.svg" alt="Cart" width="100" height="100">
         </div>
         <div class="cart-display-container" id="cart-display-container" style="display: none"></div>
@@ -474,34 +475,36 @@ function showCartForm() {
 }
 async function cancelCart() {
     try {
-        // Reference to the current cart document
         const cartDocRef = db.collection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
 
-        // For each product in the cart, reverse the sales entry in the sales collection.
-        // It assumes that each cart product document has a "productId" and a "quantity" field.
         for (let doc of cartProductsSnapshot.docs) {
             const data = doc.data();
-            const productId = data.productId || doc.id; // Adjust this if necessary
+            const productId = data.productId || doc.id;
             const quantity = data.quantity || 1;
 
-            // For each unit added in the cart, call cancelSale once.
             for (let i = 0; i < quantity; i++) {
                 cancelSale(productId, null);
             }
         }
 
-        // Now delete all cart product documents in a batch operation.
+        const batch = db.batch();
+        cartProductsSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
 
-        cartDocRef.delete();
+        batch.delete(cartDocRef);
 
-        // Clear the current cart ID and update the UI.
+        await batch.commit();
+
         currentCartId = null;
         showCartForm();
     } catch (error) {
         console.error("Error canceling cart:", error);
     }
 }
+let localCart = {};
+let updateTimer = null;
 let currentCartId = null;
 async function addCart() {
     const cartName = document.getElementById("cartName").value.trim();
@@ -519,8 +522,10 @@ async function addCart() {
 
     try {
         await cartRef.set(cartData);
-        // Store the cart ID globally
+
         currentCartId = cartRef.id;
+        localCart = {};
+        updateLocalCartUI();
         displayCart(cartRef.id);
     } catch (error) {
         console.error("Error adding cart:", error);
@@ -530,7 +535,7 @@ async function displayCart(cartId) {
     const cartDisplayContainer = document.getElementById("cart-display-container");
     setTimeout(() => {
         cartDisplayContainer.style.display = "block";
-    }, 1300);
+    }, 1200);
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
         <div class="cart-products-list-container" id="cart-products-list-container"></div>
@@ -588,37 +593,177 @@ async function displayCart(cartId) {
         }
     });
 }
-async function addToCart(productId, label, costPrice) {
+function addToCart(productId, label, costPrice) {
     if (!currentCartId) {
         console.error("No active cart found");
         return;
     }
 
-    const cartDoc = db.collection("carts").doc(currentCartId);
-    const cartProductsRef = cartDoc.collection("cartProducts").doc(productId);
-    const productSnap = await cartProductsRef.get();
-
-    if (productSnap.exists) {
-        const productData = productSnap.data();
-        await cartProductsRef.update({
-            quantity: productData.quantity + 1,
-            total: (productData.quantity + 1) * costPrice
-        });
+    if (localCart[productId]) {
+        localCart[productId].quantity += 1;
+        localCart[productId].total = localCart[productId].quantity * costPrice;
     } else {
-        await cartProductsRef.set({
+        localCart[productId] = {
             name: label,
             quantity: 1,
             costPrice: costPrice,
             total: costPrice
-        });
+        };
     }
 
-    const cartProducts = await cartDoc.collection("cartProducts").get();
+    updateLocalCartUI();
+
+    if (updateTimer) clearTimeout(updateTimer);
+    updateTimer = setTimeout(() => {
+        syncCartToFirestore();
+    }, 300);
+}
+function updateLocalCartUI() {
+    let totalQuantity = 0;
+    for (let id in localCart) {
+        totalQuantity += localCart[id].quantity;
+    }
+
+    const cartQuantityEl = document.getElementById("cart-quantity");
+    if (cartQuantityEl) {
+        cartQuantityEl.textContent = totalQuantity;
+    }
+}
+async function syncCartToFirestore() {
+    const cartDoc = db.collection("carts").doc(currentCartId);
     let totalCost = 0;
-    cartProducts.forEach(doc => {
-        totalCost += doc.data().total;
+
+    for (const productId in localCart) {
+        const product = localCart[productId];
+        totalCost += product.total;
+
+        const cartProductRef = cartDoc.collection("cartProducts").doc(productId);
+        await cartProductRef.set({
+            name: product.name,
+            quantity: product.quantity,
+            costPrice: product.costPrice,
+            total: product.total
+        }, { merge: true });
+    }
+
+    await cartDoc.set({ totalCost }, { merge: true });
+}
+async function fetchProductToAdd() {
+    const searchInput = document.getElementById("search-customers");
+    const productCardContainer = document.getElementById("cart-products-container");
+
+    try {
+        const querySnapshot = await db.collection("products").orderBy("label").get();
+        let allProducts = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        if (showSales)
+            displayProducts(allProducts);
+
+        searchInput.addEventListener("input", function () {
+            const searchValue = searchInput.value.toLowerCase();
+            const filteredProducts = allProducts.filter(product =>
+                product.label.toLowerCase() === searchValue
+            );
+            displayProducts(filteredProducts);
+        });
+
+        function displayProducts(products) {
+            productCardContainer.innerHTML = "";
+            if (products.length === 0) {
+                productCardContainer.innerHTML = `
+                <div class="no-products-message">
+                    No products found. Check Product name!
+                </div>
+                `;
+                return;
+            }
+
+            products.forEach(product => {
+                displayProductToAdd(product, product.id);
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching products:", error);
+    }
+}
+function displayProductToAdd(product, productId) {
+    const productCardContainer = document.getElementById("cart-products-container");
+
+    const actionText = showSales ? "Add to Sales" : "Add to Cart";
+    const actionFunction = showSales ? addToSales : addToCart;
+
+    const productCard = document.createElement("div");
+    productCard.classList.add("cart-product-card");
+    productCard.innerHTML = `
+        <div class="left">
+            <img src="${product.img}" alt="${product.label}" width="100" height="100">
+        </div>
+        <div class="right">
+            <button type="submit" class="add-to-cart-btn">${actionText}</button>
+            ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
+        </div>
+    `;
+
+    const actionBtn = productCard.querySelector(".add-to-cart-btn");
+    let lastAnimationTime = 0;
+    const animationCooldown = 100;
+
+    actionBtn.addEventListener("click", function () {
+        actionFunction(productId, product.label, product.costPrice, product.profit);
+
+        if (!showSales) {
+            addToSales(productId, product.label, product.costPrice, product.profit);
+
+            const now = Date.now();
+            if (now - lastAnimationTime > animationCooldown) {
+                lastAnimationTime = now;
+
+                const productImage = productCard.querySelector("img");
+                const cartIcon = document.getElementById("cart-icon");
+
+                if (productImage && cartIcon) {
+                    const clonedImage = productImage.cloneNode(true);
+                    const imageRect = productImage.getBoundingClientRect();
+                    const cartRect = cartIcon.getBoundingClientRect();
+
+                    clonedImage.classList.add("fly-img");
+                    clonedImage.style.left = `${imageRect.left}px`;
+                    clonedImage.style.top = `${imageRect.top}px`;
+                    clonedImage.style.width = `${imageRect.width}px`;
+                    clonedImage.style.height = `${imageRect.height}px`;
+
+                    document.body.appendChild(clonedImage);
+
+                    requestAnimationFrame(() => {
+                        clonedImage.style.left = `${cartRect.left + cartRect.width / 2 - imageRect.width / 2}px`;
+                        clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2 - 15}px`;
+                        clonedImage.style.transform = "scale(0.1)";
+                        clonedImage.style.opacity = "1";
+                    });
+
+                    setTimeout(() => {
+                        clonedImage.remove();
+                    }, 700);
+
+                    cartIcon.classList.remove("pulse");
+                    void cartIcon.offsetWidth;
+                    cartIcon.classList.add("pulse");
+                }
+            }
+        } else {
+            showLoadingOverlay();
+            const cancelBtn = productCard.querySelector(".cancel-sale-btn");
+            cancelBtn.addEventListener("click", async function () {
+                showLoadingOverlay();
+                await cancelSale(productId);
+            });
+        }
     });
-    await cartDoc.update({ totalCost });
+
+    productCardContainer.appendChild(productCard);
 }
 //>addSales//
 let showSales = false;
@@ -634,176 +779,75 @@ function showSalesForm() {
     `;
     fetchProductToAdd();
 }
-async function fetchProductToAdd() {
-    const searchInput = document.getElementById("search-customers");
-    const productCardContainer = document.getElementById("cart-products-container");
+let localSale = {};
+let updateSaleTimer = null;
+let currentSaleId = null;
+async function addToSales(productId, label, costPrice, profit) {
+    const today = new Date().toLocaleDateString('en-CA'); 
 
-    if (!productCardContainer) {
-        console.error("Product container not found.");
-        return;
+    // Check if we're on a new day or the sale doc was manually deleted
+    if (currentSaleId !== today) {
+        currentSaleId = today;
+        localSale = {};
     }
 
-    try {
-        // Fetch all products initially
-        const querySnapshot = await db.collection("products").orderBy("label").get();
-        let allProducts = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+    const saleDocRef = db.collection("sales").doc(currentSaleId);
+    const saleDocSnapshot = await saleDocRef.get();
 
-        function displayProducts(filteredProducts) {
-            productCardContainer.innerHTML = ""; // Clear previous content
-
-            if (filteredProducts.length === 0) {
-                productCardContainer.innerHTML = `
-                <div class="no-products-message">
-                    No products found. Check Product name!
-                </div>
-                `;
-                return;
-            }
-
-            filteredProducts.forEach(product => {
-                displayProductToAdd(product, product.id);
-            });
-        }
-
-
-        // Display all products initially
-        if (showSales)
-            displayProducts(allProducts);
-
-        // Listen for search input changes
-        searchInput.addEventListener("input", function () {
-            const searchValue = searchInput.value.toLowerCase();
-            const filteredProducts = allProducts.filter(product =>
-                product.label.toLowerCase() === searchValue
-            );
-            displayProducts(filteredProducts); // Show filtered products
-        });
-
-    } catch (error) {
-        console.error("Error fetching products:", error);
+    if (!saleDocSnapshot.exists) {
+        // Reset all if document doesn't exist (manually deleted case)
+        localSale = {};
+        updateSaleTimer = null;
     }
+
+    // Add or update product in localSale
+    if (localSale[productId]) {
+        localSale[productId].quantity += 1;
+        localSale[productId].total = localSale[productId].quantity * costPrice;
+        localSale[productId].totalProfit = localSale[productId].quantity * profit;
+    } else {
+        localSale[productId] = {
+            name: label,
+            quantity: 1,
+            costPrice: costPrice,
+            profit: profit,
+            total: costPrice,
+            totalProfit: profit
+        };
+    }
+
+    if (updateSaleTimer) clearTimeout(updateSaleTimer);
+    updateSaleTimer = setTimeout(() => {
+        syncSalesToFirestore();
+    }, 300);
 }
-function displayProductToAdd(product, productId) {
-    const productCardContainer = document.getElementById("cart-products-container");
+async function syncSalesToFirestore() {
+    const saleDoc = db.collection("sales").doc(currentSaleId);
+    let totalProductsSold = 0;
+    let totalRevenu = 0;
+    let totalProfit = 0;
 
-    // Decide which action to use for the main button
-    const actionText = showSales ? "Add to Sales" : "Add to Cart";
-    const actionFunction = showSales ? addToSales : addToCart;
+    for (const productId in localSale) {
+        const product = localSale[productId];
+        totalProductsSold += product.quantity;
+        totalRevenu += product.total;
+        totalProfit += product.totalProfit;
 
-    // Create product card element
-    const productCard = document.createElement("div");
-    productCard.classList.add("cart-product-card");
-    productCard.innerHTML = `
-        <div class="left">
-            <img src="${product.img}" alt="${product.label}" width="100" height="100">
-        </div>
-        <div class="right">
-            <button type="submit" class="add-to-cart-btn">${actionText}</button>
-            ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
-        </div>
-    `;
-
-    const actionBtn = productCard.querySelector(".add-to-cart-btn");
-    actionBtn.addEventListener("click", function () {
-
-        console.log('product profit', product.profit);
-        actionFunction(productId, product.label, product.costPrice, product.profit);
-        if (!showSales) {
-            addToSales(productId, product.label, product.costPrice, product.profit);
-
-            const productImage = productCard.querySelector("img");
-            const cartIcon = document.getElementById("cart-icon");
-            cartIcon.classList.remove("pulse");
-            if (productImage && cartIcon) {
-                const clonedImage = productImage.cloneNode(true);
-                const imageRect = productImage.getBoundingClientRect();
-                const cartRect = cartIcon.getBoundingClientRect();
-
-                clonedImage.classList.add("fly-img");
-                clonedImage.style.left = `${imageRect.left}px`;
-                clonedImage.style.top = `${imageRect.top}px`;
-                clonedImage.style.width = `${imageRect.width}px`;
-                clonedImage.style.height = `${imageRect.height}px`;
-
-                document.body.appendChild(clonedImage);
-
-                requestAnimationFrame(() => {
-                    clonedImage.style.left = `${cartRect.left + cartRect.width / 2 - imageRect.width / 2}px`;
-                    clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2 - 15}px`;
-                    clonedImage.style.transform = "scale(0.1)";
-                    clonedImage.style.opacity = "1";
-                });
-
-                setTimeout(() => {
-                    clonedImage.remove();
-                }, 700);
-            }
-
-            cartIcon.classList.add("pulse");
-        }
-        else {
-            showLoadingOverlay(1500);
-        }
-    });
-
-    if (showSales) {
-        const cancelBtn = productCard.querySelector(".cancel-sale-btn");
-        cancelBtn.addEventListener("click", async function () {
-            showLoadingOverlay();
-            await cancelSale(productId);
-        });
-    }
-
-    productCardContainer.appendChild(productCard);
-}
-async function addToSales(productId, productLabel, productPrice, productProfit) {
-    try {
-
-        const today = new Date();
-        const dateString = today.toISOString().split("T")[0];
-        const salesDocRef = db.collection("sales").doc(dateString);
-        const productRef = db.collection("products").doc(productId);
-
-        const salesDoc = await salesDocRef.get();
-        let totalProductsSold = salesDoc.exists ? (salesDoc.data().totalProductsSold || 0) : 0;
-        let totalRevenue = salesDoc.exists ? (salesDoc.data().totalRevenue || 0) : 0;
-        let totalProfit = salesDoc.exists ? (salesDoc.data().totalProfit || 0) : 0;
-
-        const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
-        const productSoldDoc = await productSoldRef.get();
-
-        let newQuantity = productSoldDoc.exists ? productSoldDoc.data().quantity + 1 : 1;
-        let newTotal = newQuantity * productPrice;
-        let newProfit = newQuantity * productProfit;
-
-        await productSoldRef.set({
-            name: productLabel,
-            quantity: newQuantity,
-            costPrice: productPrice,
-            profit: productProfit,
-            totalRevenu: newTotal,
-            totalProfit: newProfit,
-            dateSold: firebase.firestore.Timestamp.now()
-        });
-
-        await salesDocRef.set({
-            totalProductsSold: totalProductsSold + 1,
-            totalRevenue: totalRevenue + productPrice,
-            totalProfit: totalProfit + productProfit,
+        await saleDoc.collection("productsSold").doc(productId).set({
+            name: product.name,
+            quantity: product.quantity,
+            costPrice: product.costPrice,
+            profit: product.profit,
+            total: product.total,
+            totalProfit: product.totalProfit
         }, { merge: true });
-
-        const productDoc = await productRef.get();
-        if (productDoc.exists) {
-            const newStock = Math.max(0, (productDoc.data().stock || 0) - 1);
-            await productRef.update({ stock: newStock });
-        }
-
-    } catch (error) {
-        console.error("Error adding to sales:", error);
     }
+
+    await saleDoc.set({
+        totalProductsSold,
+        totalRevenu,
+        totalProfit
+    }, { merge: true });
 }
 async function cancelSale(productId) {
     try {
@@ -877,7 +921,7 @@ async function cancelSale(productId) {
         console.error("Error canceling sale:", error);
     }
 }
-function showLoadingOverlay(duration = 900) {
+function showLoadingOverlay(duration = 400) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("loading-overlay");
         const progressBar = document.getElementById("progress-bar");
