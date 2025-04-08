@@ -617,45 +617,6 @@ async function addToCart(productId, label, costPrice) {
     });
     await cartDoc.update({ totalCost });
 }
-function animateImageToCart(sourceImageElement) {
-    const cartIcon = document.getElementById("cart-icon");
-    if (!cartIcon) {
-        console.error("Cart icon element not found.");
-        return;
-    }
-
-    // Clone the source image
-    const flyingImage = sourceImageElement.cloneNode(true);
-    flyingImage.classList.add("flying-cart-image");
-    document.body.appendChild(flyingImage);
-
-    // Get starting position of the source image
-    const startRect = sourceImageElement.getBoundingClientRect();
-    flyingImage.style.left = `${startRect.left}px`;
-    flyingImage.style.top = `${startRect.top}px`;
-    flyingImage.style.width = `${startRect.width}px`;
-    flyingImage.style.height = `${startRect.height}px`;
-
-    // Get target position (cart icon)
-    const targetRect = cartIcon.getBoundingClientRect();
-
-    // Calculate translation distances
-    const translateX = targetRect.left - startRect.left - 50;
-    const translateY = targetRect.top - startRect.top - 15;
-
-    // Force reflow before applying the transform
-    flyingImage.offsetWidth;
-
-    // Apply transformation: translate, shrink, and rotate
-    const scaleFactor = 0; // Adjust if necessary
-
-    flyingImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleFactor}) rotate(360deg)`;
-
-    // Remove the clone after the animation completes
-    flyingImage.addEventListener("transitionend", () => {
-        flyingImage.remove();
-    });
-}
 //>addSales//
 let showSales = false;
 function showSalesForm() {
@@ -744,10 +705,6 @@ function displayProductToAdd(product, productId) {
             <button type="submit" class="add-to-cart-btn">${actionText}</button>
             ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
         </div>
-        ${!showSales ?
-            `<div class="cart-img-container">
-            <img src="images/cartImage.PNG" id="cart-icon" alt="Buy Logo" width="100" height="100" class="buy-logo">
-        </div>` : ""}
     `;
 
 
@@ -758,8 +715,6 @@ function displayProductToAdd(product, productId) {
         actionFunction(productId, product.label, product.costPrice, product.profit);
         if (!showSales) {
             addToSales(productId, product.label, product.costPrice, product.profit);
-            const productImage = productCard.querySelector("img");
-            animateImageToCart(productImage);
         }
         else {
             showLoadingOverlay(1500);
