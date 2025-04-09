@@ -13,6 +13,14 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 window.db = db;
 
+firebase.firestore().enablePersistence()
+    .then(() => {
+        console.log("Offline mode enabled!");
+    })
+    .catch((err) => {
+        console.error("Failed to enable offline mode:", err);
+    });
+
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/js/sw.js")
         .then(() => console.log("🔥 Service Worker Registered!"))
@@ -476,8 +484,7 @@ async function cancelCart() {
             const quantity = data.quantity || 1;
 
             for (let i = 0; i < quantity; i++) {
-                removeFromSales(productId);
-                restoreProductStock(productId);
+                cancelSale(productId, null);
             }
         }
 
@@ -499,9 +506,6 @@ async function cancelCart() {
 let localCart = {};
 let updateTimer = null;
 let currentCartId = null;
-let localSale = {};
-let updateSaleTimer = null;
-let currentSaleId = null;
 async function addCart() {
     const cartName = document.getElementById("cartName").value.trim();
     if (!cartName) {
@@ -707,18 +711,7 @@ function displayProductToAdd(product, productId) {
     let lastAnimationTime = 0;
     const animationCooldown = 100;
 
-    let stockTracker = product.stock;
     actionBtn.addEventListener("click", function () {
-
-        console.log("product stock: ", stockTracker);
-        if (stockTracker === 0) {
-            showModalMessage(`Product stock quantity reached 0! Update the stock to add more.`);
-            return;
-        }
-
-        stockTracker -= 1;
-
-        showLoadingOverlay();
         actionFunction(productId, product.label, product.costPrice, product.profit);
 
         if (!showSales) {
@@ -760,23 +753,15 @@ function displayProductToAdd(product, productId) {
                     cartIcon.classList.add("pulse");
                 }
             }
+        } else {
+            showLoadingOverlay();
+            const cancelBtn = productCard.querySelector(".cancel-sale-btn");
+            cancelBtn.addEventListener("click", async function () {
+                showLoadingOverlay();
+                await cancelSale(productId);
+            });
         }
     });
-
-    if (showSales) {
-        const cancelBtn = productCard.querySelector(".cancel-sale-btn");
-        cancelBtn.addEventListener("click", async function () {
-            if (!localSale[productId]) {
-                showModalMessage(`This product is not in Sales!. Canceling failed!`, false);
-                return;
-            }
-            else {
-                showLoadingOverlay();
-                removeFromSales(productId);
-            }
-        });
-    }
-
 
     productCardContainer.appendChild(productCard);
 }
@@ -794,10 +779,13 @@ function showSalesForm() {
     `;
     fetchProductToAdd();
 }
+let localSale = {};
+let updateSaleTimer = null;
+let currentSaleId = null;
 async function addToSales(productId, label, costPrice, profit) {
+    const today = new Date().toLocaleDateString('en-CA'); 
 
-    const today = new Date().toLocaleDateString('en-CA');
-
+    // Check if we're on a new day or the sale doc was manually deleted
     if (currentSaleId !== today) {
         currentSaleId = today;
         localSale = {};
@@ -807,13 +795,14 @@ async function addToSales(productId, label, costPrice, profit) {
     const saleDocSnapshot = await saleDocRef.get();
 
     if (!saleDocSnapshot.exists) {
+        // Reset all if document doesn't exist (manually deleted case)
         localSale = {};
         updateSaleTimer = null;
     }
 
+    // Add or update product in localSale
     if (localSale[productId]) {
         localSale[productId].quantity += 1;
-        updateProductStockFromLocalSale();
         localSale[productId].total = localSale[productId].quantity * costPrice;
         localSale[productId].totalProfit = localSale[productId].quantity * profit;
     } else {
@@ -833,33 +822,18 @@ async function addToSales(productId, label, costPrice, profit) {
     }, 300);
 }
 async function syncSalesToFirestore() {
-    console.log("syncSalesToFirestore() called");
-
     const saleDoc = db.collection("sales").doc(currentSaleId);
-    console.log("Got sale document reference:", currentSaleId);
-
     let totalProductsSold = 0;
     let totalRevenu = 0;
     let totalProfit = 0;
 
-    const productsSoldRef = saleDoc.collection("productsSold");
-    const snapshot = await productsSoldRef.get();
-
-    // Get all existing product IDs in Firestore
-    const firestoreProductIds = [];
-    snapshot.forEach(doc => firestoreProductIds.push(doc.id));
-    console.log("Current products in Firestore:", firestoreProductIds);
-
-    // Update Firestore with products in localSale
     for (const productId in localSale) {
         const product = localSale[productId];
-        console.log(`Processing product ${productId}:`, product);
-
         totalProductsSold += product.quantity;
         totalRevenu += product.total;
         totalProfit += product.totalProfit;
 
-        await productsSoldRef.doc(productId).set({
+        await saleDoc.collection("productsSold").doc(productId).set({
             name: product.name,
             quantity: product.quantity,
             costPrice: product.costPrice,
@@ -867,16 +841,6 @@ async function syncSalesToFirestore() {
             total: product.total,
             totalProfit: product.totalProfit
         }, { merge: true });
-
-        console.log(`Updated Firestore for product ${productId}`);
-    }
-
-    for (const productId of firestoreProductIds) {
-        if (!localSale[productId]) {
-            await productsSoldRef.doc(productId).delete();
-            showModalMessage(`Product is deleted from the sales as quantity reached 0!`, false);
-            console.log(`Deleted product ${productId} from Firestore (no longer in localSale)`);
-        }
     }
 
     await saleDoc.set({
@@ -884,64 +848,80 @@ async function syncSalesToFirestore() {
         totalRevenu,
         totalProfit
     }, { merge: true });
-
-    console.log("Sale summary updated:", { totalProductsSold, totalRevenu, totalProfit });
 }
-function removeFromSales(productId) {
-    console.log(`removeFromSales() called for productId: ${productId}`);
-
-    localSale[productId].quantity -= 1;
-    console.log(`Decreased quantity of ${productId} to ${localSale[productId].quantity}`);
-    updateProductStockFromLocalSale();
-
-    if (localSale[productId].quantity <= 0) {
-        delete localSale[productId];
-        console.log(`Removed ${productId} from localSale because quantity <= 0`);
-    } else {
-        localSale[productId].total = localSale[productId].quantity * localSale[productId].costPrice;
-        localSale[productId].totalProfit = localSale[productId].quantity * localSale[productId].profit;
-        console.log(`Updated totals for ${productId}:`, localSale[productId]);
-    }
-
-    if (updateSaleTimer) {
-        clearTimeout(updateSaleTimer);
-        console.log("Cleared existing updateSaleTimer");
-    }
-
-    updateSaleTimer = setTimeout(() => {
-        console.log("Running syncSalesToFirestore() after delay...");
-        syncSalesToFirestore();
-    }, 300);
-    console.log("Set new updateSaleTimer for 300ms");
-}
-let previousSaleQuantities = {};
-async function updateProductStockFromLocalSale() {
-    for (const productId in localSale) {
-        const currentQuantity = localSale[productId].quantity;
-        const previousQuantity = previousSaleQuantities[productId] || 0;
-
-        const quantityChange = currentQuantity - previousQuantity;
-
-        if (quantityChange === 0) continue; // No change
-
+async function cancelSale(productId) {
+    try {
+        const today = new Date();
+        const dateString = today.toISOString().split("T")[0];
+        const salesDocRef = db.collection("sales").doc(dateString);
         const productRef = db.collection("products").doc(productId);
-        const productDoc = await productRef.get();
+        const productSoldRef = salesDocRef.collection("productsSold").doc(productId);
 
-        if (productDoc.exists) {
-            const currentStock = productDoc.data().stock || 0;
-            const newStock = currentStock - quantityChange;
 
-            await productRef.update({ stock: newStock });
-            console.log(`Stock updated for ${productId}: ${currentStock} → ${newStock}`);
-
-            // Save the new quantity as "previous" for next time
-            previousSaleQuantities[productId] = currentQuantity;
-        } else {
-            console.warn(`Product ${productId} not found in Firestore.`);
+        const productSoldDoc = await productSoldRef.get();
+        if (!productSoldDoc.exists) {
+            console.log("No sale record found for this product today.");
+            return;
         }
+
+        const productData = productSoldDoc.data();
+        const currentQuantity = productData.quantity;
+        const productPrice = productData.costPrice;
+        const productProfit = productData.profit;
+
+        if (currentQuantity > 1) {
+
+            const newQuantity = currentQuantity - 1;
+            const newTotal = newQuantity * productPrice;
+            const newProfit = newQuantity * productProfit;
+
+            await productSoldRef.set({
+                name: productData.name,
+                quantity: newQuantity,
+                costPrice: productPrice,
+                profit: productProfit,
+                totalRevenu: newTotal,
+                totalProfit: newProfit,
+                dateSold: firebase.firestore.Timestamp.now()
+            });
+            console.log("Decremented product sale record by one unit.");
+        } else {
+            await productSoldRef.delete();
+            showModalMessage(`Product sale record deleted as quantity sold reached zero.
+                <p style='color: red;'>Canceling this item now will reduce the product stock!!</p>`, true);
+            showSalesForm();
+        }
+
+
+        const salesDoc = await salesDocRef.get();
+        if (salesDoc.exists) {
+            const salesData = salesDoc.data();
+            const newTotalProductsSold = Math.max(0, (salesData.totalProductsSold || 0) - 1);
+            const newTotalRevenue = Math.max(0, (salesData.totalRevenue || 0) - productPrice);
+            const newTotalProfit = Math.max(0, (salesData.totalProfit || 0) - productProfit);
+            await salesDocRef.set({
+                totalProductsSold: newTotalProductsSold,
+                totalRevenue: newTotalRevenue,
+                totalProfit: newTotalProfit
+            }, { merge: true });
+            console.log("Sales document updated.");
+        }
+
+        // Restore one unit of stock in the products collection
+        const productDoc = await productRef.get();
+        if (productDoc.exists) {
+            const productStock = productDoc.data().stock || 0;
+            const updatedStock = productStock + 1;
+            await productRef.update({ stock: updatedStock });
+            console.log("Product stock restored. New stock:", updatedStock);
+        } else {
+            console.error("Product not found in products collection.");
+        }
+    } catch (error) {
+        console.error("Error canceling sale:", error);
     }
 }
-function showLoadingOverlay(duration = 500) {
+function showLoadingOverlay(duration = 400) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("loading-overlay");
         const progressBar = document.getElementById("progress-bar");
@@ -964,7 +944,8 @@ function showLoadingOverlay(duration = 500) {
             }, 10); // Fade-out time
         }, duration);
     });
-}//-------------//
+}
+//-------------//
 
 
 //<Products Section>//
@@ -1205,7 +1186,7 @@ $(document).ready(function () {
             <div class="product-details">
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
-                <p><strong>Cost Price:</strong> $${product.costPrice}</p>
+                <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1216,6 +1197,7 @@ $(document).ready(function () {
         let productsGrid = `<div id="products-grid" class="products-grid">${productCards}</div>`;
         $(".main-content").html(productCards ? productsGrid : "<p>No products found.</p>");
 
+        // Add click event to display product form in .main-content
         $(".product-card").on("click", function () {
             const productId = $(this).data("id");
             const product = allProducts.find(p => p.id === productId);
@@ -1243,7 +1225,7 @@ $(document).ready(function () {
                 <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
                 <label for="profit">Profit: </label>
-                <input type="text" id="profit" name="profit" value="${product.profit}">
+                <input type="number" id="profit" name="profit" value="${product.profit}">
                 
                 <label for="category">Category:</label>
                 <input type="text" id="category" name="category" value="${product.category}">
@@ -1365,13 +1347,14 @@ $(document).ready(function () {
 
                 reader.readAsDataURL(file); // Read the image as a Data URL
             } else {
+                // Update Firestore directly if no image file is provided
                 db.collection("products").doc(product.id).update(updatedProduct)
                     .then(() => {
                         console.log("Product updated successfully!");
                         showModalMessage("Product Updated Successfully!", true);
                         fetchProducts().then((products) => {
-                            allProducts = products;
-                            displayProducts(products);
+                            allProducts = products; // Update local array
+                            displayProducts(products); // Refresh UI
                         });
                     })
                     .catch(error => {
@@ -1396,7 +1379,7 @@ $(document).ready(function () {
                 showModalMessage("Product Removed Successfully!", true);
                 fetchProducts().then((products) => {
                     allProducts = products;
-                    displayProducts(products);
+                    displayProducts(products); // Refresh product list
                 });
             })
             .catch(error => {
@@ -1412,8 +1395,10 @@ $(document).ready(function () {
             let filtered = allProducts.filter(product =>
                 product.label.toLowerCase() === (searchText)
             );
+
             displayProducts(filtered);
         });
+
         displayProducts(products); // Initial display
     });
 }); //<--------------->//
