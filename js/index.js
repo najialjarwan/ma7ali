@@ -499,6 +499,9 @@ async function cancelCart() {
 let localCart = {};
 let updateTimer = null;
 let currentCartId = null;
+let localSale = {};
+let updateSaleTimer = null;
+let currentSaleId = null;
 async function addCart() {
     const cartName = document.getElementById("cartName").value.trim();
     if (!cartName) {
@@ -704,7 +707,18 @@ function displayProductToAdd(product, productId) {
     let lastAnimationTime = 0;
     const animationCooldown = 100;
 
+    let stockTracker = product.stock;
     actionBtn.addEventListener("click", function () {
+
+        console.log("product stock: ", stockTracker);
+        if (stockTracker === 0) {
+            showModalMessage(`Product stock quantity reached 0! Update the stock to add more.`);
+            return;
+        }
+
+        stockTracker -= 1;
+
+        showLoadingOverlay();
         actionFunction(productId, product.label, product.costPrice, product.profit);
 
         if (!showSales) {
@@ -757,6 +771,7 @@ function displayProductToAdd(product, productId) {
                 return;
             }
             else {
+                showLoadingOverlay();
                 removeFromSales(productId);
             }
         });
@@ -779,10 +794,8 @@ function showSalesForm() {
     `;
     fetchProductToAdd();
 }
-let localSale = {};
-let updateSaleTimer = null;
-let currentSaleId = null;
 async function addToSales(productId, label, costPrice, profit) {
+
     const today = new Date().toLocaleDateString('en-CA');
 
     if (currentSaleId !== today) {
@@ -918,11 +931,6 @@ async function updateProductStockFromLocalSale() {
             const currentStock = productDoc.data().stock || 0;
             const newStock = currentStock - quantityChange;
 
-            if (newStock < 0) {
-                console.warn(`Can't reduce stock below 0 for ${productId}`);
-                continue;
-            }
-
             await productRef.update({ stock: newStock });
             console.log(`Stock updated for ${productId}: ${currentStock} → ${newStock}`);
 
@@ -933,7 +941,7 @@ async function updateProductStockFromLocalSale() {
         }
     }
 }
-function showLoadingOverlay(duration = 400) {
+function showLoadingOverlay(duration = 500) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("loading-overlay");
         const progressBar = document.getElementById("progress-bar");
@@ -956,8 +964,7 @@ function showLoadingOverlay(duration = 400) {
             }, 10); // Fade-out time
         }, duration);
     });
-}
-//-------------//
+}//-------------//
 
 
 //<Products Section>//
@@ -1198,7 +1205,7 @@ $(document).ready(function () {
             <div class="product-details">
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
-                <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
+                <p><strong>Cost Price:</strong> $${product.costPrice}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1209,7 +1216,6 @@ $(document).ready(function () {
         let productsGrid = `<div id="products-grid" class="products-grid">${productCards}</div>`;
         $(".main-content").html(productCards ? productsGrid : "<p>No products found.</p>");
 
-        // Add click event to display product form in .main-content
         $(".product-card").on("click", function () {
             const productId = $(this).data("id");
             const product = allProducts.find(p => p.id === productId);
@@ -1237,7 +1243,7 @@ $(document).ready(function () {
                 <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
                 <label for="profit">Profit: </label>
-                <input type="number" id="profit" name="profit" value="${product.profit}">
+                <input type="text" id="profit" name="profit" value="${product.profit}">
                 
                 <label for="category">Category:</label>
                 <input type="text" id="category" name="category" value="${product.category}">
@@ -1359,14 +1365,13 @@ $(document).ready(function () {
 
                 reader.readAsDataURL(file); // Read the image as a Data URL
             } else {
-                // Update Firestore directly if no image file is provided
                 db.collection("products").doc(product.id).update(updatedProduct)
                     .then(() => {
                         console.log("Product updated successfully!");
                         showModalMessage("Product Updated Successfully!", true);
                         fetchProducts().then((products) => {
-                            allProducts = products; // Update local array
-                            displayProducts(products); // Refresh UI
+                            allProducts = products;
+                            displayProducts(products);
                         });
                     })
                     .catch(error => {
