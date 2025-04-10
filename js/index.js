@@ -1968,11 +1968,12 @@ function populateDropdown(salesData) {
     });
 }
 function filterSales(salesData, filterType) {
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const todayDate = new Date(); // Keep the Date object
+    const todayStr = todayDate.toLocaleDateString('en-CA'); // YYYY-MM-DD (local timezone)
+    
+    const yesterdayDate = new Date(todayDate); // Clone the date
+    yesterdayDate.setDate(todayDate.getDate() - 1);
+    const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA'); // Same format, local timezone
 
     if (filterType === "today") {
         return salesData.filter(sale => sale.salesDate === todayStr);
@@ -1981,9 +1982,10 @@ function filterSales(salesData, filterType) {
         return salesData.filter(sale => sale.salesDate === yesterdayStr);
     }
     if (filterType === "thisWeek") {
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay()); // Get Monday
-        return salesData.filter(sale => new Date(sale.salesDate) >= startOfWeek);
+        const startOfWeek = new Date(todayDate);
+        startOfWeek.setDate(todayDate.getDate() - todayDate.getDay()); // Get Monday
+        const startOfWeekStr = startOfWeek.toLocaleDateString('en-CA');
+        return salesData.filter(sale => new Date(sale.salesDate) >= new Date(startOfWeekStr));
     }
     if (filterType === "thisMonth") {
         return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 7))); // Match YYYY-MM
@@ -1996,6 +1998,7 @@ function filterSales(salesData, filterType) {
     }
     return salesData; // Return all sales if "All Sales" is selected
 }
+
 function renderSalesTable(salesData) {
     const container = document.getElementById("sales-table-container");
     container.innerHTML = "";
