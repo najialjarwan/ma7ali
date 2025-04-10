@@ -596,8 +596,6 @@ async function displayCart(cartId) {
                     existingExportBtn.remove();
                 }
             }
-        } else {
-            console.error("cart-products-list container not found!");
         }
     });
 }
@@ -719,12 +717,25 @@ async function displayProductToAdd(product, productId) {
     `;
 
     const actionBtn = productCard.querySelector(".add-to-cart-btn");
+    const cancelBtn = productCard.querySelector(".cancel-sale-btn");
     let lastAnimationTime = 0;
     const animationCooldown = 100;
+    const productSnap = await db.collection("products").doc(productId).get();
+    let currentStock = productSnap.data().stock;
+    actionBtn.addEventListener("click", async function () {
 
-    actionBtn.addEventListener("click", function () {
-        actionFunction(productId, product.label, product.costPrice, product.profit);
-
+        if (currentStock <= 0) {
+            showModalMessage(`
+                <p>Product stock is 0!</p>
+                <p style="color: yellow; font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
+                    Update the stock to add to sales.
+                </p>
+            `, false);
+            return;
+        }
+        
+        await actionFunction(productId, product.label, product.costPrice, product.profit);
+        currentStock -=1;
         if (!showSales) {
             addToSales(productId, product.label, product.costPrice, product.profit);
 
@@ -765,15 +776,15 @@ async function displayProductToAdd(product, productId) {
                 }
             }
         } else {
-            showLoadingOverlay();
+            showLoadingOverlay(1000);
         }
     });
 
     if (showSales) {
-        const cancelBtn = productCard.querySelector(".cancel-sale-btn");
         cancelBtn.addEventListener("click", async function () {
-            showLoadingOverlay();
+            showLoadingOverlay(1000);
             await cancelSale(productId);
+            currentStock += 1;
         });
     }
 
@@ -806,20 +817,6 @@ async function addToSales(productId, label, costPrice, profit) {
     }
 
     const productRef = db.collection("products").doc(productId);
-    const productSnap = await productRef.get();
-    const currentStock = productSnap.data().stock;
-
-    if (currentStock <= 0) {
-        showModalMessage(`
-            <p>Product stock is 0!</p>
-            <p style="
-                    color: yellow;
-                    font-weight: bold;
-                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
-            update the stock to add to sales.</p>
-            `, false);
-        return;
-    }
 
     if (localSale[productId]) {
         localSale[productId].quantity += 1;
