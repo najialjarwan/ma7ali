@@ -881,56 +881,59 @@ async function syncSalesToFirestore() {
 }
 async function cancelSale(productId) {
     const today = new Date().toLocaleDateString('en-CA');
-    const saleDocRef = db.collection("sales").doc(today);
-    const productRef = db.collection("products").doc(productId);
-    const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
 
-    // Load current productSold from Firestore
-    const productSoldSnap = await productSoldRef.get();
-    if (!productSoldSnap.exists) {
-        showModalMessage(`
-            <p>Product quantity sold is 0!</p>
-            <p style="
-                    color: yellow;
-                    font-weight: bold;
-                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
-            product is not in sales to cancel.</p>
-            `, false);
+    if (currentSaleId !== today) {
+        console.warn("Trying to cancel sale for a different day.");
         return;
     }
 
-    const productData = productSoldSnap.data();
-
-    // Decrease the quantity by 1
-    const newQuantity = productData.quantity - 1;
-
-    if (newQuantity === 0) {
-        await productSoldRef.delete();
-    } else {
-        await productSoldRef.update({
-            quantity: newQuantity,
-            total: productData.costPrice * newQuantity,
-            totalProfit: productData.profit * newQuantity
-        });
+    const productInSale = localSale[productId];
+    if (!productInSale || productInSale.quantity <= 0) {
+        console.log("Nothing to cancel for this product.");
+        return;
     }
 
-    // Restore 1 stock in the product document
+    const saleDocRef = db.collection("sales").doc(currentSaleId);
+    const productRef = db.collection("products").doc(productId);
+    const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
+
+    // Step 1: Decrease the quantity in localSale
+    productInSale.quantity -= 1;
+    productInSale.total = productInSale.quantity * productInSale.costPrice;
+    productInSale.totalProfit = productInSale.quantity * productInSale.profit;
+
+    // If quantity reaches zero, remove the product from localSale and delete from productsSold
+    if (productInSale.quantity === 0) {
+        delete localSale[productId];
+        await productSoldRef.delete(); // Remove product from Firestore
+    } else {
+        // Update Firestore productSold collection
+        await productSoldRef.set({
+            name: productInSale.name,
+            quantity: productInSale.quantity,
+            costPrice: productInSale.costPrice,
+            profit: productInSale.profit,
+            total: productInSale.total,
+            totalProfit: productInSale.totalProfit
+        }, { merge: true });
+    }
+
+    // Step 2: Restore stock in the products collection
     await productRef.update({
-        stock: firebase.firestore.FieldValue.increment(1)
+        stock: firebase.firestore.FieldValue.increment(1) // Restores stock by 1
     });
 
-    // Recalculate totals from Firestore (optional but better)
-    const productsSoldSnap = await saleDocRef.collection("productsSold").get();
+    // Step 3: Recalculate the totals of all sales
     let totalProductsSold = 0;
     let totalRevenue = 0;
     let totalProfit = 0;
 
-    productsSoldSnap.forEach(doc => {
-        const item = doc.data();
+    for (const id in localSale) {
+        const item = localSale[id];
         totalProductsSold += item.quantity;
         totalRevenue += item.total;
         totalProfit += item.totalProfit;
-    });
+    }
 
     await saleDocRef.set({
         totalProductsSold,
@@ -938,7 +941,7 @@ async function cancelSale(productId) {
         totalProfit
     }, { merge: true });
 
-    console.log(`Canceled one unit of "${productData.name}". Stock restored.`);
+    console.log(`Canceled one unit of ${productInSale.name}. Stock restored.`);
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
     const today = new Date().toLocaleDateString('en-CA');
