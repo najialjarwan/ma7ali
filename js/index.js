@@ -733,9 +733,9 @@ async function displayProductToAdd(product, productId) {
             `, false);
             return;
         }
-        
+
         await actionFunction(productId, product.label, product.costPrice, product.profit);
-        currentStock -=1;
+        currentStock -= 1;
         if (!showSales) {
             addToSales(productId, product.label, product.costPrice, product.profit);
 
@@ -809,7 +809,6 @@ let updateSaleTimer = null;
 let currentSaleId = null;
 async function addToSales(productId, label, costPrice, profit) {
     const today = new Date().toLocaleDateString('en-CA');
-
     if (currentSaleId !== today) {
         console.log("New day detected. Resetting local sale data.");
         currentSaleId = today;
@@ -829,7 +828,7 @@ async function addToSales(productId, label, costPrice, profit) {
             costPrice: costPrice,
             profit: profit,
             total: costPrice,
-            totalProfit: profit
+            totalProfit: profit,
         };
     }
 
@@ -856,7 +855,8 @@ async function syncSalesToFirestore() {
             costPrice: product.costPrice,
             profit: product.profit,
             total: product.total,
-            totalProfit: product.totalProfit
+            totalProfit: product.totalProfit,
+            dateSold: firebase.firestore.Timestamp.now()
         }, { merge: true });
     }
 
@@ -882,14 +882,12 @@ async function syncSalesToFirestore() {
 async function cancelSale(productId) {
     const today = new Date().toLocaleDateString('en-CA');
 
-    if (currentSaleId !== today) {
-        console.warn("Trying to cancel sale for a different day.");
-        return;
-    }
-
     const productInSale = localSale[productId];
     if (!productInSale || productInSale.quantity <= 0) {
-        console.log("Nothing to cancel for this product.");
+        showModalMessage(`
+            <p>Product sold quantity is 0!</p>
+            <p style="color: yellow; font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);"></p>
+        `, false);
         return;
     }
 
@@ -937,7 +935,7 @@ async function cancelSale(productId) {
 
     await saleDocRef.set({
         totalProductsSold,
-        totalRevenu: totalRevenue,
+        totalRevenue: totalRevenue,
         totalProfit
     }, { merge: true });
 
@@ -996,7 +994,8 @@ async function loadTodaySaleToLocal() {
             costPrice: data.costPrice,
             profit: data.profit,
             total: data.total,
-            totalProfit: data.totalProfit
+            totalProfit: data.totalProfit,
+            dateSold: data.dateSold
         };
     });
 
@@ -1950,6 +1949,8 @@ async function fetchSalesData() {
             totalProfit: salesInfo.totalProfit,
             productsSold
         });
+        console.log(salesInfo);
+        console.log("products info: ", productsSold);
     }
 
     return salesData;
@@ -2025,14 +2026,18 @@ function renderSalesTable(salesData) {
 
         if (sale.productsSold.length > 0) {
             sale.productsSold.forEach(product => {
+                const date = product.dateSold?.toDate
+                    ? product.dateSold.toDate().toLocaleString('en-US')
+                    : "N/A";
+
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${product.name}</td>
-                    <td>${new Date(product.dateSold.toDate()).toLocaleString()}</td>
-                    <td>$${product.costPrice.toFixed(2)}</td>
-                    <td>${product.quantity}</td>
-                    <td>$${product.totalRevenu.toFixed(2)}</td>
-                    <td>$${product.totalProfit.toFixed(2)}</td>
+                    <td>${product.name || "N/A"}</td>
+                    <td>${date}</td>
+                    <td>$${(product.costPrice ?? 0).toFixed(2)}</td>
+                    <td>${product.quantity ?? 0}</td>
+                    <td>$${(product.total ?? 0).toFixed(2)}</td>
+                    <td>$${(product.totalProfit ?? 0).toFixed(2)}</td>
                 `;
                 tbody.appendChild(row);
             });
