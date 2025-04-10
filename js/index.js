@@ -475,30 +475,38 @@ function showCartForm() {
 }
 async function cancelCart() {
     try {
+        showLoadingOverlay(1000);
+        showCartForm();
         const cartDocRef = db.collection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
+
+        const cancelMap = {};
 
         for (let doc of cartProductsSnapshot.docs) {
             const data = doc.data();
             const productId = data.productId || doc.id;
             const quantity = data.quantity || 1;
 
-            for (let i = 0; i < quantity; i++) {
-                cancelSale(productId, null);
-            }
+            cancelMap[productId] = (cancelMap[productId] || 0) + quantity;
         }
 
+        // Reverse sale per product using optimized single call
+        for (let productId in cancelMap) {
+            await cancelProductQuantity(productId, cancelMap[productId]);
+        }
+
+        // Clear the cart
         const batch = db.batch();
         cartProductsSnapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
         });
-
         batch.delete(cartDocRef);
 
         await batch.commit();
 
         currentCartId = null;
-        showCartForm();
+
+        console.log("Cart canceled and all products restored from sales.");
     } catch (error) {
         console.error("Error canceling cart:", error);
     }
@@ -759,14 +767,15 @@ async function displayProductToAdd(product, productId) {
         } else {
             showLoadingOverlay();
         }
+    });
 
+    if (showSales) {
         const cancelBtn = productCard.querySelector(".cancel-sale-btn");
-        console.log("cancel button");
         cancelBtn.addEventListener("click", async function () {
             showLoadingOverlay();
-            cancelSale(productId);
+            await cancelSale(productId);
         });
-    });
+    }
 
     productCardContainer.appendChild(productCard);
 }
@@ -800,14 +809,17 @@ async function addToSales(productId, label, costPrice, profit) {
     const productSnap = await productRef.get();
     const currentStock = productSnap.data().stock;
 
-    // ⛔ Stop if stock is 0 or less
     if (currentStock <= 0) {
-        showModalMessage("Product stock reached 0. Update the quantity to add more to sales", false);
-        return; // Prevent adding to sales
+        showModalMessage(`
+            <p>Product stock is 0!</p>
+            <p style="
+                    color: yellow;
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
+            update the stock to add to sales.</p>
+            `, false);
+        return;
     }
-
-    // ✅ Continue if stock is available
-    const saleDocRef = db.collection("sales").doc(currentSaleId);
 
     if (localSale[productId]) {
         localSale[productId].quantity += 1;
@@ -824,12 +836,10 @@ async function addToSales(productId, label, costPrice, profit) {
         };
     }
 
-    // 🔽 Safe to reduce stock
     await productRef.update({
         stock: firebase.firestore.FieldValue.increment(-1)
     });
 
-    // 🕒 Debounced sync
     if (updateSaleTimer) clearTimeout(updateSaleTimer);
     updateSaleTimer = setTimeout(() => {
         syncSalesToFirestore();
@@ -874,63 +884,56 @@ async function syncSalesToFirestore() {
 }
 async function cancelSale(productId) {
     const today = new Date().toLocaleDateString('en-CA');
-
-    if (currentSaleId !== today) {
-        console.warn("Trying to cancel sale for a different day.");
-        return;
-    }
-
-    const productInSale = localSale[productId];
-    if (!productInSale || productInSale.quantity <= 0) {
-        console.log("Nothing to cancel for this product.");
-        return;
-    }
-
-    const saleDocRef = db.collection("sales").doc(currentSaleId);
+    const saleDocRef = db.collection("sales").doc(today);
     const productRef = db.collection("products").doc(productId);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
 
-    // Step 1: Update localSale (decrease quantity)
-    productInSale.quantity -= 1;
-    productInSale.total = productInSale.quantity * productInSale.costPrice;
-    productInSale.totalProfit = productInSale.quantity * productInSale.profit;
-
-    if (productInSale.quantity === 0) {
-        delete localSale[productId];
-        await productSoldRef.delete();
-    } else {
-        await productSoldRef.set({
-            name: productInSale.name,
-            quantity: productInSale.quantity,
-            costPrice: productInSale.costPrice,
-            profit: productInSale.profit,
-            total: productInSale.total,
-            totalProfit: productInSale.totalProfit
-        }, { merge: true });
+    // Load current productSold from Firestore
+    const productSoldSnap = await productSoldRef.get();
+    if (!productSoldSnap.exists) {
+        showModalMessage(`
+            <p>Product quantity sold is 0!</p>
+            <p style="
+                    color: yellow;
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
+            product is not in sales to cancel.</p>
+            `, false);
+        return;
     }
 
-    // Step 2: Restore stock
-    await saleDocRef.collection("productsSold").doc(productId).update({
-        quantity: firebase.firestore.FieldValue.increment(-1),
-        total: firebase.firestore.FieldValue.increment(-product.costPrice),
-        totalProfit: firebase.firestore.FieldValue.increment(-product.profit)
-    });
-    
+    const productData = productSoldSnap.data();
+
+    // Decrease the quantity by 1
+    const newQuantity = productData.quantity - 1;
+
+    if (newQuantity === 0) {
+        await productSoldRef.delete();
+    } else {
+        await productSoldRef.update({
+            quantity: newQuantity,
+            total: productData.costPrice * newQuantity,
+            totalProfit: productData.profit * newQuantity
+        });
+    }
+
+    // Restore 1 stock in the product document
     await productRef.update({
         stock: firebase.firestore.FieldValue.increment(1)
     });
 
-    // Step 3: Recalculate all sale totals from localSale
+    // Recalculate totals from Firestore (optional but better)
+    const productsSoldSnap = await saleDocRef.collection("productsSold").get();
     let totalProductsSold = 0;
     let totalRevenue = 0;
     let totalProfit = 0;
 
-    for (const id in localSale) {
-        const item = localSale[id];
+    productsSoldSnap.forEach(doc => {
+        const item = doc.data();
         totalProductsSold += item.quantity;
         totalRevenue += item.total;
         totalProfit += item.totalProfit;
-    }
+    });
 
     await saleDocRef.set({
         totalProductsSold,
@@ -938,7 +941,44 @@ async function cancelSale(productId) {
         totalProfit
     }, { merge: true });
 
-    console.log(`Canceled one unit of ${productInSale.name}. Stock restored.`);
+    console.log(`Canceled one unit of "${productData.name}". Stock restored.`);
+}
+async function cancelProductQuantity(productId, quantityToCancel) {
+    const today = new Date().toLocaleDateString('en-CA');
+    const saleDocRef = db.collection("sales").doc(today);
+    const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
+    const productRef = db.collection("products").doc(productId);
+
+    const productDoc = await productSoldRef.get();
+    if (!productDoc.exists) return;
+
+    const productData = productDoc.data();
+
+    const cancelQty = Math.min(productData.quantity, quantityToCancel);
+    if (cancelQty <= 0) return;
+
+    const updatedQty = productData.quantity - cancelQty;
+
+    // Update or delete productSold
+    if (updatedQty === 0) {
+        await productSoldRef.delete();
+    } else {
+        await productSoldRef.update({
+            quantity: updatedQty,
+            total: updatedQty * productData.costPrice,
+            totalProfit: updatedQty * productData.profit
+        });
+    }
+
+    // Restore stock
+    await productRef.update({
+        stock: firebase.firestore.FieldValue.increment(cancelQty)
+    });
+
+    // Reload sales from Firestore to recalculate totals
+    await loadTodaySaleToLocal();
+
+    console.log(`Canceled ${cancelQty} unit(s) of ${productData.name}. Stock restored.`);
 }
 async function loadTodaySaleToLocal() {
     const today = new Date().toLocaleDateString('en-CA');
@@ -962,7 +1002,6 @@ async function loadTodaySaleToLocal() {
 
     console.log("Loaded today's sale into local memory:");
 }
-
 function showLoadingOverlay(duration = 400) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("loading-overlay");
