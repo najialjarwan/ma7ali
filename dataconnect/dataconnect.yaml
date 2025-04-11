@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "serniorproject-possystem"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "serniorproject-possystem-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]
