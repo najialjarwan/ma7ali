@@ -1953,6 +1953,9 @@ async function fetchSalesData() {
             ...productDoc.data()
         }));
 
+        // Sort products within this sale by quantity descending
+        productsSold.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+
         salesData.push({
             salesDate,
             createdAt: salesInfo.createdAt,
