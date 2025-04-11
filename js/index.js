@@ -662,7 +662,7 @@ async function fetchProductToAdd() {
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
             const filteredProducts = allProducts.filter(product =>
-                product.label.toLowerCase() === searchValue
+                product.label.toLowerCase() === (searchValue)
             );
             displayProducts(filteredProducts);
         });
@@ -1026,13 +1026,13 @@ function initProductPage() {
     mainContent.innerHTML = `
         <div id="filter-options" class="filter-options">
             <div class="filter-group">
-                <label for="category-select">Filter by Category:</label>
+                <label for="category-select">Filter Category:</label>
                 <select id="category-select">
                     <option value="">All Categories</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label for="price-select">Filter by Price:</label>
+                <label for="price-select">Filter Price:</label>
                 <select id="price-select">
                     <option value="">All Prices</option>
                     <option value="low-price">Low Price (0-10)</option>
@@ -1041,16 +1041,16 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="stock-select">Sort by Stock:</label>
+                <label for="stock-select">Filter Stock:</label>
                 <select id="stock-select">
                         <option value="">All Stocks</option>
-                        <option value="low-stock">Low Stock (0-10)</option>
-                        <option value="medium-stock">Medium Stock (11-50)</option>
-                        <option value="high-stock">High Stock (51+)</option>
+                        <option value="low-stock" style="color: red;">Low Stock (0-10)</option>
+                        <option value="medium-stock" style="color: yellow;">Medium Stock (11-50)</option>
+                        <option value="high-stock" style="color: green;">High Stock (51+)</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label for="profit-select">Sort by Profit:</label>
+                <label for="profit-select">Filter Profit:</label>
                 <select id="profit-select">
                         <option value="">All Profits</option>
                         <option value="low-profit">Low profit (0-10)</option>
@@ -1059,7 +1059,7 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="sort-by-price-stock-profit">Sort by Price or Stock:</label>
+                <label for="sort-by-price-stock-profit">Sort:</label>
                 <select id="sort-by-price-stock-profit">
                     <option value="">No Sort</option>
                     <optgroup label="Sort by Price">
@@ -1525,29 +1525,28 @@ async function fetchCustomers() {
     searchInput.addEventListener("input", async () => {
         const searchValue = searchInput.value.trim().toLowerCase();
 
-        // Search Fetch
+
         try {
-            // Fetch all customers from Firebase
+
             const customersSnapshot = await db.collection("customers").get();
 
-            // Filter customers based on the search input value
+
             const filteredCustomers = [];
             customersSnapshot.forEach((doc) => {
-                const customer = { id: doc.id, ...doc.data() }; // Fix: Include document ID
+                const customer = { id: doc.id, ...doc.data() };
                 const name = customer.name.toLowerCase();
-                const phoneNumber = customer.phoneNumber.toLowerCase();
+                const phoneNumber = customer.phoneNumber;
 
                 if (name.includes(searchValue) || phoneNumber.includes(searchValue)) {
                     filteredCustomers.push(customer);
                 }
             });
 
-            // Clear the current grid before rendering new content
             customersGrid.innerHTML = "";
 
             if (filteredCustomers.length > 0) {
                 filteredCustomers.forEach((customer) => {
-                    // Create a customer card for each filtered customer
+
                     const customerCard = document.createElement("div");
                     customerCard.classList.add("customers-card");
                     customerCard.innerHTML = `
@@ -1890,13 +1889,7 @@ function setupCartClickListeners() {
                         `;
                     }).join("");
 
-                    const repeatedItems = productItems + productItems; // duplicate for seamless loop
-
-                    productsContainer.innerHTML = `
-                        <div class="product-scroller">
-                            ${repeatedItems}
-                        </div>
-                    `;
+                    productsContainer.innerHTML = `${productItems}`;
                 }
 
                 productsContainer.classList.add("show");
@@ -1951,7 +1944,7 @@ async function fetchSalesData() {
     const salesData = [];
 
     for (const doc of snapshot.docs) {
-        const salesDate = doc.id; // Sales date is the document ID (e.g., "2025-04-02")
+        const salesDate = doc.id;
         const salesInfo = doc.data();
         const productsSnapshot = await salesCollection.doc(salesDate).collection("productsSold").get();
 
@@ -1968,16 +1961,14 @@ async function fetchSalesData() {
             totalProfit: salesInfo.totalProfit,
             productsSold
         });
-        console.log(salesInfo);
-        console.log("products info: ", productsSold);
     }
 
     return salesData;
 }
 function populateDropdown(salesData) {
     const optGroup = document.getElementById("specific-dates-group");
-
-    optGroup.innerHTML = "";
+    if (optGroup)
+        optGroup.innerHTML = "";
 
     salesData.forEach(sale => {
         const option = document.createElement("option");
@@ -1989,7 +1980,7 @@ function populateDropdown(salesData) {
 function filterSales(salesData, filterType) {
     const todayDate = new Date(); // Keep the Date object
     const todayStr = todayDate.toLocaleDateString('en-CA'); // YYYY-MM-DD (local timezone)
-    
+
     const yesterdayDate = new Date(todayDate); // Clone the date
     yesterdayDate.setDate(todayDate.getDate() - 1);
     const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA'); // Same format, local timezone
