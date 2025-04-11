@@ -424,16 +424,17 @@ function showCartForm() {
             <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
             <button type="button" class="cancel-cart-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
         </form>
-        <div class="search-customer-container search-container-main" >
+        <div class="search-container-main" >
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+                    <div id="cart-icon">
+            <span id="cart-quantity" class="cart-badge">0</span>
+            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="30" height="30">
+        </div>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
-        <div id="cart-icon">
-            <span id="cart-quantity" class="cart-badge">0</span>
-            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="100" height="100">
+        <div class="cart-display-container" id="cart-display-container" style="display: none">
         </div>
-        <div class="cart-display-container" id="cart-display-container" style="display: none"></div>
     `;
     fetchProductToAdd();
 
@@ -662,7 +663,8 @@ async function fetchProductToAdd() {
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
             const filteredProducts = allProducts.filter(product =>
-                product.label.toLowerCase() === (searchValue)
+                !showSales ? product.label.toLowerCase() === (searchValue) 
+                : product.label.toLowerCase().startsWith(searchValue)
             );
             displayProducts(filteredProducts);
         });
@@ -752,7 +754,7 @@ async function displayProductToAdd(product, productId) {
 
                     requestAnimationFrame(() => {
                         clonedImage.style.left = `${cartRect.left + cartRect.width / 2 - imageRect.width / 2}px`;
-                        clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2 - 15}px`;
+                        clonedImage.style.top = `${cartRect.top + cartRect.height / 2 - imageRect.height / 2 - 5}px`;
                         clonedImage.style.transform = "scale(0.1)";
                         clonedImage.style.opacity = "1";
                     });
@@ -1972,7 +1974,6 @@ async function fetchSalesData() {
 
     return salesData;
 }
-
 function populateDropdown(salesData) {
     const optGroup = document.getElementById("specific-dates-group");
     if (optGroup)
