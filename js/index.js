@@ -840,6 +840,7 @@ async function addToSales(productId, label, costPrice, profit) {
     updateSaleTimer = setTimeout(() => {
         syncSalesToFirestore();
     }, 300);
+    refreshProductList();
 }
 async function syncSalesToFirestore() {
     console.log("Syncing sale to Firestore:", currentSaleId);
@@ -1232,33 +1233,30 @@ async function fetchProducts() {
     }
 }
 let allProducts = [];
-$(document).ready(function () {
-
-    function fetchProducts() {
-        return db.collection("products").get().then((querySnapshot) => {
-            let products = [];
-            querySnapshot.forEach((doc) => {
-                let data = doc.data();
-                products.push({
-                    id: doc.id,
-                    label: data.label,
-                    barcode: data.barcode,
-                    costPrice: data.costPrice || 0,
-                    category: data.category || "Unknown",
-                    stock: data.stock || 0,
-                    img: data.img || "placeholder.jpg",
-                    createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date", // Temporary timestamp
-                });
+function fetchProductsForDoc() {
+    return db.collection("products").get().then((querySnapshot) => {
+        let products = [];
+        querySnapshot.forEach((doc) => {
+            let data = doc.data();
+            products.push({
+                id: doc.id,
+                label: data.label,
+                barcode: data.barcode,
+                costPrice: data.costPrice || 0,
+                category: data.category || "Unknown",
+                stock: data.stock || 0,
+                img: data.img || "placeholder.jpg",
+                createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date",
             });
-            return products;
-        }).catch((error) => {
-            console.error("Error fetching products:", error);
-            return [];
         });
-    }
-
-    function displayProducts(filteredProducts) {
-        let productCards = filteredProducts.map(product => `
+        return products;
+    }).catch((error) => {
+        console.error("Error fetching products:", error);
+        return [];
+    });
+}
+function displayProducts(filteredProducts) {
+    let productCards = filteredProducts.map(product => `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image">
                 <img src="${product.img}" alt="${product.label}">
@@ -1266,7 +1264,7 @@ $(document).ready(function () {
             <div class="product-details">
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
-                <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
+                <p><strong>Cost Price:</strong> $${product.costPrice}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1274,214 +1272,212 @@ $(document).ready(function () {
         </div>
     `).join("");
 
-        let productsGrid = `<div id="products-grid" class="products-grid">${productCards}</div>`;
-        $(".main-content").html(productCards ? productsGrid : "<p>No products found.</p>");
+    let productsGrid = `<div id="products-grid" class="products-grid">${productCards}</div>`;
+    $(".main-content").html(productCards ? productsGrid : "<p>No products found.</p>");
 
-        // Add click event to display product form in .main-content
-        $(".product-card").on("click", function () {
-            const productId = $(this).data("id");
-            const product = allProducts.find(p => p.id === productId);
-            displayProductForm(product);
-        });
-    }
+    $(".product-card").on("click", function () {
+        const productId = $(this).data("id");
+        const product = allProducts.find(p => p.id === productId);
+        displayProductForm(product);
+    });
+}
+function refreshProductList() {
+    fetchProductsForDoc().then((products) => {
+        allProducts = products;
+        console.log("Products refreshed.");
+    });
+}
+$(document).ready(function () {
+    fetchProductsForDoc().then(products => {
+        allProducts = products;
+        displayProducts(products);
+    });
 
-    function displayProductForm(product) {
-        const formHtml = `
-            <h3>Update Product: </h3>
-            <form id="product-form" class="product-form">
-                <label for="label">Label:</label>
-                <input type="text" id="label" name="label" value="${product.label}">
-                
-                <label for="barcode">Barcode:</label>
-                <input type="text" id="barcode" name="barcode" value="${product.barcode}">
+    $(".search-bar").on("input", function () {
+        let searchText = $(this).val().toLowerCase().trim();
+        let filtered = allProducts.filter(product =>
+            product.label.toLowerCase().startsWith(searchText)
+        );
+        displayProducts(filtered);
+    });
+});
+function displayProductForm(product) {
+    const formHtml = `
+        <h3>Update Product: </h3>
+        <form id="product-form" class="product-form">
+            <label for="label">Label:</label>
+            <input type="text" id="label" name="label" value="${product.label}">
+            
+            <label for="barcode">Barcode:</label>
+            <input type="text" id="barcode" name="barcode" value="${product.barcode}">
 
-                <div class="file-container">
-                    <label for="img">Image: <span id="fileName">No file selected!</span> </label>
-                    <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
-                    <button type="button" id="customFileButton">Update Image:</button>
-                </div>
-                
-                <label for="costPrice">Cost Price:</label>
-                <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
+            <div class="file-container">
+                <label for="img">Image: <span id="fileName">No file selected!</span> </label>
+                <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
+                <button type="button" id="customFileButton">Update Image:</button>
+            </div>
+            
+            <label for="costPrice">Cost Price:</label>
+            <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
-                <label for="profit">Profit: </label>
-                <input type="number" id="profit" name="profit" value="${product.profit}">
-                
-                <label for="category">Category:</label>
-                <input type="text" id="category" name="category" value="${product.category}">
-                
-                <label for="stock">Stock:</label>
-                <input type="number" id="stock" name="stock" value="${product.stock}">
-                
-                <button type="submit" id="update-button">Update</button>
-                <button type="button" id="remove-button">Remove Product</button>
-                <button type="button" id="cancel-button">Cancel</button>
-            </form>
-        `;
+            <label for="profit">Profit: </label>
+            <input type="number" id="profit" name="profit" value="${product.profit}">
+            
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" value="${product.category}">
+            
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" value="${product.stock}">
+            
+            <button type="submit" id="update-button">Update</button>
+            <button type="button" id="remove-button">Remove Product</button>
+            <button type="button" id="cancel-button">Cancel</button>
+        </form>
+    `;
 
-        $(".main-content").html(formHtml);
+    $(".main-content").html(formHtml);
 
-        // Custom behavior for file input
-        const fileInput = document.getElementById("img");
-        const customFileButton = document.getElementById("customFileButton");
-        const fileNameSpan = document.getElementById("fileName");
+    // Custom behavior for file input
+    const fileInput = document.getElementById("img");
+    const customFileButton = document.getElementById("customFileButton");
+    const fileNameSpan = document.getElementById("fileName");
 
-        customFileButton.addEventListener("click", () => {
-            fileInput.click(); // Trigger the hidden file input
-        });
+    customFileButton.addEventListener("click", () => {
+        fileInput.click(); // Trigger the hidden file input
+    });
 
-        fileInput.addEventListener("change", () => {
-            if (fileInput.files.length > 0) {
-                fileNameSpan.textContent = fileInput.files[0].name; // Display file name
-            } else {
-                fileNameSpan.textContent = "No file selected!"; // Reset text if no file is chosen
-            }
-        });
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+            fileNameSpan.textContent = fileInput.files[0].name; // Display file name
+        } else {
+            fileNameSpan.textContent = "No file selected!"; // Reset text if no file is chosen
+        }
+    });
 
-        $("#product-form").on("submit", function (e) {
-            e.preventDefault();
+    $("#product-form").on("submit", function (e) {
+        e.preventDefault();
 
-            const updatedProduct = {
-                label: $("#label").val(),
-                barcode: $("#barcode").val(),
-                costPrice: parseFloat($("#costPrice").val()),
-                profit: parseFloat($("profit").val()),
-                category: $("#category").val(),
-                stock: parseInt($("#stock").val(), 10),
+        const updatedProduct = {
+            label: $("#label").val(),
+            barcode: $("#barcode").val(),
+            costPrice: parseFloat($("#costPrice").val()),
+            profit: parseFloat($("profit").val()),
+            category: $("#category").val(),
+            stock: parseInt($("#stock").val(), 10),
+        };
+
+        const file = $("#img")[0].files[0];
+        if (file && file.size > 0) {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+
+                img.onload = () => {
+                    // Create a canvas for image resizing and conversion
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    // Set maximum dimensions for the image (control pixels)
+                    const maxWidth = 250; // Adjust as needed
+                    const maxHeight = 250;
+
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = (width * maxHeight) / height;
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Draw the resized image onto the canvas
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convert the canvas content to WEBP or JPEG and control quality
+                    canvas.toBlob(
+                        (blob) => {
+                            const storageRef = storage.ref(`product-images/${product.id}/${file.name.split(".")[0]}.webp`);
+                            const metadata = { contentType: "image/webp" };
+
+                            // Upload the optimized image
+                            storageRef.put(blob, metadata)
+                                .then(snapshot => snapshot.ref.getDownloadURL()) // Get the image URL
+                                .then(url => {
+                                    updatedProduct.img = url; // Add image URL to the updated product
+
+                                    // Update product details in Firestore
+                                    db.collection("products").doc(product.id).update(updatedProduct)
+                                        .then(() => {
+                                            console.log("Product updated successfully!");
+                                            showModalMessage("Product Updated Successfully!", true);
+                                            fetchProducts().then((products) => {
+                                                allProducts = products; // Refresh the local array
+                                                displayProducts(products); // Refresh UI
+                                            });
+                                        })
+                                        .catch(error => {
+                                            console.error("Error updating product:", error);
+                                        });
+                                })
+                                .catch(error => {
+                                    console.error("Error uploading image:", error);
+                                    showModalMessage("Image upload failed. Please try again.", false);
+                                });
+                        },
+                        "image/webp", // Format (use JPEG if required)
+                        0.3 // Adjust quality for better control (lower = smaller file, worse quality)
+                    );
+                };
             };
 
-            const file = $("#img")[0].files[0];
-            if (file && file.size > 0) {
-                const reader = new FileReader();
-
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-
-                    img.onload = () => {
-                        // Create a canvas for image resizing and conversion
-                        const canvas = document.createElement("canvas");
-                        const ctx = canvas.getContext("2d");
-
-                        // Set maximum dimensions for the image (control pixels)
-                        const maxWidth = 250; // Adjust as needed
-                        const maxHeight = 250;
-
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > maxWidth) {
-                                height = (height * maxWidth) / width;
-                                width = maxWidth;
-                            }
-                        } else {
-                            if (height > maxHeight) {
-                                width = (width * maxHeight) / height;
-                                height = maxHeight;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-
-                        // Draw the resized image onto the canvas
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Convert the canvas content to WEBP or JPEG and control quality
-                        canvas.toBlob(
-                            (blob) => {
-                                const storageRef = storage.ref(`product-images/${product.id}/${file.name.split(".")[0]}.webp`);
-                                const metadata = { contentType: "image/webp" };
-
-                                // Upload the optimized image
-                                storageRef.put(blob, metadata)
-                                    .then(snapshot => snapshot.ref.getDownloadURL()) // Get the image URL
-                                    .then(url => {
-                                        updatedProduct.img = url; // Add image URL to the updated product
-
-                                        // Update product details in Firestore
-                                        db.collection("products").doc(product.id).update(updatedProduct)
-                                            .then(() => {
-                                                console.log("Product updated successfully!");
-                                                showModalMessage("Product Updated Successfully!", true);
-                                                fetchProducts().then((products) => {
-                                                    allProducts = products; // Refresh the local array
-                                                    displayProducts(products); // Refresh UI
-                                                });
-                                            })
-                                            .catch(error => {
-                                                console.error("Error updating product:", error);
-                                            });
-                                    })
-                                    .catch(error => {
-                                        console.error("Error uploading image:", error);
-                                        showModalMessage("Image upload failed. Please try again.", false);
-                                    });
-                            },
-                            "image/webp", // Format (use JPEG if required)
-                            0.3 // Adjust quality for better control (lower = smaller file, worse quality)
-                        );
-                    };
-                };
-
-                reader.readAsDataURL(file); // Read the image as a Data URL
-            } else {
-                // Update Firestore directly if no image file is provided
-                db.collection("products").doc(product.id).update(updatedProduct)
-                    .then(() => {
-                        console.log("Product updated successfully!");
-                        showModalMessage("Product Updated Successfully!", true);
-                        fetchProducts().then((products) => {
-                            allProducts = products; // Update local array
-                            displayProducts(products); // Refresh UI
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error updating product:", error);
+            reader.readAsDataURL(file); // Read the image as a Data URL
+        } else {
+            // Update Firestore directly if no image file is provided
+            db.collection("products").doc(product.id).update(updatedProduct)
+                .then(() => {
+                    console.log("Product updated successfully!");
+                    showModalMessage("Product Updated Successfully!", true);
+                    fetchProducts().then((products) => {
+                        allProducts = products; // Update local array
+                        displayProducts(products); // Refresh UI
                     });
-            }
-        });
-
-        // Cancel button functionality
-        $("#cancel-button").on("click", function () {
-            displayProducts(allProducts); // Return to products grid
-        });
-        $("#remove-button").on("click", function () {
-            removeProductFromFirebase(product.id);
-        });
-    }
-
-    function removeProductFromFirebase(productId) {
-        db.collection("products").doc(productId).delete()
-            .then(() => {
-                console.log("Product removed successfully!");
-                showModalMessage("Product Removed Successfully!", true);
-                fetchProducts().then((products) => {
-                    allProducts = products;
-                    displayProducts(products); // Refresh product list
+                })
+                .catch(error => {
+                    console.error("Error updating product:", error);
                 });
-            })
-            .catch(error => {
-                console.error("Error removing product:", error);
-            });
-    }
-
-    fetchProducts().then((products) => {
-        allProducts = products;
-
-        $(".search-bar").on("input", function () {
-            let searchText = $(this).val().toLowerCase().trim();
-            let filtered = allProducts.filter(product =>
-                product.label.toLowerCase() === (searchText)
-            );
-
-            displayProducts(filtered);
-        });
-
-        displayProducts(products); // Initial display
+        }
     });
-}); //<--------------->//
+
+    // Cancel button functionality
+    $("#cancel-button").on("click", function () {
+        displayProducts(allProducts); // Return to products grid
+    });
+    $("#remove-button").on("click", function () {
+        removeProductFromFirebase(product.id);
+    });
+}
+function removeProductFromFirebase(productId) {
+    db.collection("products").doc(productId).delete()
+        .then(() => {
+            console.log("Product removed successfully!");
+            showModalMessage("Product Removed Successfully!", true);
+            refreshProductList();
+        })
+        .catch(error => {
+            console.error("Error removing product:", error);
+        });
+}//<--------------->//
 
 
 //<Customers Section>//
@@ -1998,7 +1994,6 @@ function filterSales(salesData, filterType) {
     }
     return salesData; // Return all sales if "All Sales" is selected
 }
-
 function renderSalesTable(salesData) {
     const container = document.getElementById("sales-table-container");
     container.innerHTML = "";
