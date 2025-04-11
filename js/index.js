@@ -39,15 +39,6 @@ window.addEventListener("load", updateOnlineStatus);
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 
-db.collection("test")
-    .get()
-    .then((snapshot) => {
-        console.log("Firestore is connected!", snapshot.docs);
-    })
-    .catch((error) => {
-        console.error("Error connecting to Firestore:", error);
-    });
-
 
 function initializeEventListeners() {
 
@@ -1059,8 +1050,17 @@ function initProductPage() {
                 </select>
             </div>
             <div class="filter-group">
-                <label for="sort-by-price-or-stock">Sort by Price or Stock:</label>
-                <select id="sort-by-price-or-stock">
+                <label for="profit-select">Sort by Profit:</label>
+                <select id="profit-select">
+                        <option value="">All Profits</option>
+                        <option value="low-profit">Low profit (0-10)</option>
+                        <option value="medium-profit">Medium Profit (11-20)</option>
+                        <option value="high-profit">High Profit (21+)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sort-by-price-stock-profit">Sort by Price or Stock:</label>
+                <select id="sort-by-price-stock-profit">
                     <option value="">No Sort</option>
                     <optgroup label="Sort by Price">
                         <option value="price-asc">Lowest to Highest</option>
@@ -1069,6 +1069,10 @@ function initProductPage() {
                     <optgroup label="Sort by Stock">
                         <option value="stock-asc">Lowest to Highest</option>
                         <option value="stock-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Profit">
+                        <option value="profit-asc">Lowest to Highest</option>
+                        <option value="profit-desc">Highest to Lowest</option>
                     </optgroup>
                 </select>
             </div>
@@ -1104,7 +1108,8 @@ async function fetchProducts() {
     const categorySelect = document.getElementById("category-select");
     const priceSelect = document.getElementById("price-select");
     const stockSelect = document.getElementById("stock-select");
-    const sortByPriceOrStock = document.getElementById("sort-by-price-or-stock");
+    const profitSelect = document.getElementById("profit-select");
+    const sortByPriceStockProfit = document.getElementById("sort-by-price-stock-profit");
 
     try {
         const snapshot = await db.collection("products").get();
@@ -1143,7 +1148,6 @@ async function fetchProducts() {
             if (priceRange) {
                 switch (priceRange) {
                     case "low-price":
-                        console.log(priceRange);
                         filteredProducts = filteredProducts.filter(product => product.costPrice >= 0 && product.costPrice <= 10);
                         break;
                     case "medium-price":
@@ -1170,17 +1174,34 @@ async function fetchProducts() {
                 }
             }
 
-            const sort = sortByPriceOrStock.value;
+            const profitRange = profitSelect.value;
+            if (profitRange) {
+                switch (profitRange) {
+                    case "low-profit":
+                        filteredProducts = filteredProducts.filter(product => product.profit >= 0 && product.profit <= 10);
+                        break;
+                    case "medium-profit":
+                        filteredProducts = filteredProducts.filter(product => product.profit >= 11 && product.profit <= 20);
+                        break;
+                    case "high-profit":
+                        filteredProducts = filteredProducts.filter(product => product.profit > 21);
+                        break;
+                }
+            }
 
+            const sort = sortByPriceStockProfit.value;
             if (sort === "price-asc" || sort === "price-desc") {
-                console.log("sorting by price: ");
+
                 filteredProducts = filteredProducts.sort((a, b) =>
                     sort === "price-asc" ? a.costPrice - b.costPrice : b.costPrice - a.costPrice
                 );
             } else if (sort === "stock-asc" || sort === "stock-desc") {
-                console.log("sorting by stock: ");
                 filteredProducts = filteredProducts.sort((a, b) =>
                     sort === "stock-asc" ? a.stock - b.stock : b.stock - a.stock
+                );
+            } else {
+                filteredProducts = filteredProducts.sort((a, b) =>
+                    sort === "profit-asc" ? a.profit - b.profit : b.profit - a.profit
                 );
             }
 
@@ -1217,14 +1238,16 @@ async function fetchProducts() {
             document.getElementById("category-select").value = "";
             document.getElementById("price-select").value = "";
             document.getElementById("stock-select").value = "";
-            document.getElementById("sort-by-price-or-stock").value = "";
+            document.getElementById("profit-select").value = "";
+            document.getElementById("sort-by-price-stock-profit").value = "";
             applyFilters();
         });
 
         categorySelect.addEventListener("change", applyFilters);
         priceSelect.addEventListener("change", applyFilters);
         stockSelect.addEventListener("change", applyFilters);
-        sortByPriceOrStock.addEventListener("change", applyFilters);
+        profitSelect.addEventListener("change", applyFilters);
+        sortByPriceStockProfit.addEventListener("change", applyFilters);
 
         renderProducts(products);
     } catch (error) {
@@ -2263,7 +2286,8 @@ async function fetchProductsforExporting() {
         const categoryFilter = document.getElementById("category-select").value;
         const priceSelect = document.getElementById("price-select").value;
         const stockSelect = document.getElementById("stock-select").value;
-        const sort = document.getElementById("sort-by-price-or-stock").value;
+        const profitSelect = document.getElementById("profit-select").value;
+        const sort = document.getElementById("sort-by-price-stock-profit").value;
 
         let query = db.collection("products");
 
@@ -2291,6 +2315,16 @@ async function fetchProductsforExporting() {
             }
         }
 
+        if (profitSelect) {
+            if (profitSelect === "low-profit") {
+                query = query.where("profit", "<=", 10);
+            } else if (profitSelect === "medium-profit") {
+                query = query.where("profit", ">=", 11).where("profit", "<=", 20);
+            } else if (profitSelect === "high-profit") {
+                query = query.where("profit", ">=", 21);
+            }
+        }
+
         if (sort === "price-asc") {
             query = query.orderBy("costPrice", "asc");
         } else if (sort === "price-desc") {
@@ -2299,6 +2333,10 @@ async function fetchProductsforExporting() {
             query = query.orderBy("stock", "asc");
         } else if (sort === "stock-desc") {
             query = query.orderBy("stock", "desc");
+        } else if (sort === "profit-asc") {
+            query = query.orderBy("profit", "asc");
+        } else if (sort === "profit-desc") {
+            query = query.orderBy("profit", "desc");
         }
 
         const snapshot = await query.get();
@@ -2315,6 +2353,7 @@ async function fetchProductsforExporting() {
             };
         });
 
+        console.log(products);
         return products;
     } catch (error) {
         console.error("Error fetching products:", error);
