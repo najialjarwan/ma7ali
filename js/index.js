@@ -150,6 +150,8 @@ async function loadContent(section) {
             initCustomersPage();
         if (section === "cartAndSales")
             initCartsAndSalesSection();
+        if (section === "dashboard")
+            initDashboard();
         //<Pop sections>//
         if (section === "addProduct")
             showProductForm();
@@ -164,6 +166,158 @@ async function loadContent(section) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
     }
+}
+
+function initDashboard() {
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+      <div class="inventory-analytics" id="inventory-analytics">
+          <h1>Inventory Analytics</h1>
+          <div id="inventory-metrics" class="inventory-metrics">
+              <div id="total-products" class="metric-box">Total Products: <span>Loading...</span></div>
+              <div id="total-stock-units" class="metric-box">Total Stock Units: <span>Loading...</span></div>
+              <div id="out-of-stock" class="metric-box">Out of Stock: <span>Loading...</span></div>
+              <div id="low-stock" class="metric-box">Low Stock Products: <span>Loading...</span></div>
+          </div>
+  
+          <div id="low-stock-list" class="low-stock-list">
+              <h3>Low Stock Products</h3>
+              <ul id="low-stock-products"></ul>
+          </div>
+  
+          <div id="category-chart-container" class="chart-container">
+              <h3>Category Distribution</h3>
+              <canvas id="categoryChart"></canvas>
+          </div>
+  
+          <div id="inventory-value" class="metric-box">
+              Total Inventory Value: <span>Loading...</span>
+          </div>
+      </div>
+    `;
+
+    // Call each analytics function
+    fetchTotalProducts();
+    fetchTotalStockUnits();
+    fetchOutOfStockCount();
+    fetchLowStockProducts();
+    fetchCategoryDistribution();
+    fetchTotalInventoryValue();
+}
+async function fetchTotalProducts() {
+    const snapshot = await db.collection("products").get();
+    const count = snapshot.size;
+    document.querySelector("#total-products span").textContent = count;
+}
+
+async function fetchTotalStockUnits() {
+    const snapshot = await db.collection("products").get();
+    let totalStock = 0;
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        totalStock += data.stock || 0;
+    });
+    document.querySelector("#total-stock-units span").textContent = totalStock;
+}
+
+async function fetchOutOfStockCount() {
+    const snapshot = await db.collection("products").where("stock", "==", 0).get();
+    const count = snapshot.size;
+    document.querySelector("#out-of-stock span").textContent = count;
+}
+
+async function fetchLowStockProducts() {
+    const snapshot = await db.collection("products").where("stock", "<=", 5).get();
+    const count = snapshot.size;
+    document.querySelector("#low-stock span").textContent = count;
+
+    const list = document.querySelector("#low-stock-products");
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${data.label} - Stock: ${data.stock}`;
+        list.appendChild(li);
+    });
+}
+
+async function fetchCategoryDistribution() {
+    const snapshot = await db.collection("products").get();
+    const categoryCounts = {};
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const category = data.category || "Uncategorized"; // Default to 'Uncategorized'
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    // Now that we have the data, call the function to render the chart
+    renderCategoryChart(categoryCounts);
+}
+function renderCategoryChart(categoryCounts) {
+    // Prepare labels and data for the chart
+    const labels = Object.keys(categoryCounts);
+    const data = Object.values(categoryCounts);
+
+    // Get the canvas element
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+
+    // Create a new Chart.js chart
+    new Chart(ctx, {
+        type: "pie", // or "bar" depending on your preference
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Products by Category",
+                data: data,
+                backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(255, 159, 64, 0.2)"
+                ],
+                borderColor: [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.label}: ${context.raw} products`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+async function fetchTotalInventoryValue() {
+    const snapshot = await db.collection("products").get();
+    let totalValue = 0;
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const stock = data.stock || 0;
+        const costPrice = data.costPrice || 0;
+        totalValue += stock * costPrice;
+    });
+    document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
 }
 
 
@@ -663,8 +817,8 @@ async function fetchProductToAdd() {
         searchInput.addEventListener("input", function () {
             const searchValue = searchInput.value.toLowerCase();
             const filteredProducts = allProducts.filter(product =>
-                !showSales ? product.label.toLowerCase() === (searchValue) 
-                : product.label.toLowerCase().startsWith(searchValue)
+                !showSales ? product.label.toLowerCase() === (searchValue)
+                    : product.label.toLowerCase().startsWith(searchValue)
             );
             displayProducts(filteredProducts);
         });
@@ -2048,8 +2202,8 @@ function renderSalesTable(salesData) {
         if (sale.productsSold.length > 0) {
             sale.productsSold.forEach(product => {
                 const date = product.dateSold?.toDate
-                ? product.dateSold.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                : "N/A";            
+                    ? product.dateSold.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    : "N/A";
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
