@@ -1953,8 +1953,12 @@ async function fetchSalesData() {
             ...productDoc.data()
         }));
 
-        // Sort products within this sale by quantity descending
-        productsSold.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+        // Sort by time (not date)
+        productsSold.sort((a, b) => {
+            const aTime = a.dateSold?.toDate?.().getTime?.() || 0;
+            const bTime = b.dateSold?.toDate?.().getTime?.() || 0;
+            return bTime - aTime;
+        });
 
         salesData.push({
             salesDate,
@@ -1968,6 +1972,7 @@ async function fetchSalesData() {
 
     return salesData;
 }
+
 function populateDropdown(salesData) {
     const optGroup = document.getElementById("specific-dates-group");
     if (optGroup)
@@ -2042,8 +2047,8 @@ function renderSalesTable(salesData) {
         if (sale.productsSold.length > 0) {
             sale.productsSold.forEach(product => {
                 const date = product.dateSold?.toDate
-                    ? product.dateSold.toDate().toLocaleString('en-US')
-                    : "N/A";
+                ? product.dateSold.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : "N/A";            
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
