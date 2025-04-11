@@ -1187,3 +1187,13 @@ aside {
   z-index: 2; /* Make sure it's above the green bar */
   pointer-events: none; /* Don't block clicks */
 }
+
+
+#profit-margin-chart-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+#profitMarginChart {
+  width: max-content;
+}

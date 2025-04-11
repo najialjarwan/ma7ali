@@ -171,32 +171,71 @@ async function loadContent(section) {
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
-      <div class="inventory-analytics" id="inventory-analytics">
-          <h1>Inventory Analytics</h1>
-          <div id="inventory-metrics" class="inventory-metrics">
-              <div id="total-products" class="metric-box">Total Products: <span>Loading...</span></div>
-              <div id="total-stock-units" class="metric-box">Total Stock Units: <span>Loading...</span></div>
-              <div id="out-of-stock" class="metric-box">Out of Stock: <span>Loading...</span></div>
-              <div id="low-stock" class="metric-box">Low Stock Products: <span>Loading...</span></div>
-          </div>
+        <div class="inventory-analytics" id="inventory-analytics">
+            <h1>Inventory Analytics</h1>
+
+            <div id="category-chart-container" class="chart-container">
+                <h4>Category Distribution</h4>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <hr>
+
+            <!-- Profitability Analysis Section -->
+            <div id="profitability-analysis">
+                <h4>Profitability Analysis</h4>
+                <div id="profit-margin-chart-container" class="chart-container">
+                    <h4>Product Profit Margin Distribution</h4>
+                    <canvas id="profitMarginChart"></canvas>
+                </div>
+                <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
+                <p><strong>Lowest Profit Margin: </strong><span id="lowest-profit-margin"></span></p>
+                <p><strong>Average Profit Margin: </strong><span id="average-profit-margin"></span></p>
+            </div>
+            <hr>
+
+            <!-- Product Lifecycle Analysis Section -->
+            <div id="product-lifecycle-analysis">
+                <h2>Product Lifecycle Analysis</h2>
+                <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
+
+                <div id="product-age-chart-container" class="chart-container">
+                    <h3>Product Age Distribution</h3>
+                    <canvas id="productAgeChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Most Popular Products by Sales -->
+            <div id="most-popular-products">
+                <h2>Most Popular Products by Sales</h2>
+                <div id="most-popular-products-chart-container" class="chart-container">
+                <h3>Top 5 Most Sold Products</h3>
+                <canvas id="mostPopularProductsChart"></canvas></div>
+            </div>
+            <hr>
+
+            <div id="inventory-metrics" class="inventory-metrics">
+                <h4>Inventory Summary</h4>
+                <div id="total-products" class="metric-box">Total Products: <span>Loading...</span></div>
+                <div id="total-stock-units" class="metric-box">Total Stock Units: <span>Loading...</span></div>
+                <div id="out-of-stock" class="metric-box">Out of Stock: <span>Loading...</span></div>
+                <div id="low-stock" class="metric-box">Low Stock Products: <span>Loading...</span></div>
+                <div id="inventory-value" class="metric-box">Total Inventory Value: <span>Loading...</span></div>
+            </div>
+            <hr>
   
-          <div id="low-stock-list" class="low-stock-list">
-              <h3>Low Stock Products</h3>
-              <ul id="low-stock-products"></ul>
-          </div>
-  
-          <div id="category-chart-container" class="chart-container">
-              <h3>Category Distribution</h3>
-              <canvas id="categoryChart"></canvas>
-          </div>
-  
-          <div id="inventory-value" class="metric-box">
-              Total Inventory Value: <span>Loading...</span>
-          </div>
-      </div>
+            <div id="low-stock-list" class="low-stock-list">
+                <h4>Low Stock Products</h4>
+                <ul id="low-stock-products"></ul>
+            </div>
+            <hr>
+        </div>
     `;
 
     // Call each analytics function
+    fetchProfitabilityData();
+    fetchProductLifecycleData();
+    fetchMostPopularProducts();
     fetchTotalProducts();
     fetchTotalStockUnits();
     fetchOutOfStockCount();
@@ -204,6 +243,224 @@ function initDashboard() {
     fetchCategoryDistribution();
     fetchTotalInventoryValue();
 }
+function fetchProfitabilityData() {
+    const productsRef = db.collection("products");
+    let products = [];
+    productsRef.get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const profitMargin = (data.profit / (data.costPrice + data.profit)) * 100;
+            products.push({
+                label: data.label,
+                costPrice: data.costPrice,
+                profit: data.profit,
+                profitMargin: profitMargin
+            });
+        });
+
+        renderProfitabilityMetrics(products);
+        renderProfitMarginChart(products);
+    }).catch((error) => {
+        console.error("Error fetching products:", error);
+    });
+}
+function renderProfitabilityMetrics(products) {
+    const highestProfitMargin = Math.max(...products.map(product => product.profitMargin));
+    const lowestProfitMargin = Math.min(...products.map(product => product.profitMargin));
+    const averageProfitMargin = products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length;
+
+    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin.toFixed(2)}%`;
+    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin.toFixed(2)}%`;
+    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
+}
+function renderProfitMarginChart(products) {
+    const ctx = document.getElementById('profitMarginChart').getContext('2d');
+    const labels = products.map(product => product.label);
+    const profitMargins = products.map(product => product.profitMargin);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Profit Margin (%)',
+                data: profitMargins,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,  // Automatically skips some labels if there are too many
+                        maxRotation: 90,  // Rotate labels to 90 degrees (vertical)
+                        minRotation: 90   // Ensure labels are always 90 degrees
+                    }
+                }
+            }
+        }
+    });
+}
+function fetchProductLifecycleData() {
+    const productsRef = db.collection("products");
+    let products = [];
+    productsRef.get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const createdAt = data.createdAt.toDate(); // Convert Firestore timestamp to Date
+            const currentDate = new Date();
+            const ageInDays = Math.floor((currentDate - createdAt) / (1000 * 3600 * 24)); // Age in days
+            products.push({
+                label: data.label,
+                createdAt: createdAt,
+                ageInDays: ageInDays
+            });
+        });
+
+        renderProductLifecycleMetrics(products);
+        renderProductAgeChart(products);
+    }).catch((error) => {
+        console.error("Error fetching products:", error);
+    });
+}
+function renderProductLifecycleMetrics(products) {
+    const totalAge = products.reduce((acc, product) => acc + product.ageInDays, 0);
+    const averageAge = totalAge / products.length;
+
+    document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
+}
+function renderProductAgeChart(products) {
+    const ctx = document.getElementById('productAgeChart').getContext('2d');
+    const labels = products.map(product => product.label);
+    const ages = products.map(product => product.ageInDays);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Product Age (Days)',
+                data: ages,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                }
+            }
+        }
+    });
+}
+//
+function fetchMostPopularProducts() {
+    const salesRef = db.collection("sales");
+    let productSales = {};
+
+    salesRef.get().then((querySnapshot) => {
+        const salesPromises = [];
+
+        querySnapshot.forEach((doc) => {
+            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+
+            const promise = productsSoldRef.get().then((productsSnapshot) => {
+                productsSnapshot.forEach((productDoc) => {
+                    const product = productDoc.data();
+                    const productId = product.name; // Assuming 'name' is used to identify products
+                    const quantitySold = product.quantity;
+
+                    if (productSales[productId]) {
+                        productSales[productId] += quantitySold;
+                    } else {
+                        productSales[productId] = quantitySold;
+                    }
+                });
+            });
+
+            salesPromises.push(promise);
+        });
+
+        Promise.all(salesPromises).then(() => {
+            renderMostPopularProductsChart(productSales);
+        }).catch((error) => {
+            console.error("Error fetching productsSold subcollections:", error);
+        });
+    }).catch((error) => {
+        console.error("Error fetching sales data:", error);
+    });
+}
+
+function renderMostPopularProductsChart(productSales) {
+    // Convert the aggregated productSales object to arrays for labels and data
+    const labels = Object.keys(productSales); // Product names (or IDs)
+    const salesVolumes = Object.values(productSales); // Total quantity sold for each product
+
+    // Sort the products by sales volume in descending order and slice to top 5
+    const topProducts = labels
+        .map((label, index) => ({
+            label: label,
+            salesVolume: salesVolumes[index]
+        }))
+        .sort((a, b) => b.salesVolume - a.salesVolume)
+        .slice(0, 5); // Get top 5
+
+    const topLabels = topProducts.map(product => product.label);
+    const topSalesVolumes = topProducts.map(product => product.salesVolume);
+
+    const ctx = document.getElementById('mostPopularProductsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topLabels,
+            datasets: [{
+                label: 'Quantity Sold',
+                data: topSalesVolumes,
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                }
+            }
+        }
+    });
+}
+
 async function fetchTotalProducts() {
     const snapshot = await db.collection("products").get();
     const count = snapshot.size;
@@ -247,11 +504,10 @@ async function fetchCategoryDistribution() {
 
     snapshot.forEach(doc => {
         const data = doc.data();
-        const category = data.category || "Uncategorized"; // Default to 'Uncategorized'
+        const category = data.category || "Uncategorized";
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     });
 
-    // Now that we have the data, call the function to render the chart
     renderCategoryChart(categoryCounts);
 }
 function renderCategoryChart(categoryCounts) {
@@ -264,7 +520,7 @@ function renderCategoryChart(categoryCounts) {
 
     // Create a new Chart.js chart
     new Chart(ctx, {
-        type: "pie", // or "bar" depending on your preference
+        type: "pie",
         data: {
             labels: labels,
             datasets: [{
@@ -306,8 +562,6 @@ function renderCategoryChart(categoryCounts) {
         }
     });
 }
-
-
 async function fetchTotalInventoryValue() {
     const snapshot = await db.collection("products").get();
     let totalValue = 0;
