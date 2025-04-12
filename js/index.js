@@ -172,19 +172,16 @@ function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="inventory-analytics" id="inventory-analytics">
-            <h1>Inventory Analytics</h1>
-
             <div id="category-chart-container" class="chart-container">
-                <h4>Category Distribution</h4>
+                <h2>Category Distribution</h2>
                 <canvas id="categoryChart"></canvas>
             </div>
             <hr>
 
             <!-- Profitability Analysis Section -->
             <div id="profitability-analysis">
-                <h4>Profitability Analysis</h4>
                 <div id="profit-margin-chart-container" class="chart-container">
-                    <h4>Product Profit Margin Distribution</h4>
+                    <h2>Product Profit Margin Distribution</h2>
                     <canvas id="profitMarginChart"></canvas>
                 </div>
                 <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
@@ -199,7 +196,7 @@ function initDashboard() {
                 <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
 
                 <div id="product-age-chart-container" class="chart-container">
-                    <h3>Product Age Distribution</h3>
+                    <h2>Product Age Distribution</h2>
                     <canvas id="productAgeChart"></canvas>
                 </div>
             </div>
@@ -215,7 +212,7 @@ function initDashboard() {
             <hr>
 
             <div id="inventory-metrics" class="inventory-metrics">
-                <h4>Inventory Summary</h4>
+                <h2>Inventory Summary</h2>
                 <div id="total-products" class="metric-box">Total Products: <span>Loading...</span></div>
                 <div id="total-stock-units" class="metric-box">Total Stock Units: <span>Loading...</span></div>
                 <div id="out-of-stock" class="metric-box">Out of Stock: <span>Loading...</span></div>
@@ -225,7 +222,7 @@ function initDashboard() {
             <hr>
   
             <div id="low-stock-list" class="low-stock-list">
-                <h4>Low Stock Products</h4>
+                <h2>Low Stock Products</h2>
                 <ul id="low-stock-products"></ul>
             </div>
             <hr>
@@ -240,8 +237,9 @@ function initDashboard() {
     fetchTotalStockUnits();
     fetchOutOfStockCount();
     fetchLowStockProducts();
-    fetchCategoryDistribution();
     fetchTotalInventoryValue();
+    fetchCategoryDistribution();
+    
 }
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
@@ -497,7 +495,17 @@ async function fetchLowStockProducts() {
         list.appendChild(li);
     });
 }
-
+async function fetchTotalInventoryValue() {
+    const snapshot = await db.collection("products").get();
+    let totalValue = 0;
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const stock = data.stock || 0;
+        const costPrice = data.costPrice || 0;
+        totalValue += stock * costPrice;
+    });
+    document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
+}
 async function fetchCategoryDistribution() {
     const snapshot = await db.collection("products").get();
     const categoryCounts = {};
@@ -562,17 +570,7 @@ function renderCategoryChart(categoryCounts) {
         }
     });
 }
-async function fetchTotalInventoryValue() {
-    const snapshot = await db.collection("products").get();
-    let totalValue = 0;
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const stock = data.stock || 0;
-        const costPrice = data.costPrice || 0;
-        totalValue += stock * costPrice;
-    });
-    document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
-}
+
 
 
 //<Adder Section>//

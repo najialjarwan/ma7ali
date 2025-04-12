@@ -1188,7 +1188,25 @@ aside {
   pointer-events: none; /* Don't block clicks */
 }
 
+.chart-container{
+  width: 100%;
+}
 
+.inventory-analytics{
+  width: 100%;
+}
+.inventory-analytics hr{
+  width: 100%;
+  opacity: 1;
+  margin: 50px 0;
+}
+
+.inventory-analytics h2{
+  font-style:italic;
+  color: var(--accent-color);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+
+}
 #profit-margin-chart-container {
   width: 100%;
   overflow-x: auto;
