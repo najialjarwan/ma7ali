@@ -172,6 +172,14 @@ function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="inventory-analytics" id="inventory-analytics">
+            <!-- Sales Comparison Chart -->
+            <div id="sales-comparison">
+                <h2>Sales Comparison</h2>
+                <canvas id="comparisonSalesChart"></canvas>
+                
+            </div>
+            <hr>
+
             <div id="category-chart-container" class="chart-container">
                 <h2>Category Distribution</h2>
                 <canvas id="categoryChart"></canvas>
@@ -206,41 +214,289 @@ function initDashboard() {
             <div id="most-popular-products">
                 <h2>Most Popular Products by Sales</h2>
                 <div id="most-popular-products-chart-container" class="chart-container">
-                <h3>Top 5 Most Sold Products</h3>
-                <canvas id="mostPopularProductsChart"></canvas></div>
+                    <h5>Top 5 Most Sold Products</h5>
+                    <canvas id="mostPopularProductsChart"></canvas>
+                </div>
             </div>
             <hr>
 
+            <!-- Least Popular Products by Sales -->
+            <div id="least-popular-products">
+                <h2>Least Popular Products by Sales</h2>
+                <div id="least-popular-products-chart-container" class="chart-container">
+                    <h5>Bottom 5 Least Sold Products</h5>
+                    <canvas id="leastPopularProductsChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Inventory Analytics -->
             <div id="inventory-metrics" class="inventory-metrics">
                 <h2>Inventory Summary</h2>
-                <div id="total-products" class="metric-box">Total Products: <span>Loading...</span></div>
-                <div id="total-stock-units" class="metric-box">Total Stock Units: <span>Loading...</span></div>
-                <div id="out-of-stock" class="metric-box">Out of Stock: <span>Loading...</span></div>
-                <div id="low-stock" class="metric-box">Low Stock Products: <span>Loading...</span></div>
-                <div id="inventory-value" class="metric-box">Total Inventory Value: <span>Loading...</span></div>
+                <table class="low-stock-table">
+                    <tbody>
+                        <tr>
+                            <th>Total Products</th>
+                            <td id="total-products"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Total Stock Units</th>
+                            <td id="total-stock-units"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Out of Stock</th>
+                            <td id="out-of-stock"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Low Stock Products</th>
+                            <td id="low-stock"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Total Inventory Value</th>
+                            <td id="inventory-value"><span>Loading...</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <hr>
-  
+
             <div id="low-stock-list" class="low-stock-list">
                 <h2>Low Stock Products</h2>
-                <ul id="low-stock-products"></ul>
+                <table class="low-stock-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="low-stock-products"></tbody>
+                </table>
             </div>
-            <hr>
+
         </div>
     `;
 
     // Call each analytics function
-    fetchProfitabilityData();
-    fetchProductLifecycleData();
-    fetchMostPopularProducts();
-    fetchTotalProducts();
-    fetchTotalStockUnits();
-    fetchOutOfStockCount();
-    fetchLowStockProducts();
-    fetchTotalInventoryValue();
+    fetchComparisonSales();
+
     fetchCategoryDistribution();
-    
+
+    fetchProfitabilityData();
+
+    fetchProductLifecycleData();
+
+    fetchMostPopularProducts();
+
+    fetchLeastPopularProducts();
+
+    fetchInventoryAnalytics();
 }
+
+function getDateRange(period) {
+    const today = new Date();
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    let startDate = new Date();
+    let endDate = today;
+
+    if (period === "today") {
+        startDate = today;
+        endDate = today;
+    } else if (period === "yesterday") {
+        startDate.setDate(today.getDate() - 1);
+        endDate = startDate;
+    } else if (period === "thisWeek") {
+        startDate.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+        endDate = today;
+    } else if (period === "lastWeek") {
+        startDate.setDate(today.getDate() - today.getDay() - 7); // Start of last week
+        endDate.setDate(today.getDate() - today.getDay() - 1);   // End of last week (Saturday)
+    } else if (period === "thisMonth") {
+        startDate.setDate(1); // 1st day of current month
+        endDate = today;
+    } else if (period === "lastMonth") {
+        startDate.setMonth(today.getMonth() - 1, 1); // 1st day of last month
+        endDate.setMonth(today.getMonth(), 0);       // Last day of last month
+    }
+
+    return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate)
+    };
+}
+async function fetchSalesForPeriod(period) {
+    const { startDate, endDate } = getDateRange(period);
+    const dates = getDatesBetween(startDate, endDate); // Helper to generate YYYY-MM-DD dates
+
+    let totalRevenue = 0;
+    let totalProductsSold = 0;
+
+    // Fetch each document by its ID (date)
+    for (const date of dates) {
+        const doc = await db.collection("sales").doc(date).get();
+        if (doc.exists) {
+            const data = doc.data();
+            totalRevenue += data.totalRevenue || 0;
+            totalProductsSold += data.totalProductsSold || 0;
+        }
+    }
+
+    return { totalRevenue, totalProductsSold };
+}
+function getDatesBetween(startDate, endDate) {
+    const dates = [];
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, "0");
+        const day = String(current.getDate()).padStart(2, "0");
+        dates.push(`${year}-${month}-${day}`);
+        current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+}
+function fetchComparisonSales() {
+    // Fetch sales for today, yesterday, this week, last week, this month, last month
+    Promise.all([
+        fetchSalesForPeriod("today"),
+        fetchSalesForPeriod("yesterday"),
+        fetchSalesForPeriod("thisWeek"),
+        fetchSalesForPeriod("lastWeek"),
+        fetchSalesForPeriod("thisMonth"),
+        fetchSalesForPeriod("lastMonth")
+    ])
+        .then(([todaySales, yesterdaySales, thisWeekSales, lastWeekSales, thisMonthSales, lastMonthSales]) => {
+            renderComparisonChart({
+                today: todaySales.totalRevenue,
+                yesterday: yesterdaySales.totalRevenue,
+                thisWeek: thisWeekSales.totalRevenue,
+                lastWeek: lastWeekSales.totalRevenue,
+                thisMonth: thisMonthSales.totalRevenue,
+                lastMonth: lastMonthSales.totalRevenue
+            });
+        })
+        .catch((error) => {
+            console.error("Error fetching comparison sales data:", error);
+        });
+}
+function renderComparisonChart(comparisonData) {
+    const ctx = document.getElementById('comparisonSalesChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ["Today vs Yesterday", "This Week vs Last Week", "This Month vs Last Month"],
+            datasets: [
+                {
+                    label: 'Current Period Sales',
+                    data: [
+                        comparisonData.today,
+                        comparisonData.thisWeek,
+                        comparisonData.thisMonth
+                    ],
+                    backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                    borderColor: 'rgba(53, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Previous Period Sales',
+                    data: [
+                        comparisonData.yesterday,
+                        comparisonData.lastWeek,
+                        comparisonData.lastMonth
+                    ],
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+
+
+async function fetchCategoryDistribution() {
+    const snapshot = await db.collection("products").get();
+    const categoryCounts = {};
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const category = data.category || "Uncategorized";
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    renderCategoryChart(categoryCounts);
+}
+function renderCategoryChart(categoryCounts) {
+    // Prepare labels and data for the chart
+    const labels = Object.keys(categoryCounts);
+    const data = Object.values(categoryCounts);
+
+    // Get the canvas element
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+
+    // Create a new Chart.js chart
+    new Chart(ctx, {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Products by Category",
+                data: data,
+                backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(255, 159, 64, 0.2)"
+                ],
+                borderColor: [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.label}: ${context.raw} products`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -308,6 +564,7 @@ function renderProfitMarginChart(products) {
         }
     });
 }
+
 function fetchProductLifecycleData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -373,7 +630,7 @@ function renderProductAgeChart(products) {
         }
     });
 }
-//
+
 function fetchMostPopularProducts() {
     const salesRef = db.collection("sales");
     let productSales = {};
@@ -387,7 +644,7 @@ function fetchMostPopularProducts() {
             const promise = productsSoldRef.get().then((productsSnapshot) => {
                 productsSnapshot.forEach((productDoc) => {
                     const product = productDoc.data();
-                    const productId = product.name; // Assuming 'name' is used to identify products
+                    const productId = product.name;
                     const quantitySold = product.quantity;
 
                     if (productSales[productId]) {
@@ -410,7 +667,6 @@ function fetchMostPopularProducts() {
         console.error("Error fetching sales data:", error);
     });
 }
-
 function renderMostPopularProductsChart(productSales) {
     // Convert the aggregated productSales object to arrays for labels and data
     const labels = Object.keys(productSales); // Product names (or IDs)
@@ -459,116 +715,135 @@ function renderMostPopularProductsChart(productSales) {
     });
 }
 
-async function fetchTotalProducts() {
-    const snapshot = await db.collection("products").get();
-    const count = snapshot.size;
-    document.querySelector("#total-products span").textContent = count;
-}
+function fetchLeastPopularProducts() {
+    const salesRef = db.collection("sales");
+    let productSales = {};
 
-async function fetchTotalStockUnits() {
-    const snapshot = await db.collection("products").get();
-    let totalStock = 0;
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        totalStock += data.stock || 0;
+    salesRef.get().then((querySnapshot) => {
+        const salesPromises = [];
+
+        querySnapshot.forEach((doc) => {
+            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+
+            const promise = productsSoldRef.get().then((productsSnapshot) => {
+                productsSnapshot.forEach((productDoc) => {
+                    const product = productDoc.data();
+                    const productId = product.name;
+                    const quantitySold = product.quantity;
+
+                    if (productSales[productId]) {
+                        productSales[productId] += quantitySold;
+                    } else {
+                        productSales[productId] = quantitySold;
+                    }
+                });
+            });
+
+            salesPromises.push(promise);
+        });
+
+        Promise.all(salesPromises).then(() => {
+            renderLeastPopularProductsChart(productSales);
+        }).catch((error) => {
+            console.error("Error fetching productsSold subcollections:", error);
+        });
+    }).catch((error) => {
+        console.error("Error fetching sales data:", error);
     });
-    document.querySelector("#total-stock-units span").textContent = totalStock;
 }
+function renderLeastPopularProductsChart(productSales) {
+    const labels = Object.keys(productSales);
+    const salesVolumes = Object.values(productSales);
 
-async function fetchOutOfStockCount() {
-    const snapshot = await db.collection("products").where("stock", "==", 0).get();
-    const count = snapshot.size;
-    document.querySelector("#out-of-stock span").textContent = count;
-}
+    // Sort products by sales volume (ascending) and slice bottom 5
+    const bottomProducts = labels
+        .map((label, index) => ({
+            label: label,
+            salesVolume: salesVolumes[index]
+        }))
+        .sort((a, b) => a.salesVolume - b.salesVolume)
+        .slice(0, 5); // Get least 5
 
-async function fetchLowStockProducts() {
-    const snapshot = await db.collection("products").where("stock", "<=", 5).get();
-    const count = snapshot.size;
-    document.querySelector("#low-stock span").textContent = count;
+    const bottomLabels = bottomProducts.map(product => product.label);
+    const bottomSalesVolumes = bottomProducts.map(product => product.salesVolume);
 
-    const list = document.querySelector("#low-stock-products");
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${data.label} - Stock: ${data.stock}`;
-        list.appendChild(li);
-    });
-}
-async function fetchTotalInventoryValue() {
-    const snapshot = await db.collection("products").get();
-    let totalValue = 0;
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const stock = data.stock || 0;
-        const costPrice = data.costPrice || 0;
-        totalValue += stock * costPrice;
-    });
-    document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
-}
-async function fetchCategoryDistribution() {
-    const snapshot = await db.collection("products").get();
-    const categoryCounts = {};
-
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const category = data.category || "Uncategorized";
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-
-    renderCategoryChart(categoryCounts);
-}
-function renderCategoryChart(categoryCounts) {
-    // Prepare labels and data for the chart
-    const labels = Object.keys(categoryCounts);
-    const data = Object.values(categoryCounts);
-
-    // Get the canvas element
-    const ctx = document.getElementById("categoryChart").getContext("2d");
-
-    // Create a new Chart.js chart
+    const ctx = document.getElementById('leastPopularProductsChart').getContext('2d');
     new Chart(ctx, {
-        type: "pie",
+        type: 'bar',
         data: {
-            labels: labels,
+            labels: bottomLabels,
             datasets: [{
-                label: "Products by Category",
-                data: data,
-                backgroundColor: [
-                    "rgba(255, 99, 132, 0.2)",
-                    "rgba(54, 162, 235, 0.2)",
-                    "rgba(255, 206, 86, 0.2)",
-                    "rgba(75, 192, 192, 0.2)",
-                    "rgba(153, 102, 255, 0.2)",
-                    "rgba(255, 159, 64, 0.2)"
-                ],
-                borderColor: [
-                    "rgba(255, 99, 132, 1)",
-                    "rgba(54, 162, 235, 1)",
-                    "rgba(255, 206, 86, 1)",
-                    "rgba(75, 192, 192, 1)",
-                    "rgba(153, 102, 255, 1)",
-                    "rgba(255, 159, 64, 1)"
-                ],
+                label: 'Quantity Sold',
+                data: bottomSalesVolumes,
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgba(255, 159, 64, 1)',
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    position: "top",
+            scales: {
+                y: {
+                    beginAtZero: true
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return `${context.label}: ${context.raw} products`;
-                        }
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
                     }
                 }
             }
         }
     });
+}
+
+async function fetchInventoryAnalytics() {
+    try {
+        const snapshot = await db.collection("products").get();
+        const allProducts = snapshot.docs.map(doc => doc.data());
+
+        // Total Products
+        const totalProducts = snapshot.size;
+        document.querySelector("#total-products span").textContent = totalProducts;
+
+        // Total Stock Units
+        const totalStock = allProducts.reduce((sum, product) => sum + (product.stock || 0), 0);
+        document.querySelector("#total-stock-units span").textContent = totalStock;
+
+        // Out of Stock
+        const outOfStockCount = allProducts.filter(product => (product.stock || 0) === 0).length;
+        document.querySelector("#out-of-stock span").textContent = outOfStockCount;
+
+        // Total Inventory Value
+        const totalValue = allProducts.reduce((sum, product) => {
+            return sum + ((product.stock || 0) * (product.costPrice || 0));
+        }, 0);
+        document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
+
+        // Low Stock (<= 5)
+        const lowStockProducts = allProducts.filter(product => (product.stock || 0) <= 5);
+        document.querySelector("#low-stock span").textContent = lowStockProducts.length;
+
+        const list = document.querySelector("#low-stock-products");
+        list.innerHTML = "";
+        lowStockProducts.forEach(product => {
+            const row = document.createElement("tr");
+
+            const nameCell = document.createElement("td");
+            nameCell.textContent = product.label;
+
+            const stockCell = document.createElement("td");
+            stockCell.textContent = product.stock;
+
+            row.appendChild(nameCell);
+            row.appendChild(stockCell);
+            list.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Error fetching inventory analytics:", error);
+    }
 }
 
 

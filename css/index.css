@@ -1184,8 +1184,8 @@ aside {
   font-size: 0.9rem;
   font-weight: bold;
   color: black;
-  z-index: 2; /* Make sure it's above the green bar */
-  pointer-events: none; /* Don't block clicks */
+  z-index: 2;
+  pointer-events: none;
 }
 
 .chart-container{
@@ -1198,7 +1198,7 @@ aside {
 .inventory-analytics hr{
   width: 100%;
   opacity: 1;
-  margin: 50px 0;
+  margin: 30px 0;
 }
 
 .inventory-analytics h2{
@@ -1214,4 +1214,57 @@ aside {
 
 #profitMarginChart {
   width: max-content;
+}
+
+.inventory-metrics {
+  padding: 1rem;
+}
+
+.metrics-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.metric-box {
+  flex: 1 1 calc(50% - 1rem); /* Two columns */
+  background-color: var(--accent-color);
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+}
+
+.low-stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.low-stock-table th, .low-stock-table td {
+  padding: 2px;
+  text-align: left;
+  border: 1px solid var(--text-color);
+}
+
+.low-stock-table tr:nth-child(odd){
+  background-color: var(--input-color);
+}
+.low-stock-table tr:nth-child(even){
+  background-color: lightgoldenrodyellow;
+}
+
+.low-stock-table th {
+  background-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.inventory-metrics .low-stock-table td:nth-child(1) {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: bold;
+}
+
+.inventory-metrics .low-stock-table td:nth-child(2) {
+  background-color: white;
+  color: black;
 }
