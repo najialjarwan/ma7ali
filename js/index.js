@@ -176,7 +176,7 @@ function initDashboard() {
     mainContent.innerHTML = `
         <div class="inventory-analytics" id="inventory-analytics">
             <!-- Category Distrubtion -->
-            <div id="category-chart-container" class="chart-container">
+            <div id="category-chart-container" class="category-chart-container">
                 <h2>Category Distribution</h2>
                 <canvas id="categoryChart"></canvas>
             </div>
@@ -293,33 +293,47 @@ function initDashboard() {
     fetchLeastPopularProducts();
 
     fetchInventorySummary();
-} 
+}
 //>Sales Comparison//
-function fetchComparisonSales() {
-    Promise.all([
-        fetchSalesForPeriod("today"),
-        fetchSalesForPeriod("yesterday"),
-        fetchSalesForPeriod("thisWeek"),
-        fetchSalesForPeriod("lastWeek"),
-        fetchSalesForPeriod("thisMonth"),
-        fetchSalesForPeriod("lastMonth")
-    ]).then(([today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth]) => {
+let isFetching = false;
+const activeCharts = {};
+let isFetchingComparison = false;
+
+async function fetchComparisonSales() {
+    // Prevent duplicate concurrent requests
+    if (isFetchingComparison) return;
+    isFetchingComparison = true;
+
+    try {
+        // Fetch all periods in parallel
+        const [today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth] = await Promise.all([
+            fetchSalesForPeriod("today"),
+            fetchSalesForPeriod("yesterday"),
+            fetchSalesForPeriod("thisWeek"),
+            fetchSalesForPeriod("lastWeek"),
+            fetchSalesForPeriod("thisMonth"),
+            fetchSalesForPeriod("lastMonth")
+        ]);
+
         const comparisonData = {
             today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth
         };
-        renderComparisonChart(comparisonData, 'totalRevenue', 'revenueChart', 'Revenu');
-        renderComparisonChart(comparisonData, 'totalProfit', 'profitChart', 'Profit');       // Ensure Firestore has `totalProfit` field
+
+        // Render all charts (reusing existing instances)
+        renderComparisonChart(comparisonData, 'totalRevenue', 'revenueChart', 'Revenue');
+        renderComparisonChart(comparisonData, 'totalProfit', 'profitChart', 'Profit');
         renderComparisonChart(comparisonData, 'totalProductsSold', 'quantityChart', 'Quantity');
-    });
+
+    } catch (error) {
+        console.error("Error in fetchComparisonSales:", error);
+    } finally {
+        isFetchingComparison = false;
+    }
 }
+const dateRangeCache = {};
 function getDateRange(period) {
+    if (dateRangeCache[period]) return dateRangeCache[period];
     const today = new Date();
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-    };
 
     let startDate = new Date();
     let endDate = today;
@@ -344,32 +358,15 @@ function getDateRange(period) {
         endDate.setMonth(today.getMonth(), 0);       // Last day of last month
     }
 
-    return {
-        startDate: formatDate(startDate),
-        endDate: formatDate(endDate)
-    };
+    dateRangeCache[period] = { startDate: formatDate(startDate), endDate: formatDate(endDate) };
+    return dateRangeCache[period];
 }
-async function fetchSalesForPeriod(period) {
-    const { startDate, endDate } = getDateRange(period);
-    const dates = getDatesBetween(startDate, endDate);
-
-    let totalRevenue = 0;
-    let totalProductsSold = 0;
-    let totalProfit = 0;
-
-    for (const date of dates) {
-        const docRef = db.collection("sales").doc(date);
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-            const data = doc.data();
-            totalRevenue += data.totalRevenue || 0;
-            totalProductsSold += data.totalProductsSold || 0;
-            totalProfit += data.totalProfit || 0;
-        }
-    }
-
-    return { totalRevenue, totalProductsSold, totalProfit };
+function formatDate(date) {
+    if (!(date instanceof Date)) date = new Date(date);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }
 function getDatesBetween(startDate, endDate) {
     const dates = [];
@@ -377,18 +374,48 @@ function getDatesBetween(startDate, endDate) {
     const end = new Date(endDate);
 
     while (current <= end) {
-        const year = current.getFullYear();
-        const month = String(current.getMonth() + 1).padStart(2, "0");
-        const day = String(current.getDate()).padStart(2, "0");
-        dates.push(`${year}-${month}-${day}`);
+        dates.push(formatDate(new Date(current))); // Explicitly format each date
         current.setDate(current.getDate() + 1);
     }
 
     return dates;
 }
+async function fetchSalesForPeriod(period) {
+    const { startDate, endDate } = getDateRange(period);
+    const dates = getDatesBetween(startDate, endDate);
+
+    // Fetch all documents in parallel
+    const promises = dates.map(date =>
+        db.collection("sales").doc(date).get()
+    );
+    const docs = await Promise.all(promises);
+
+    let totalRevenue = 0, totalProductsSold = 0, totalProfit = 0;
+    docs.forEach(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            totalRevenue += data.totalRevenue || 0;
+            totalProductsSold += data.totalProductsSold || 0;
+            totalProfit += data.totalProfit || 0;
+        }
+    });
+
+    return { totalRevenue, totalProductsSold, totalProfit };
+}
+const chartInstances = {};
 function renderComparisonChart(comparisonData, metric, canvasId, title) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    new Chart(ctx, {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.warn(`Canvas element #${canvasId} not found`);
+        return;
+    }
+
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ["Today vs Yesterday", "This Week vs Last Week", "This Month vs Last Month"],
@@ -419,25 +446,22 @@ function renderComparisonChart(comparisonData, metric, canvasId, title) {
         },
         options: {
             responsive: true,
+            animation: {
+                duration: 7000,
+                easing: 'easeOutCubic'
+            },
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: title } // Add Y-axis title (e.g., "Revenue")
+                    title: { display: true, text: title }
                 },
                 x: {
                     ticks: {
-                        font: { size: 10 },
-                        autoSkip: false, // Forces all labels to show
-                        maxRotation: 0,   // 0° rotation = horizontal
-                        minRotation: 0
+                        autoSkip: false,
+                        maxRotation: 0,
+                        minRotation: 0,
+                        font: { size: 10 }
                     }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: `${title} Comparison`, // Chart title (e.g., "Profit Comparison")
-                    font: { size: 16 }
                 }
             }
         }
@@ -457,14 +481,11 @@ async function fetchCategoryDistribution() {
     renderCategoryChart(categoryCounts);
 }
 function renderCategoryChart(categoryCounts) {
-    // Prepare labels and data for the chart
     const labels = Object.keys(categoryCounts);
     const data = Object.values(categoryCounts);
 
-    // Get the canvas element
     const ctx = document.getElementById("categoryChart").getContext("2d");
 
-    // Create a new Chart.js chart
     new Chart(ctx, {
         type: "pie",
         data: {
@@ -493,6 +514,10 @@ function renderCategoryChart(categoryCounts) {
         },
         options: {
             responsive: true,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutCubic'
+            },
             plugins: {
                 legend: {
                     position: "top",
