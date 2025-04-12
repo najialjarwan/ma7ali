@@ -152,6 +152,7 @@ async function loadContent(section) {
             initCartsAndSalesSection();
         if (section === "dashboard")
             initDashboard();
+        //
         //<Pop sections>//
         if (section === "addProduct")
             showProductForm();
@@ -161,6 +162,7 @@ async function loadContent(section) {
             showCartForm();
         if (section === "addSales")
             showSalesForm();
+        //
 
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
@@ -168,28 +170,31 @@ async function loadContent(section) {
     }
 }
 
+//<Dashboard Section>//
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="inventory-analytics" id="inventory-analytics">
-            <!-- Sales Comparison Chart -->
-            <div id="sales-comparison">
-                <h2>Sales Comparison</h2>
-                <canvas id="comparisonSalesChart"></canvas>
-                
-            </div>
-            <hr>
-
+            <!-- Category Distrubtion -->
             <div id="category-chart-container" class="chart-container">
                 <h2>Category Distribution</h2>
                 <canvas id="categoryChart"></canvas>
             </div>
             <hr>
 
+            <!-- Sales Comparison Chart -->
+            <div id="sales-comparison">
+                <h2>Sales Comparison</h2>
+                <div><canvas id="revenueChart"></canvas></div>
+                <div><canvas id="profitChart"></canvas></div>
+                <div><canvas id="quantityChart"></canvas></div>
+            </div>
+            <hr>
+
             <!-- Profitability Analysis Section -->
-            <div id="profitability-analysis">
+            <div id="profitability-analysis" class="profitability-analysis">
                 <div id="profit-margin-chart-container" class="chart-container">
-                    <h2>Product Profit Margin Distribution</h2>
+                    <h2>Profit Margin</h2>
                     <canvas id="profitMarginChart"></canvas>
                 </div>
                 <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
@@ -199,20 +204,19 @@ function initDashboard() {
             <hr>
 
             <!-- Product Lifecycle Analysis Section -->
-            <div id="product-lifecycle-analysis">
-                <h2>Product Lifecycle Analysis</h2>
-                <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
-
+            <div id="product-lifecycle-analysis" class="product-lifecycle-analysis">
+                <h2>Product Lifecycle</h2>
                 <div id="product-age-chart-container" class="chart-container">
-                    <h2>Product Age Distribution</h2>
+                    <h5>Product Age Distribution</h5>
                     <canvas id="productAgeChart"></canvas>
                 </div>
+                <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
             </div>
             <hr>
 
             <!-- Most Popular Products by Sales -->
-            <div id="most-popular-products">
-                <h2>Most Popular Products by Sales</h2>
+            <div id="most-popular-products" class>
+                <h2>Most Popular</h2>
                 <div id="most-popular-products-chart-container" class="chart-container">
                     <h5>Top 5 Most Sold Products</h5>
                     <canvas id="mostPopularProductsChart"></canvas>
@@ -222,7 +226,7 @@ function initDashboard() {
 
             <!-- Least Popular Products by Sales -->
             <div id="least-popular-products">
-                <h2>Least Popular Products by Sales</h2>
+                <h2>Least Popular</h2>
                 <div id="least-popular-products-chart-container" class="chart-container">
                     <h5>Bottom 5 Least Sold Products</h5>
                     <canvas id="leastPopularProductsChart"></canvas>
@@ -262,7 +266,7 @@ function initDashboard() {
 
             <div id="low-stock-list" class="low-stock-list">
                 <h2>Low Stock Products</h2>
-                <table class="low-stock-table">
+                <table class="low-stock-list-table">
                     <thead>
                         <tr>
                             <th>Product</th>
@@ -276,7 +280,6 @@ function initDashboard() {
         </div>
     `;
 
-    // Call each analytics function
     fetchComparisonSales();
 
     fetchCategoryDistribution();
@@ -289,9 +292,26 @@ function initDashboard() {
 
     fetchLeastPopularProducts();
 
-    fetchInventoryAnalytics();
+    fetchInventorySummary();
+} 
+//>Sales Comparison//
+function fetchComparisonSales() {
+    Promise.all([
+        fetchSalesForPeriod("today"),
+        fetchSalesForPeriod("yesterday"),
+        fetchSalesForPeriod("thisWeek"),
+        fetchSalesForPeriod("lastWeek"),
+        fetchSalesForPeriod("thisMonth"),
+        fetchSalesForPeriod("lastMonth")
+    ]).then(([today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth]) => {
+        const comparisonData = {
+            today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth
+        };
+        renderComparisonChart(comparisonData, 'totalRevenue', 'revenueChart', 'Revenu');
+        renderComparisonChart(comparisonData, 'totalProfit', 'profitChart', 'Profit');       // Ensure Firestore has `totalProfit` field
+        renderComparisonChart(comparisonData, 'totalProductsSold', 'quantityChart', 'Quantity');
+    });
 }
-
 function getDateRange(period) {
     const today = new Date();
     const formatDate = (date) => {
@@ -331,22 +351,25 @@ function getDateRange(period) {
 }
 async function fetchSalesForPeriod(period) {
     const { startDate, endDate } = getDateRange(period);
-    const dates = getDatesBetween(startDate, endDate); // Helper to generate YYYY-MM-DD dates
+    const dates = getDatesBetween(startDate, endDate);
 
     let totalRevenue = 0;
     let totalProductsSold = 0;
+    let totalProfit = 0;
 
-    // Fetch each document by its ID (date)
     for (const date of dates) {
-        const doc = await db.collection("sales").doc(date).get();
+        const docRef = db.collection("sales").doc(date);
+        const doc = await docRef.get();
+
         if (doc.exists) {
             const data = doc.data();
             totalRevenue += data.totalRevenue || 0;
             totalProductsSold += data.totalProductsSold || 0;
+            totalProfit += data.totalProfit || 0;
         }
     }
 
-    return { totalRevenue, totalProductsSold };
+    return { totalRevenue, totalProductsSold, totalProfit };
 }
 function getDatesBetween(startDate, endDate) {
     const dates = [];
@@ -363,57 +386,32 @@ function getDatesBetween(startDate, endDate) {
 
     return dates;
 }
-function fetchComparisonSales() {
-    // Fetch sales for today, yesterday, this week, last week, this month, last month
-    Promise.all([
-        fetchSalesForPeriod("today"),
-        fetchSalesForPeriod("yesterday"),
-        fetchSalesForPeriod("thisWeek"),
-        fetchSalesForPeriod("lastWeek"),
-        fetchSalesForPeriod("thisMonth"),
-        fetchSalesForPeriod("lastMonth")
-    ])
-        .then(([todaySales, yesterdaySales, thisWeekSales, lastWeekSales, thisMonthSales, lastMonthSales]) => {
-            renderComparisonChart({
-                today: todaySales.totalRevenue,
-                yesterday: yesterdaySales.totalRevenue,
-                thisWeek: thisWeekSales.totalRevenue,
-                lastWeek: lastWeekSales.totalRevenue,
-                thisMonth: thisMonthSales.totalRevenue,
-                lastMonth: lastMonthSales.totalRevenue
-            });
-        })
-        .catch((error) => {
-            console.error("Error fetching comparison sales data:", error);
-        });
-}
-function renderComparisonChart(comparisonData) {
-    const ctx = document.getElementById('comparisonSalesChart').getContext('2d');
-
+function renderComparisonChart(comparisonData, metric, canvasId, title) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ["Today vs Yesterday", "This Week vs Last Week", "This Month vs Last Month"],
             datasets: [
                 {
-                    label: 'Current Period Sales',
+                    label: `Current Period ${title}`,
                     data: [
-                        comparisonData.today,
-                        comparisonData.thisWeek,
-                        comparisonData.thisMonth
+                        comparisonData.today[metric],
+                        comparisonData.thisWeek[metric],
+                        comparisonData.thisMonth[metric]
                     ],
-                    backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                    backgroundColor: 'rgba(53, 162, 235, 0.9)',
                     borderColor: 'rgba(53, 162, 235, 1)',
                     borderWidth: 1
                 },
                 {
-                    label: 'Previous Period Sales',
+                    label: `Previous Period ${title}`,
                     data: [
-                        comparisonData.yesterday,
-                        comparisonData.lastWeek,
-                        comparisonData.lastMonth
+                        comparisonData.yesterday[metric],
+                        comparisonData.lastWeek[metric],
+                        comparisonData.lastMonth[metric]
                     ],
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.9)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     borderWidth: 1
                 }
@@ -423,15 +421,29 @@ function renderComparisonChart(comparisonData) {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: { display: true, text: title } // Add Y-axis title (e.g., "Revenue")
+                },
+                x: {
+                    ticks: {
+                        font: { size: 10 },
+                        autoSkip: false, // Forces all labels to show
+                        maxRotation: 0,   // 0° rotation = horizontal
+                        minRotation: 0
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `${title} Comparison`, // Chart title (e.g., "Profit Comparison")
+                    font: { size: 16 }
                 }
             }
         }
     });
 }
-
-
-
+//>CategoryDistribution//
 async function fetchCategoryDistribution() {
     const snapshot = await db.collection("products").get();
     const categoryCounts = {};
@@ -496,7 +508,7 @@ function renderCategoryChart(categoryCounts) {
         }
     });
 }
-
+//>Profit Margin//
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -564,7 +576,7 @@ function renderProfitMarginChart(products) {
         }
     });
 }
-
+//>Products LifeCycle//
 function fetchProductLifecycleData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -630,7 +642,7 @@ function renderProductAgeChart(products) {
         }
     });
 }
-
+//>Most Popular Products//
 function fetchMostPopularProducts() {
     const salesRef = db.collection("sales");
     let productSales = {};
@@ -714,7 +726,7 @@ function renderMostPopularProductsChart(productSales) {
         }
     });
 }
-
+//>Least Popular Products//
 function fetchLeastPopularProducts() {
     const salesRef = db.collection("sales");
     let productSales = {};
@@ -797,8 +809,8 @@ function renderLeastPopularProductsChart(productSales) {
         }
     });
 }
-
-async function fetchInventoryAnalytics() {
+//>Inventory Summary//
+async function fetchInventorySummary() {
     try {
         const snapshot = await db.collection("products").get();
         const allProducts = snapshot.docs.map(doc => doc.data());
@@ -847,7 +859,6 @@ async function fetchInventoryAnalytics() {
 }
 
 
-
 //<Adder Section>//
 //>addproduct//
 function showProductForm() {
@@ -893,7 +904,7 @@ async function addProduct() {
     const form = document.getElementById("product-form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        showLoadingOverlay(1500);
+        showLoadingOverlay(3000);
         const formData = new FormData(form);
         const convertToJPEG = (file) => {
             return new Promise((resolve, reject) => {
@@ -2352,7 +2363,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 const debtId = event.target.getAttribute("data-debt-id");
                 await db.collection("customers").doc(customerId).collection("debts").doc(debtId).delete();
                 loadDebts();
-                showModalMessage("Debt removed successfully!", true);
             });
         });
     }

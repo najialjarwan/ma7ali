@@ -1188,6 +1188,9 @@ aside {
   pointer-events: none;
 }
 
+
+
+
 .chart-container{
   width: 100%;
 }
@@ -1202,10 +1205,27 @@ aside {
 }
 
 .inventory-analytics h2{
-  font-style:italic;
-  color: var(--accent-color);
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 1.6rem;
+  color: var(--input-color);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+  background-color: var(--accent-color);
+  letter-spacing: 7px;
+}
 
+.profitability-analysis p{
+  margin: 0;
+}
+.profitability-analysis p strong{
+  color: rgb(75, 192, 192);
+}
+
+.product-lifecycle-analysis{
+  width: 100%;
+}
+.product-lifecycle-analysis p strong{
+  color: rgb(54, 162, 235);
 }
 #profit-margin-chart-container {
   width: 100%;
@@ -1214,10 +1234,6 @@ aside {
 
 #profitMarginChart {
   width: max-content;
-}
-
-.inventory-metrics {
-  padding: 1rem;
 }
 
 .metrics-grid {
@@ -1240,31 +1256,45 @@ aside {
   border-collapse: collapse;
 }
 
+.low-stock-table th{
+  color: var(--text-color);
+  background-color: var(--accent-color);
+}
+
 .low-stock-table th, .low-stock-table td {
   padding: 2px;
   text-align: left;
   border: 1px solid var(--text-color);
+  width: 50%;
 }
 
-.low-stock-table tr:nth-child(odd){
+.low-stock-table td:nth-child(1) {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+.low-stock-table td:nth-child(2) {
+  background-color: var(--input-color);
+  color: var(--text-color);
+}
+
+.low-stock-list-table{
+  width: 100%;
+  border-collapse: collapse;
+}
+.low-stock-list-table th{
+  background-color: var(--accent-color);
+  border: 1px solid var(--text-color);
+}
+.low-stock-list-table td{
+  text-align: left;
+  border: 1px solid var(--text-color);
+  padding: 5px;
+  width: 50%;
+}
+.low-stock-list-table tr:nth-child(odd){
   background-color: var(--input-color);
 }
-.low-stock-table tr:nth-child(even){
-  background-color: lightgoldenrodyellow;
-}
-
-.low-stock-table th {
-  background-color: var(--accent-color);
-  font-weight: 600;
-}
-
-.inventory-metrics .low-stock-table td:nth-child(1) {
-  background-color: var(--accent-color);
-  color: white;
-  font-weight: bold;
-}
-
-.inventory-metrics .low-stock-table td:nth-child(2) {
-  background-color: white;
-  color: black;
+.low-stock-list-table tr:nth-child(even){
+  background-color: rgb(230, 230, 210);
 }
