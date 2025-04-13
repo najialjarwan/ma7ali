@@ -1,3 +1,4 @@
+// #region Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
@@ -38,48 +39,53 @@ function updateOnlineStatus() {
 window.addEventListener("load", updateOnlineStatus);
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
+// #endregion
 
 
+// #region EventListeners and LoadContent
 function initializeEventListeners() {
 
+    // #region Pop Button And Adders
     const popButton = document.getElementById("pop");
     const slider = document.getElementById("slider");
-
     popButton.addEventListener("click", function (e) {
+
         slider.classList.toggle("active");
         popButton.classList.toggle("active");
         e.stopPropagation();
-
-        document.getElementById("add-customer-btn").addEventListener("click", function () {
-            const section = this.getAttribute("data-section");
-            if (section) {
-                removeActive();
-                loadContent(section);
-            }
-        });
-        document.getElementById("add-product-btn").addEventListener("click", function () {
-            const section = this.getAttribute("data-section");
-            if (section) {
-                removeActive();
-                loadContent(section);
-            }
-        });
-        document.getElementById("add-cart-btn").addEventListener("click", function () {
-            const section = this.getAttribute("data-section");
-            if (section) {
-                removeActive();
-                loadContent(section);
-            }
-        });
-        document.getElementById("add-sales-btn").addEventListener("click", function () {
-            const section = this.getAttribute("data-section");
-            if (section) {
-                removeActive();
-                loadContent(section);
-            }
-        });
     });
+    document.getElementById("add-customer-btn").addEventListener("click", function () {
+        const section = this.getAttribute("data-section");
+        if (section) {
+            removeActive();
+            loadContent(section);
+        }
+    });
+    document.getElementById("add-product-btn").addEventListener("click", function () {
+        const section = this.getAttribute("data-section");
+        if (section) {
+            removeActive();
+            loadContent(section);
+        }
+    });
+    document.getElementById("add-cart-btn").addEventListener("click", function () {
+        const section = this.getAttribute("data-section");
+        if (section) {
+            removeActive();
+            loadContent(section);
+        }
+    });
+    document.getElementById("add-sales-btn").addEventListener("click", function () {
+        const section = this.getAttribute("data-section");
+        if (section) {
+            console.log('Add sales is clicked, loading Sales content');
+            removeActive();
+            loadContent(section);
+        }
+    });
+    // #endregion
 
+    // #region SideBar
     document.addEventListener("click", function (e) {
         if (!slider.contains(e.target) && !popButton.contains(e.target)) {
             slider.classList.remove("active");
@@ -92,6 +98,7 @@ function initializeEventListeners() {
         button.addEventListener("click", function () {
             const section = this.getAttribute("data-section");
             if (section) {
+                console.log("calling load content");
                 loadContent(section);
             }
             removeActive();
@@ -132,9 +139,11 @@ function initializeEventListeners() {
         slider.classList.remove("active");
         popButton.classList.remove("active");
     }
+    // #endregion
+
 }
 async function loadContent(section) {
-
+    console.log("Load content is called");
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = "<p>Loading...</p>";
     try {
@@ -169,723 +178,12 @@ async function loadContent(section) {
         console.error(error);
     }
 }
+// #endregion
 
-//<Dashboard Section>//
-function initDashboard() {
-    const mainContent = document.querySelector(".main-content");
-    mainContent.innerHTML = `
-        <div class="inventory-analytics" id="inventory-analytics">
-            <!-- Category Distrubtion -->
-            <div id="category-chart-container" class="category-chart-container">
-                <h2>Category Distribution</h2>
-                <canvas id="categoryChart"></canvas>
-            </div>
-            <hr>
 
-            <!-- Sales Comparison Chart -->
-            <div id="sales-comparison">
-                <h2>Sales Comparison</h2>
-                <div><canvas id="revenueChart"></canvas></div>
-                <div><canvas id="profitChart"></canvas></div>
-                <div><canvas id="quantityChart"></canvas></div>
-            </div>
-            <hr>
+// #region Adder Section [
 
-            <!-- Profitability Analysis Section -->
-            <div id="profitability-analysis" class="profitability-analysis">
-                <div id="profit-margin-chart-container" class="chart-container">
-                    <h2>Profit Margin</h2>
-                    <canvas id="profitMarginChart"></canvas>
-                </div>
-                <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
-                <p><strong>Lowest Profit Margin: </strong><span id="lowest-profit-margin"></span></p>
-                <p><strong>Average Profit Margin: </strong><span id="average-profit-margin"></span></p>
-            </div>
-            <hr>
-
-            <!-- Product Lifecycle Analysis Section -->
-            <div id="product-lifecycle-analysis" class="product-lifecycle-analysis">
-                <h2>Product Lifecycle</h2>
-                <div id="product-age-chart-container" class="chart-container">
-                    <h5>Product Age Distribution</h5>
-                    <canvas id="productAgeChart"></canvas>
-                </div>
-                <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
-            </div>
-            <hr>
-
-            <!-- Most Popular Products by Sales -->
-            <div id="most-popular-products" class>
-                <h2>Most Popular</h2>
-                <div id="most-popular-products-chart-container" class="chart-container">
-                    <h5>Top 5 Most Sold Products</h5>
-                    <canvas id="mostPopularProductsChart"></canvas>
-                </div>
-            </div>
-            <hr>
-
-            <!-- Least Popular Products by Sales -->
-            <div id="least-popular-products">
-                <h2>Least Popular</h2>
-                <div id="least-popular-products-chart-container" class="chart-container">
-                    <h5>Bottom 5 Least Sold Products</h5>
-                    <canvas id="leastPopularProductsChart"></canvas>
-                </div>
-            </div>
-            <hr>
-
-            <!-- Inventory Analytics -->
-            <div id="inventory-metrics" class="inventory-metrics">
-                <h2>Inventory Summary</h2>
-                <table class="low-stock-table">
-                    <tbody>
-                        <tr>
-                            <th>Total Products</th>
-                            <td id="total-products"><span>Loading...</span></td>
-                        </tr>
-                        <tr>
-                            <th>Total Stock Units</th>
-                            <td id="total-stock-units"><span>Loading...</span></td>
-                        </tr>
-                        <tr>
-                            <th>Out of Stock</th>
-                            <td id="out-of-stock"><span>Loading...</span></td>
-                        </tr>
-                        <tr>
-                            <th>Low Stock Products</th>
-                            <td id="low-stock"><span>Loading...</span></td>
-                        </tr>
-                        <tr>
-                            <th>Total Inventory Value</th>
-                            <td id="inventory-value"><span>Loading...</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <hr>
-
-            <div id="low-stock-list" class="low-stock-list">
-                <h2>Low Stock Products</h2>
-                <table class="low-stock-list-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Stock</th>
-                        </tr>
-                    </thead>
-                    <tbody id="low-stock-products"></tbody>
-                </table>
-            </div>
-
-        </div>
-    `;
-
-    fetchComparisonSales();
-
-    fetchCategoryDistribution();
-
-    fetchProfitabilityData();
-
-    fetchProductLifecycleData();
-
-    fetchMostPopularProducts();
-
-    fetchLeastPopularProducts();
-
-    fetchInventorySummary();
-}
-//>Sales Comparison//
-let isFetching = false;
-const activeCharts = {};
-let isFetchingComparison = false;
-
-async function fetchComparisonSales() {
-    // Prevent duplicate concurrent requests
-    if (isFetchingComparison) return;
-    isFetchingComparison = true;
-
-    try {
-        // Fetch all periods in parallel
-        const [today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth] = await Promise.all([
-            fetchSalesForPeriod("today"),
-            fetchSalesForPeriod("yesterday"),
-            fetchSalesForPeriod("thisWeek"),
-            fetchSalesForPeriod("lastWeek"),
-            fetchSalesForPeriod("thisMonth"),
-            fetchSalesForPeriod("lastMonth")
-        ]);
-
-        const comparisonData = {
-            today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth
-        };
-
-        // Render all charts (reusing existing instances)
-        renderComparisonChart(comparisonData, 'totalRevenue', 'revenueChart', 'Revenue');
-        renderComparisonChart(comparisonData, 'totalProfit', 'profitChart', 'Profit');
-        renderComparisonChart(comparisonData, 'totalProductsSold', 'quantityChart', 'Quantity');
-
-    } catch (error) {
-        console.error("Error in fetchComparisonSales:", error);
-    } finally {
-        isFetchingComparison = false;
-    }
-}
-const dateRangeCache = {};
-function getDateRange(period) {
-    if (dateRangeCache[period]) return dateRangeCache[period];
-    const today = new Date();
-
-    let startDate = new Date();
-    let endDate = today;
-
-    if (period === "today") {
-        startDate = today;
-        endDate = today;
-    } else if (period === "yesterday") {
-        startDate.setDate(today.getDate() - 1);
-        endDate = startDate;
-    } else if (period === "thisWeek") {
-        startDate.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-        endDate = today;
-    } else if (period === "lastWeek") {
-        startDate.setDate(today.getDate() - today.getDay() - 7); // Start of last week
-        endDate.setDate(today.getDate() - today.getDay() - 1);   // End of last week (Saturday)
-    } else if (period === "thisMonth") {
-        startDate.setDate(1); // 1st day of current month
-        endDate = today;
-    } else if (period === "lastMonth") {
-        startDate.setMonth(today.getMonth() - 1, 1); // 1st day of last month
-        endDate.setMonth(today.getMonth(), 0);       // Last day of last month
-    }
-
-    dateRangeCache[period] = { startDate: formatDate(startDate), endDate: formatDate(endDate) };
-    return dateRangeCache[period];
-}
-function formatDate(date) {
-    if (!(date instanceof Date)) date = new Date(date);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
-function getDatesBetween(startDate, endDate) {
-    const dates = [];
-    const current = new Date(startDate);
-    const end = new Date(endDate);
-
-    while (current <= end) {
-        dates.push(formatDate(new Date(current))); // Explicitly format each date
-        current.setDate(current.getDate() + 1);
-    }
-
-    return dates;
-}
-async function fetchSalesForPeriod(period) {
-    const { startDate, endDate } = getDateRange(period);
-    const dates = getDatesBetween(startDate, endDate);
-
-    // Fetch all documents in parallel
-    const promises = dates.map(date =>
-        db.collection("sales").doc(date).get()
-    );
-    const docs = await Promise.all(promises);
-
-    let totalRevenue = 0, totalProductsSold = 0, totalProfit = 0;
-    docs.forEach(doc => {
-        if (doc.exists) {
-            const data = doc.data();
-            totalRevenue += data.totalRevenue || 0;
-            totalProductsSold += data.totalProductsSold || 0;
-            totalProfit += data.totalProfit || 0;
-        }
-    });
-
-    return { totalRevenue, totalProductsSold, totalProfit };
-}
-const chartInstances = {};
-function renderComparisonChart(comparisonData, metric, canvasId, title) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) {
-        console.warn(`Canvas element #${canvasId} not found`);
-        return;
-    }
-
-    if (chartInstances[canvasId]) {
-        chartInstances[canvasId].destroy();
-    }
-
-    const ctx = canvas.getContext('2d');
-    chartInstances[canvasId] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ["Today vs Yesterday", "This Week vs Last Week", "This Month vs Last Month"],
-            datasets: [
-                {
-                    label: `Current Period ${title}`,
-                    data: [
-                        comparisonData.today[metric],
-                        comparisonData.thisWeek[metric],
-                        comparisonData.thisMonth[metric]
-                    ],
-                    backgroundColor: 'rgba(53, 162, 235, 0.9)',
-                    borderColor: 'rgba(53, 162, 235, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: `Previous Period ${title}`,
-                    data: [
-                        comparisonData.yesterday[metric],
-                        comparisonData.lastWeek[metric],
-                        comparisonData.lastMonth[metric]
-                    ],
-                    backgroundColor: 'rgba(255, 99, 132, 0.9)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            animation: {
-                duration: 7000,
-                easing: 'easeOutCubic'
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: title }
-                },
-                x: {
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 0,
-                        minRotation: 0,
-                        font: { size: 10 }
-                    }
-                }
-            }
-        }
-    });
-}
-//>CategoryDistribution//
-async function fetchCategoryDistribution() {
-    const snapshot = await db.collection("products").get();
-    const categoryCounts = {};
-
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const category = data.category || "Uncategorized";
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-
-    renderCategoryChart(categoryCounts);
-}
-function renderCategoryChart(categoryCounts) {
-    const labels = Object.keys(categoryCounts);
-    const data = Object.values(categoryCounts);
-
-    const ctx = document.getElementById("categoryChart").getContext("2d");
-
-    new Chart(ctx, {
-        type: "pie",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Products by Category",
-                data: data,
-                backgroundColor: [
-                    "rgba(255, 99, 132, 0.2)",
-                    "rgba(54, 162, 235, 0.2)",
-                    "rgba(255, 206, 86, 0.2)",
-                    "rgba(75, 192, 192, 0.2)",
-                    "rgba(153, 102, 255, 0.2)",
-                    "rgba(255, 159, 64, 0.2)"
-                ],
-                borderColor: [
-                    "rgba(255, 99, 132, 1)",
-                    "rgba(54, 162, 235, 1)",
-                    "rgba(255, 206, 86, 1)",
-                    "rgba(75, 192, 192, 1)",
-                    "rgba(153, 102, 255, 1)",
-                    "rgba(255, 159, 64, 1)"
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            animation: {
-                duration: 2000,
-                easing: 'easeOutCubic'
-            },
-            plugins: {
-                legend: {
-                    position: "top",
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return `${context.label}: ${context.raw} products`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-//>Profit Margin//
-function fetchProfitabilityData() {
-    const productsRef = db.collection("products");
-    let products = [];
-    productsRef.get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const profitMargin = (data.profit / (data.costPrice + data.profit)) * 100;
-            products.push({
-                label: data.label,
-                costPrice: data.costPrice,
-                profit: data.profit,
-                profitMargin: profitMargin
-            });
-        });
-
-        renderProfitabilityMetrics(products);
-        renderProfitMarginChart(products);
-    }).catch((error) => {
-        console.error("Error fetching products:", error);
-    });
-}
-function renderProfitabilityMetrics(products) {
-    const highestProfitMargin = Math.max(...products.map(product => product.profitMargin));
-    const lowestProfitMargin = Math.min(...products.map(product => product.profitMargin));
-    const averageProfitMargin = products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length;
-
-    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin.toFixed(2)}%`;
-    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin.toFixed(2)}%`;
-    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
-}
-function renderProfitMarginChart(products) {
-    const ctx = document.getElementById('profitMarginChart').getContext('2d');
-    const labels = products.map(product => product.label);
-    const profitMargins = products.map(product => product.profitMargin);
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Profit Margin (%)',
-                data: profitMargins,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 5
-                    }
-                },
-                x: {
-                    ticks: {
-                        autoSkip: true,  // Automatically skips some labels if there are too many
-                        maxRotation: 90,  // Rotate labels to 90 degrees (vertical)
-                        minRotation: 90   // Ensure labels are always 90 degrees
-                    }
-                }
-            }
-        }
-    });
-}
-//>Products LifeCycle//
-function fetchProductLifecycleData() {
-    const productsRef = db.collection("products");
-    let products = [];
-    productsRef.get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const createdAt = data.createdAt.toDate(); // Convert Firestore timestamp to Date
-            const currentDate = new Date();
-            const ageInDays = Math.floor((currentDate - createdAt) / (1000 * 3600 * 24)); // Age in days
-            products.push({
-                label: data.label,
-                createdAt: createdAt,
-                ageInDays: ageInDays
-            });
-        });
-
-        renderProductLifecycleMetrics(products);
-        renderProductAgeChart(products);
-    }).catch((error) => {
-        console.error("Error fetching products:", error);
-    });
-}
-function renderProductLifecycleMetrics(products) {
-    const totalAge = products.reduce((acc, product) => acc + product.ageInDays, 0);
-    const averageAge = totalAge / products.length;
-
-    document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
-}
-function renderProductAgeChart(products) {
-    const ctx = document.getElementById('productAgeChart').getContext('2d');
-    const labels = products.map(product => product.label);
-    const ages = products.map(product => product.ageInDays);
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Product Age (Days)',
-                data: ages,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 5
-                    }
-                },
-                x: {
-                    ticks: {
-                        autoSkip: true,
-                        maxRotation: 90,
-                        minRotation: 90
-                    }
-                }
-            }
-        }
-    });
-}
-//>Most Popular Products//
-function fetchMostPopularProducts() {
-    const salesRef = db.collection("sales");
-    let productSales = {};
-
-    salesRef.get().then((querySnapshot) => {
-        const salesPromises = [];
-
-        querySnapshot.forEach((doc) => {
-            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
-
-            const promise = productsSoldRef.get().then((productsSnapshot) => {
-                productsSnapshot.forEach((productDoc) => {
-                    const product = productDoc.data();
-                    const productId = product.name;
-                    const quantitySold = product.quantity;
-
-                    if (productSales[productId]) {
-                        productSales[productId] += quantitySold;
-                    } else {
-                        productSales[productId] = quantitySold;
-                    }
-                });
-            });
-
-            salesPromises.push(promise);
-        });
-
-        Promise.all(salesPromises).then(() => {
-            renderMostPopularProductsChart(productSales);
-        }).catch((error) => {
-            console.error("Error fetching productsSold subcollections:", error);
-        });
-    }).catch((error) => {
-        console.error("Error fetching sales data:", error);
-    });
-}
-function renderMostPopularProductsChart(productSales) {
-    // Convert the aggregated productSales object to arrays for labels and data
-    const labels = Object.keys(productSales); // Product names (or IDs)
-    const salesVolumes = Object.values(productSales); // Total quantity sold for each product
-
-    // Sort the products by sales volume in descending order and slice to top 5
-    const topProducts = labels
-        .map((label, index) => ({
-            label: label,
-            salesVolume: salesVolumes[index]
-        }))
-        .sort((a, b) => b.salesVolume - a.salesVolume)
-        .slice(0, 5); // Get top 5
-
-    const topLabels = topProducts.map(product => product.label);
-    const topSalesVolumes = topProducts.map(product => product.salesVolume);
-
-    const ctx = document.getElementById('mostPopularProductsChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: topLabels,
-            datasets: [{
-                label: 'Quantity Sold',
-                data: topSalesVolumes,
-                backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                borderColor: 'rgba(153, 102, 255, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                },
-                x: {
-                    ticks: {
-                        autoSkip: true,
-                        maxRotation: 90,
-                        minRotation: 90
-                    }
-                }
-            }
-        }
-    });
-}
-//>Least Popular Products//
-function fetchLeastPopularProducts() {
-    const salesRef = db.collection("sales");
-    let productSales = {};
-
-    salesRef.get().then((querySnapshot) => {
-        const salesPromises = [];
-
-        querySnapshot.forEach((doc) => {
-            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
-
-            const promise = productsSoldRef.get().then((productsSnapshot) => {
-                productsSnapshot.forEach((productDoc) => {
-                    const product = productDoc.data();
-                    const productId = product.name;
-                    const quantitySold = product.quantity;
-
-                    if (productSales[productId]) {
-                        productSales[productId] += quantitySold;
-                    } else {
-                        productSales[productId] = quantitySold;
-                    }
-                });
-            });
-
-            salesPromises.push(promise);
-        });
-
-        Promise.all(salesPromises).then(() => {
-            renderLeastPopularProductsChart(productSales);
-        }).catch((error) => {
-            console.error("Error fetching productsSold subcollections:", error);
-        });
-    }).catch((error) => {
-        console.error("Error fetching sales data:", error);
-    });
-}
-function renderLeastPopularProductsChart(productSales) {
-    const labels = Object.keys(productSales);
-    const salesVolumes = Object.values(productSales);
-
-    // Sort products by sales volume (ascending) and slice bottom 5
-    const bottomProducts = labels
-        .map((label, index) => ({
-            label: label,
-            salesVolume: salesVolumes[index]
-        }))
-        .sort((a, b) => a.salesVolume - b.salesVolume)
-        .slice(0, 5); // Get least 5
-
-    const bottomLabels = bottomProducts.map(product => product.label);
-    const bottomSalesVolumes = bottomProducts.map(product => product.salesVolume);
-
-    const ctx = document.getElementById('leastPopularProductsChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: bottomLabels,
-            datasets: [{
-                label: 'Quantity Sold',
-                data: bottomSalesVolumes,
-                backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                borderColor: 'rgba(255, 159, 64, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                },
-                x: {
-                    ticks: {
-                        autoSkip: true,
-                        maxRotation: 90,
-                        minRotation: 90
-                    }
-                }
-            }
-        }
-    });
-}
-//>Inventory Summary//
-async function fetchInventorySummary() {
-    try {
-        const snapshot = await db.collection("products").get();
-        const allProducts = snapshot.docs.map(doc => doc.data());
-
-        // Total Products
-        const totalProducts = snapshot.size;
-        document.querySelector("#total-products span").textContent = totalProducts;
-
-        // Total Stock Units
-        const totalStock = allProducts.reduce((sum, product) => sum + (product.stock || 0), 0);
-        document.querySelector("#total-stock-units span").textContent = totalStock;
-
-        // Out of Stock
-        const outOfStockCount = allProducts.filter(product => (product.stock || 0) === 0).length;
-        document.querySelector("#out-of-stock span").textContent = outOfStockCount;
-
-        // Total Inventory Value
-        const totalValue = allProducts.reduce((sum, product) => {
-            return sum + ((product.stock || 0) * (product.costPrice || 0));
-        }, 0);
-        document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
-
-        // Low Stock (<= 5)
-        const lowStockProducts = allProducts.filter(product => (product.stock || 0) <= 5);
-        document.querySelector("#low-stock span").textContent = lowStockProducts.length;
-
-        const list = document.querySelector("#low-stock-products");
-        list.innerHTML = "";
-        lowStockProducts.forEach(product => {
-            const row = document.createElement("tr");
-
-            const nameCell = document.createElement("td");
-            nameCell.textContent = product.label;
-
-            const stockCell = document.createElement("td");
-            stockCell.textContent = product.stock;
-
-            row.appendChild(nameCell);
-            row.appendChild(stockCell);
-            list.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error("Error fetching inventory analytics:", error);
-    }
-}
-
-
-//<Adder Section>//
-//>addproduct//
+// #region Add Product Section {
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -1058,7 +356,9 @@ async function addProduct() {
         }
     });
 }
-//>AddCustomer//
+// #endregion }
+
+// #region Add Customer Section {
 function showCustomerForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -1130,9 +430,12 @@ async function addCustomer() {
         showModalMessage(`Error checking for duplicates: ${error.message}`, false);
     }
 }
-//>addCart//
+// #endregion }
+
+// #region Add Cart Secton {
 function showCartForm() {
     showSales = false;
+    localSale = {};
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <form id="cart-form" class="product-form">
@@ -1374,31 +677,34 @@ async function fetchProductToAdd() {
             ...doc.data()
         }));
 
-        if (showSales)
-            displayProducts(allProducts);
+        // Initial display of all products
+        displayProducts(allProducts);
 
+        // Debounce the search input to avoid frequent calls
+        let debounceTimer;
         searchInput.addEventListener("input", function () {
-            const searchValue = searchInput.value.toLowerCase();
-            const filteredProducts = allProducts.filter(product =>
-                !showSales ? product.label.toLowerCase() === (searchValue)
-                    : product.label.toLowerCase().startsWith(searchValue)
-            );
-            displayProducts(filteredProducts);
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const searchValue = searchInput.value.toLowerCase().trim();
+                const filteredProducts = allProducts.filter(product =>
+                    product.label.toLowerCase().includes(searchValue)
+                );
+                displayProducts(filteredProducts);
+            }, 500); // Adjust debounce delay as needed
         });
 
-        function displayProducts(products) {
-            productCardContainer.innerHTML = "";
+        async function displayProducts(products) {
+            productCardContainer.innerHTML = ""; // Clear previous results
             if (products.length === 0) {
                 productCardContainer.innerHTML = `
-                <div class="no-products-message">
-                    No products found. Check Product name!
-                </div>
+                    <div class="no-products-message">
+                        No products found. Check Product name!
+                    </div>
                 `;
                 return;
             }
-
-            products.forEach(product => {
-                displayProductToAdd(product, product.id);
+            products.forEach(async product => {
+                await displayProductToAdd(product, product.id);
             });
         }
     } catch (error) {
@@ -1406,10 +712,10 @@ async function fetchProductToAdd() {
     }
 }
 async function displayProductToAdd(product, productId) {
-
-    await loadTodaySaleToLocal();
-
+    console.log("displaying product: ", product.label);
     const productCardContainer = document.getElementById("cart-products-container");
+    productCardContainer.innerHTML = ``;
+    console.log("Product Card Container: ", productCardContainer);
 
     const actionText = showSales ? "Add to Sales" : "Add to Cart";
     const actionFunction = showSales ? addToSales : addToCart;
@@ -1500,10 +806,16 @@ async function displayProductToAdd(product, productId) {
 
     productCardContainer.appendChild(productCard);
 }
-//>addSales//
+// #endregion }
+
+// #region Add Sales Section {
 let showSales = false;
+let localSale = {};
+let updateSaleTimer = null;
+let currentSaleId = null;
 function showSalesForm() {
     showSales = true;
+    localSale = {};
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <div class="search-customer-container search-container-main" >
@@ -1512,11 +824,9 @@ function showSalesForm() {
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
     `;
+    loadTodaySaleToLocal();
     fetchProductToAdd();
 }
-let localSale = {};
-let updateSaleTimer = null;
-let currentSaleId = null;
 async function addToSales(productId, label, costPrice, profit) {
     const today = new Date().toLocaleDateString('en-CA');
     if (currentSaleId !== today) {
@@ -1668,7 +978,6 @@ async function cancelProductQuantity(productId, quantityToCancel) {
 
     const updatedQty = productData.quantity - cancelQty;
 
-    // Update or delete productSold
     if (updatedQty === 0) {
         await productSoldRef.delete();
     } else {
@@ -1679,12 +988,10 @@ async function cancelProductQuantity(productId, quantityToCancel) {
         });
     }
 
-    // Restore stock
     await productRef.update({
         stock: firebase.firestore.FieldValue.increment(cancelQty)
     });
 
-    // Reload sales from Firestore to recalculate totals
     await loadTodaySaleToLocal();
 
     console.log(`Canceled ${cancelQty} unit(s) of ${productData.name}. Stock restored.`);
@@ -1709,8 +1016,7 @@ async function loadTodaySaleToLocal() {
             dateSold: data.dateSold
         };
     });
-
-    console.log("Loaded today's sale into local memory:");
+    console.log("Local Sale Content: ", localSale);
 }
 function showLoadingOverlay(duration = 400) {
     return new Promise((resolve) => {
@@ -1736,10 +1042,14 @@ function showLoadingOverlay(duration = 400) {
         }, duration);
     });
 }
-//-------------//
+// #endregion }
+
+// #endregion ]
 
 
-//<Products Section>//
+// #region Sections Content
+
+// #region Products Section
 function initProductPage() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -2219,10 +1529,11 @@ function removeProductFromFirebase(productId) {
         .catch(error => {
             console.error("Error removing product:", error);
         });
-}//<--------------->//
+}
+// #endregion
 
 
-//<Customers Section>//
+// #region Customers Section
 function initCustomersPage() {
 
     const mainContent = document.querySelector(".main-content");
@@ -2304,7 +1615,6 @@ async function fetchCustomers() {
                 <div class="customer-phone">${customer.phoneNumber}</div>
             `;
             customerCard.addEventListener("click", () => {
-                console.log("Customer ID:", customer.id);
                 displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
             });
             customersGrid.appendChild(customerCard);
@@ -2458,10 +1768,11 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
     });
-}//<---------------->//
+}
+// #endregion
 
 
-//<CartsAndSales Section>//
+// #region Cart And Sales Section
 function initCartsAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -2498,7 +1809,7 @@ function initCartsAndSalesSection() {
         });
     });
 }
-//carts sections//
+// #region Carts Section
 async function fetchCartsData() {
     console.log("Fetching carts data...");
     try {
@@ -2622,7 +1933,9 @@ function setupCartClickListeners() {
 
     console.log("Cart click listeners set up.");
 }
-//sales sections//
+// #endregion
+
+// #region Sales Section
 async function loadSalesData() {
     const salesContainer = document.getElementById("sales-container");
 
@@ -2817,10 +2130,742 @@ function renderSalesTable(salesData) {
             button.addEventListener("click", event => exportSalesTableToPDF(event, index));
         });
     });
-}//<--------------->//
+}
+// #endregion
+// #endregion
 
 
-//<Aside Section>//
+// #region Dashboard Section
+function initDashboard() {
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+        <div class="inventory-analytics" id="inventory-analytics">
+            <!-- Category Distrubtion -->
+            <div id="category-chart-container" class="category-chart-container">
+                <h2>Category Distribution</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <hr>
+
+            <!-- Sales Comparison Chart -->
+            <div id="sales-comparison">
+                <h2>Sales Comparison</h2>
+                <div><canvas id="revenueChart"></canvas></div>
+                <div><canvas id="profitChart"></canvas></div>
+                <div><canvas id="quantityChart"></canvas></div>
+            </div>
+            <hr>
+
+            <!-- Profitability Analysis Section -->
+            <div id="profitability-analysis" class="profitability-analysis">
+                <div id="profit-margin-chart-container" class="chart-container">
+                    <h2>Profit Margin</h2>
+                    <canvas id="profitMarginChart"></canvas>
+                </div>
+                <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
+                <p><strong>Lowest Profit Margin: </strong><span id="lowest-profit-margin"></span></p>
+                <p><strong>Average Profit Margin: </strong><span id="average-profit-margin"></span></p>
+            </div>
+            <hr>
+
+            <!-- Product Lifecycle Analysis Section -->
+            <div id="product-lifecycle-analysis" class="product-lifecycle-analysis">
+                <h2>Product Lifecycle</h2>
+                <div id="product-age-chart-container" class="chart-container">
+                    <h5>Product Age Distribution</h5>
+                    <canvas id="productAgeChart"></canvas>
+                </div>
+                <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
+            </div>
+            <hr>
+
+            <!-- Most Popular Products by Sales -->
+            <div id="most-popular-products" class>
+                <h2>Most Popular</h2>
+                <div id="most-popular-products-chart-container" class="chart-container">
+                    <h5>Top 5 Most Sold Products</h5>
+                    <canvas id="mostPopularProductsChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Least Popular Products by Sales -->
+            <div id="least-popular-products">
+                <h2>Least Popular</h2>
+                <div id="least-popular-products-chart-container" class="chart-container">
+                    <h5>Bottom 5 Least Sold Products</h5>
+                    <canvas id="leastPopularProductsChart"></canvas>
+                </div>
+            </div>
+            <hr>
+
+            <!-- Inventory Analytics -->
+            <div id="inventory-metrics" class="inventory-metrics">
+                <h2>Inventory Summary</h2>
+                <table class="low-stock-table">
+                    <tbody>
+                        <tr>
+                            <th>Total Products</th>
+                            <td id="total-products"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Total Stock Units</th>
+                            <td id="total-stock-units"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Out of Stock</th>
+                            <td id="out-of-stock"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Low Stock Products</th>
+                            <td id="low-stock"><span>Loading...</span></td>
+                        </tr>
+                        <tr>
+                            <th>Total Inventory Value</th>
+                            <td id="inventory-value"><span>Loading...</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+
+            <div id="low-stock-list" class="low-stock-list">
+                <h2>Low Stock Products</h2>
+                <table class="low-stock-list-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="low-stock-products"></tbody>
+                </table>
+            </div>
+
+        </div>
+    `;
+
+    fetchComparisonSales();
+
+    fetchCategoryDistribution();
+
+    fetchProfitabilityData();
+
+    fetchProductLifecycleData();
+
+    fetchMostPopularProducts();
+
+    fetchLeastPopularProducts();
+
+    fetchInventorySummary();
+}
+// #region Sales Comparisons
+let isFetching = false;
+const activeCharts = {};
+let isFetchingComparison = false;
+async function fetchComparisonSales() {
+    // Prevent duplicate concurrent requests
+    if (isFetchingComparison) return;
+    isFetchingComparison = true;
+
+    try {
+        // Fetch all periods in parallel
+        const [today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth] = await Promise.all([
+            fetchSalesForPeriod("today"),
+            fetchSalesForPeriod("yesterday"),
+            fetchSalesForPeriod("thisWeek"),
+            fetchSalesForPeriod("lastWeek"),
+            fetchSalesForPeriod("thisMonth"),
+            fetchSalesForPeriod("lastMonth")
+        ]);
+
+        const comparisonData = {
+            today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth
+        };
+
+        // Render all charts (reusing existing instances)
+        renderComparisonChart(comparisonData, 'totalRevenue', 'revenueChart', 'Revenue');
+        renderComparisonChart(comparisonData, 'totalProfit', 'profitChart', 'Profit');
+        renderComparisonChart(comparisonData, 'totalProductsSold', 'quantityChart', 'Quantity');
+
+    } catch (error) {
+        console.error("Error in fetchComparisonSales:", error);
+    } finally {
+        isFetchingComparison = false;
+    }
+}
+const dateRangeCache = {};
+function getDateRange(period) {
+    if (dateRangeCache[period]) return dateRangeCache[period];
+    const today = new Date();
+
+    let startDate = new Date();
+    let endDate = today;
+
+    if (period === "today") {
+        startDate = today;
+        endDate = today;
+    } else if (period === "yesterday") {
+        startDate.setDate(today.getDate() - 1);
+        endDate = startDate;
+    } else if (period === "thisWeek") {
+        startDate.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+        endDate = today;
+    } else if (period === "lastWeek") {
+        startDate.setDate(today.getDate() - today.getDay() - 7); // Start of last week
+        endDate.setDate(today.getDate() - today.getDay() - 1);   // End of last week (Saturday)
+    } else if (period === "thisMonth") {
+        startDate.setDate(1); // 1st day of current month
+        endDate = today;
+    } else if (period === "lastMonth") {
+        startDate.setMonth(today.getMonth() - 1, 1); // 1st day of last month
+        endDate.setMonth(today.getMonth(), 0);       // Last day of last month
+    }
+
+    dateRangeCache[period] = { startDate: formatDate(startDate), endDate: formatDate(endDate) };
+    return dateRangeCache[period];
+}
+function formatDate(date) {
+    if (!(date instanceof Date)) date = new Date(date);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+function getDatesBetween(startDate, endDate) {
+    const dates = [];
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+        dates.push(formatDate(new Date(current))); // Explicitly format each date
+        current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+}
+async function fetchSalesForPeriod(period) {
+    const { startDate, endDate } = getDateRange(period);
+    const dates = getDatesBetween(startDate, endDate);
+
+    // Fetch all documents in parallel
+    const promises = dates.map(date =>
+        db.collection("sales").doc(date).get()
+    );
+    const docs = await Promise.all(promises);
+
+    let totalRevenue = 0, totalProductsSold = 0, totalProfit = 0;
+    docs.forEach(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            totalRevenue += data.totalRevenue || 0;
+            totalProductsSold += data.totalProductsSold || 0;
+            totalProfit += data.totalProfit || 0;
+        }
+    });
+
+    return { totalRevenue, totalProductsSold, totalProfit };
+}
+const chartInstances = {};
+function renderComparisonChart(comparisonData, metric, canvasId, title) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.warn(`Canvas element #${canvasId} not found`);
+        return;
+    }
+
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    chartInstances[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ["Today vs Yesterday", "This Week vs Last Week", "This Month vs Last Month"],
+            datasets: [
+                {
+                    label: `Current Period ${title}`,
+                    data: [
+                        comparisonData.today[metric],
+                        comparisonData.thisWeek[metric],
+                        comparisonData.thisMonth[metric]
+                    ],
+                    backgroundColor: 'rgba(53, 162, 235, 0.9)',
+                    borderColor: 'rgba(53, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: `Previous Period ${title}`,
+                    data: [
+                        comparisonData.yesterday[metric],
+                        comparisonData.lastWeek[metric],
+                        comparisonData.lastMonth[metric]
+                    ],
+                    backgroundColor: 'rgba(255, 99, 132, 0.9)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 7000,
+                easing: 'easeOutCubic'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: title }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 0,
+                        minRotation: 0,
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Category Disribution
+async function fetchCategoryDistribution() {
+    const snapshot = await db.collection("products").get();
+    const categoryCounts = {};
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const category = data.category || "Uncategorized";
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    renderCategoryChart(categoryCounts);
+}
+function renderCategoryChart(categoryCounts) {
+    const labels = Object.keys(categoryCounts);
+    const data = Object.values(categoryCounts);
+
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Products by Category",
+                data: data,
+                backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(255, 159, 64, 0.2)"
+                ],
+                borderColor: [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutCubic'
+            },
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.label}: ${context.raw} products`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+//#region Proftability Margin
+function fetchProfitabilityData() {
+    const productsRef = db.collection("products");
+    let products = [];
+    productsRef.get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const profitMargin = (data.profit / (data.costPrice + data.profit)) * 100;
+            products.push({
+                label: data.label,
+                costPrice: data.costPrice,
+                profit: data.profit,
+                profitMargin: profitMargin
+            });
+        });
+
+        renderProfitabilityMetrics(products);
+        renderProfitMarginChart(products);
+    }).catch((error) => {
+        console.error("Error fetching products:", error);
+    });
+}
+function renderProfitabilityMetrics(products) {
+    const highestProfitMargin = Math.max(...products.map(product => product.profitMargin));
+    const lowestProfitMargin = Math.min(...products.map(product => product.profitMargin));
+    const averageProfitMargin = products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length;
+
+    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin.toFixed(2)}%`;
+    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin.toFixed(2)}%`;
+    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
+}
+function renderProfitMarginChart(products) {
+    const ctx = document.getElementById('profitMarginChart').getContext('2d');
+    const labels = products.map(product => product.label);
+    const profitMargins = products.map(product => product.profitMargin);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Profit Margin (%)',
+                data: profitMargins,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,  // Automatically skips some labels if there are too many
+                        maxRotation: 90,  // Rotate labels to 90 degrees (vertical)
+                        minRotation: 90   // Ensure labels are always 90 degrees
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Products Lifecycle
+function fetchProductLifecycleData() {
+    const productsRef = db.collection("products");
+    let products = [];
+    productsRef.get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const createdAt = data.createdAt.toDate(); // Convert Firestore timestamp to Date
+            const currentDate = new Date();
+            const ageInDays = Math.floor((currentDate - createdAt) / (1000 * 3600 * 24)); // Age in days
+            products.push({
+                label: data.label,
+                createdAt: createdAt,
+                ageInDays: ageInDays
+            });
+        });
+
+        renderProductLifecycleMetrics(products);
+        renderProductAgeChart(products);
+    }).catch((error) => {
+        console.error("Error fetching products:", error);
+    });
+}
+function renderProductLifecycleMetrics(products) {
+    const totalAge = products.reduce((acc, product) => acc + product.ageInDays, 0);
+    const averageAge = totalAge / products.length;
+
+    document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
+}
+function renderProductAgeChart(products) {
+    const ctx = document.getElementById('productAgeChart').getContext('2d');
+    const labels = products.map(product => product.label);
+    const ages = products.map(product => product.ageInDays);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Product Age (Days)',
+                data: ages,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Most Popular Products
+function fetchMostPopularProducts() {
+    const salesRef = db.collection("sales");
+    let productSales = {};
+
+    salesRef.get().then((querySnapshot) => {
+        const salesPromises = [];
+
+        querySnapshot.forEach((doc) => {
+            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+
+            const promise = productsSoldRef.get().then((productsSnapshot) => {
+                productsSnapshot.forEach((productDoc) => {
+                    const product = productDoc.data();
+                    const productId = product.name;
+                    const quantitySold = product.quantity;
+
+                    if (productSales[productId]) {
+                        productSales[productId] += quantitySold;
+                    } else {
+                        productSales[productId] = quantitySold;
+                    }
+                });
+            });
+
+            salesPromises.push(promise);
+        });
+
+        Promise.all(salesPromises).then(() => {
+            renderMostPopularProductsChart(productSales);
+        }).catch((error) => {
+            console.error("Error fetching productsSold subcollections:", error);
+        });
+    }).catch((error) => {
+        console.error("Error fetching sales data:", error);
+    });
+}
+function renderMostPopularProductsChart(productSales) {
+    // Convert the aggregated productSales object to arrays for labels and data
+    const labels = Object.keys(productSales); // Product names (or IDs)
+    const salesVolumes = Object.values(productSales); // Total quantity sold for each product
+
+    // Sort the products by sales volume in descending order and slice to top 5
+    const topProducts = labels
+        .map((label, index) => ({
+            label: label,
+            salesVolume: salesVolumes[index]
+        }))
+        .sort((a, b) => b.salesVolume - a.salesVolume)
+        .slice(0, 5); // Get top 5
+
+    const topLabels = topProducts.map(product => product.label);
+    const topSalesVolumes = topProducts.map(product => product.salesVolume);
+
+    const ctx = document.getElementById('mostPopularProductsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topLabels,
+            datasets: [{
+                label: 'Quantity Sold',
+                data: topSalesVolumes,
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Least Poplular Products
+function fetchLeastPopularProducts() {
+    const salesRef = db.collection("sales");
+    let productSales = {};
+
+    salesRef.get().then((querySnapshot) => {
+        const salesPromises = [];
+
+        querySnapshot.forEach((doc) => {
+            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+
+            const promise = productsSoldRef.get().then((productsSnapshot) => {
+                productsSnapshot.forEach((productDoc) => {
+                    const product = productDoc.data();
+                    const productId = product.name;
+                    const quantitySold = product.quantity;
+
+                    if (productSales[productId]) {
+                        productSales[productId] += quantitySold;
+                    } else {
+                        productSales[productId] = quantitySold;
+                    }
+                });
+            });
+
+            salesPromises.push(promise);
+        });
+
+        Promise.all(salesPromises).then(() => {
+            renderLeastPopularProductsChart(productSales);
+        }).catch((error) => {
+            console.error("Error fetching productsSold subcollections:", error);
+        });
+    }).catch((error) => {
+        console.error("Error fetching sales data:", error);
+    });
+}
+function renderLeastPopularProductsChart(productSales) {
+    const labels = Object.keys(productSales);
+    const salesVolumes = Object.values(productSales);
+
+    // Sort products by sales volume (ascending) and slice bottom 5
+    const bottomProducts = labels
+        .map((label, index) => ({
+            label: label,
+            salesVolume: salesVolumes[index]
+        }))
+        .sort((a, b) => a.salesVolume - b.salesVolume)
+        .slice(0, 5); // Get least 5
+
+    const bottomLabels = bottomProducts.map(product => product.label);
+    const bottomSalesVolumes = bottomProducts.map(product => product.salesVolume);
+
+    const ctx = document.getElementById('leastPopularProductsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: bottomLabels,
+            datasets: [{
+                label: 'Quantity Sold',
+                data: bottomSalesVolumes,
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Inventory Summary
+async function fetchInventorySummary() {
+    try {
+        const snapshot = await db.collection("products").get();
+        const allProducts = snapshot.docs.map(doc => doc.data());
+
+        // Total Products
+        const totalProducts = snapshot.size;
+        document.querySelector("#total-products span").textContent = totalProducts;
+
+        // Total Stock Units
+        const totalStock = allProducts.reduce((sum, product) => sum + (product.stock || 0), 0);
+        document.querySelector("#total-stock-units span").textContent = totalStock;
+
+        // Out of Stock
+        const outOfStockCount = allProducts.filter(product => (product.stock || 0) === 0).length;
+        document.querySelector("#out-of-stock span").textContent = outOfStockCount;
+
+        // Total Inventory Value
+        const totalValue = allProducts.reduce((sum, product) => {
+            return sum + ((product.stock || 0) * (product.costPrice || 0));
+        }, 0);
+        document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
+
+        // Low Stock (<= 5)
+        const lowStockProducts = allProducts.filter(product => (product.stock || 0) <= 5);
+        document.querySelector("#low-stock span").textContent = lowStockProducts.length;
+
+        const list = document.querySelector("#low-stock-products");
+        list.innerHTML = "";
+        lowStockProducts.forEach(product => {
+            const row = document.createElement("tr");
+
+            const nameCell = document.createElement("td");
+            nameCell.textContent = product.label;
+
+            const stockCell = document.createElement("td");
+            stockCell.textContent = product.stock;
+
+            row.appendChild(nameCell);
+            row.appendChild(stockCell);
+            list.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Error fetching inventory analytics:", error);
+    }
+}
+// #endregion
+
+// #endregion
+
+// #endregion
+
+
+// #region Sidebar Section
 function toggleSidebar() {
     document.getElementById("sidebar").classList.add("show");
 }
@@ -2933,10 +2978,11 @@ function showModalMessage(message, isSuccess) {
 
     // Append modal to the body
     document.body.appendChild(modalContainer);
-}//<--------------->//
+}
+// #endregion
 
 
-//*Exporting Functions*//
+// #region Exporting
 async function exportToPDF(data) {
     try {
         const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded from the CDN
@@ -3170,7 +3216,6 @@ function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalB
 
     pdf.save(`${customerName}_debt_details.pdf`);
 }
-
 
 async function exportCartToPDF() {
     if (!currentCartId) {
@@ -3430,6 +3475,7 @@ async function exportSalesTableToPDF(event) {
         console.error("Error exporting sales table:", error);
     }
 }
+// #endregion
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
