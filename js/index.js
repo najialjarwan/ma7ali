@@ -1047,7 +1047,7 @@ function showLoadingOverlay(duration = 400) {
 // #endregion ]
 
 
-// #region Sections Content
+// #region Sections Content [
 
 // #region Products Section
 function initProductPage() {
@@ -1938,6 +1938,8 @@ function setupCartClickListeners() {
 // #region Sales Section
 async function loadSalesData() {
     const salesContainer = document.getElementById("sales-container");
+    if (!salesContainer)
+        return;
 
     salesContainer.innerHTML = `
         <div id="filter-sales" class="filter-options"> 
@@ -1957,13 +1959,15 @@ async function loadSalesData() {
         <div id="sales-table-container"></div>
     `;
 
-    // Get sales data and populate the dropdown
     const salesData = await fetchSalesData();
     populateDropdown(salesData);
     renderSalesTable(salesData);
 
-    // Event Listener for Filtering
-    document.getElementById("sales-date-select").addEventListener("change", function () {
+    const salesDateSelect = document.getElementById("sales-date-select");
+    if (!salesDateSelect)
+        return;
+
+    salesDateSelect.addEventListener("change", function () {
         const filterValue = this.value;
         const filteredData = filterSales(salesData, filterValue);
         renderSalesTable(filteredData);
@@ -2005,9 +2009,10 @@ async function fetchSalesData() {
 }
 function populateDropdown(salesData) {
     const optGroup = document.getElementById("specific-dates-group");
-    if (optGroup)
-        optGroup.innerHTML = "";
+    if (!optGroup)
+        return;
 
+    optGroup.innerHTML = "";
     salesData.forEach(sale => {
         const option = document.createElement("option");
         option.value = sale.salesDate;
@@ -2048,6 +2053,8 @@ function filterSales(salesData, filterType) {
 }
 function renderSalesTable(salesData) {
     const container = document.getElementById("sales-table-container");
+    if (!container)
+        return;
     container.innerHTML = "";
 
     if (salesData.length === 0) {
@@ -2134,7 +2141,6 @@ function renderSalesTable(salesData) {
 // #endregion
 // #endregion
 
-
 // #region Dashboard Section
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
@@ -2153,6 +2159,13 @@ function initDashboard() {
                 <div><canvas id="revenueChart"></canvas></div>
                 <div><canvas id="profitChart"></canvas></div>
                 <div><canvas id="quantityChart"></canvas></div>
+            </div>
+            <hr>
+
+            <!-- Sales Over Time Chart -->
+            <div id="sales-trend">
+                <h2>Sales Over Time</h2>
+                <canvas id="salesTrendChart"></canvas>
             </div>
             <hr>
 
@@ -2248,6 +2261,8 @@ function initDashboard() {
     fetchComparisonSales();
 
     fetchCategoryDistribution();
+
+    fetchYearlyProfitTrend();
 
     fetchProfitabilityData();
 
@@ -2493,6 +2508,151 @@ function renderCategoryChart(categoryCounts) {
                         label: function (context) {
                             return `${context.label}: ${context.raw} products`;
                         }
+                    }
+                }
+            }
+        }
+    });
+}
+// #endregion
+
+// #region Sales Over Time
+function fetchYearlyProfitTrend() {
+    const salesRef = db.collection("sales");
+    salesRef.get().then(snapshot => {
+        const profitData = [];
+
+        snapshot.forEach(doc => {
+            const dateStr = doc.id; // "2025-04-13"
+            const data = doc.data();
+            const profit = data.totalProfit || 0;
+            const totalProductsSold = data.totalProductsSold || 0;
+
+
+            // Push as { date: DateObject, profit }
+            profitData.push({
+                date: new Date(dateStr),
+                profit,
+                productsSold: totalProductsSold
+            });
+        });
+
+        // Sort by date ascending
+        profitData.sort((a, b) => a.date - b.date);
+
+        const labels = profitData.map(entry =>
+            entry.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) // e.g., "Apr 13"
+        );
+
+        const profits = profitData.map(entry => entry.profit);
+        const productsSold = profitData.map(entry => entry.productsSold);
+
+        renderProfitTrendChart(labels, profits, productsSold);
+    }).catch(error => {
+        console.error("Error fetching yearly profit trend:", error);
+    });
+}
+function renderProfitTrendChart(labels, profits, productsSold) {
+    const ctx = document.getElementById('salesTrendChart')?.getContext('2d');
+    if (!ctx) {
+        console.error("Canvas for salesTrendChart not found");
+        return;
+    }
+
+    const profitData = labels.map((dateStr, i) => ({
+        x: new Date(dateStr),
+        y: profits[i]
+    }));
+
+    const productData = labels.map((dateStr, i) => ({
+        x: new Date(dateStr),
+        y: productsSold[i]
+    }));
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Total Profit ($)',
+                    data: profitData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.3,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Total Products Sold',
+                    data: productData,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.3,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    yAxisID: 'y2'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Profit vs Products Sold Over the Year'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return `${label}: ${label.includes("Profit") ? `$${value.toFixed(2)}` : value}`;
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month',
+                        tooltipFormat: 'MMM d',
+                        displayFormats: {
+                            day: 'MMM d',
+                            month: 'MMM'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Profit ($)'
+                    },
+                    beginAtZero: true
+                },
+                y2: {
+                    type: 'linear',
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Products Sold'
+                    },
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false // avoids overlapping gridlines
                     }
                 }
             }
@@ -2862,7 +3022,7 @@ async function fetchInventorySummary() {
 
 // #endregion
 
-// #endregion
+// #endregion ]
 
 
 // #region Sidebar Section
