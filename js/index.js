@@ -1049,7 +1049,7 @@ function showLoadingOverlay(duration = 400) {
 
 // #region Sections Content [
 
-// #region Products Section
+// #region Products Section {
 function initProductPage() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -1530,10 +1530,9 @@ function removeProductFromFirebase(productId) {
             console.error("Error removing product:", error);
         });
 }
-// #endregion
+// #endregion }
 
-
-// #region Customers Section
+// #region Customers Section {
 function initCustomersPage() {
 
     const mainContent = document.querySelector(".main-content");
@@ -1769,10 +1768,9 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
     });
 }
-// #endregion
+// #endregion }
 
-
-// #region Cart And Sales Section
+// #region Cart And Sales Section {
 function initCartsAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -2139,9 +2137,9 @@ function renderSalesTable(salesData) {
     });
 }
 // #endregion
-// #endregion
+// #endregion }
 
-// #region Dashboard Section
+// #region Dashboard Section [
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -2162,9 +2160,14 @@ function initDashboard() {
             </div>
             <hr>
 
-            <!-- Sales Over Time Chart -->
+            <!-- Sales Trend Chart -->
             <div id="sales-trend">
                 <h2>Sales Over Time</h2>
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate">
+                <button id="applyDateRange">Apply Filter</button>
                 <canvas id="salesTrendChart"></canvas>
             </div>
             <hr>
@@ -2210,6 +2213,10 @@ function initDashboard() {
                     <canvas id="leastPopularProductsChart"></canvas>
                 </div>
             </div>
+            <hr>
+
+            <div id="smart-insights"></div>
+            <button id="exportAllChartsBtn" class="btn btn-danger">Export All Dashboard Charts</button>
             <hr>
 
             <!-- Inventory Analytics -->
@@ -2258,6 +2265,20 @@ function initDashboard() {
         </div>
     `;
 
+    document.getElementById('applyDateRange').addEventListener('click', async () => {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        if (!startDate || !endDate) {
+            alert("Please select both start and end dates.");
+            return;
+        }
+
+        await fetchSalesOverTimeForRange(startDate, endDate);
+    });
+
+    document.getElementById("exportAllChartsBtn").addEventListener("click", exportAllChartsAsPDF);
+
     fetchComparisonSales();
 
     fetchCategoryDistribution();
@@ -2272,9 +2293,224 @@ function initDashboard() {
 
     fetchLeastPopularProducts();
 
+    fetchSalesDataAndRenderInsights();
+
     fetchInventorySummary();
 }
-// #region Sales Comparisons
+const jsPDF = window.jspdf.jsPDF;
+async function exportAllChartsAsPDF() {
+  const chartIds = [
+    'revenueChart',
+    'profitChart',
+    'quantityChart',
+    'salesTrendChart',
+    'profitMarginChart',
+    'productAgeChart',
+    'mostPopularProductsChart',
+    'leastPopularProductsChart',
+  ];
+
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: "a4"
+  });
+
+  let isFirstPage = true;
+
+  for (const chartId of chartIds) {
+    const canvas = document.getElementById(chartId);
+    if (!canvas) continue;
+
+    const imgData = canvas.toDataURL("image/png", 1.0);
+
+    if (!isFirstPage) {
+      pdf.addPage();
+    }
+
+    pdf.addImage(imgData, "PNG", 60, 60, 700, 400);
+    isFirstPage = false;
+  }
+
+  pdf.save("dashboard-charts.pdf");
+}
+async function generatePDFfromCanvas(canvasId, title) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.error(`Canvas element with ID "${canvasId}" not found.`);
+        return null;
+    }
+
+    // Create new jsPDF instance
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    // Convert canvas to image
+    const imgData = canvas.toDataURL('image/png');
+
+    // Optional: Add a title
+    pdf.setFontSize(16);
+    pdf.text(title, 10, 15);
+
+    // Add image to PDF (fit inside A4)
+    const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+    const aspectRatio = canvas.height / canvas.width;
+    const pdfHeight = pdfWidth * aspectRatio;
+
+    pdf.addImage(imgData, 'PNG', 10, 20, pdfWidth, pdfHeight);
+
+    return pdf;
+}
+// Function to calculate and display smart insights
+function getSmartInsights(salesData) {
+    // Initialize variables
+    let totalRevenue = 0, totalProductsSold = 0, totalProfit = 0;
+    let topProducts = [];
+    let lowStockWarning = [];
+    let highestSalesDay = { date: '', revenue: 0 };
+    let lowestSalesDay = { date: '', revenue: Infinity };
+    let totalOrders = 0;
+
+    // Calculate total values, find top products, and lowest stock
+    salesData.forEach(sale => {
+        console.log(sale);
+        totalRevenue += sale.totalRevenue || 0;
+        totalProductsSold += sale.totalProductsSold || 0;
+        totalProfit += sale.totalProfit || 0;
+        totalOrders += sale.totalOrders || 0;
+
+        // Identify highest and lowest sales days
+        if (sale.totalRevenue > highestSalesDay.revenue) {
+            highestSalesDay = { date: sale.date, revenue: sale.totalRevenue };
+        }
+        if (sale.totalRevenue < lowestSalesDay.revenue) {
+            lowestSalesDay = { date: sale.date, revenue: sale.totalRevenue };
+        }
+
+        // Analyze products sold
+        sale.productsSold.forEach(product => {
+            console.log(product);
+            if (!topProducts[product.name]) {
+                topProducts[product.name] = { quantity: 0, revenue: 0 };
+            }
+            topProducts[product.name].quantity += product.quantity;
+            topProducts[product.name].revenue += product.total;
+        });
+    });
+
+    // Get the top 5 products by total revenue
+    topProducts = Object.entries(topProducts)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+    // Low stock warning for products with stock below threshold (e.g., 10 units)
+    salesData.forEach(product => {
+        console.log(product);
+        if (product.stock < 10) {
+            lowStockWarning.push(product.name);
+        }
+    });
+
+    // Average Order Value (AOV)
+    totalRevenue = salesData.reduce((sum, sale) => sum + sale.totalRevenue, 0);
+    totalOrders = salesData.length;
+    
+    const AOV = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+
+    return {
+        salesGrowth: calculateSalesGrowth(totalRevenue), // Implement sales growth calculation
+        topProducts,
+        lowStockWarning,
+        highestSalesDay,
+        lowestSalesDay,
+        AOV
+    };
+}
+
+// Function to calculate sales growth (current period vs. previous period)
+function calculateSalesGrowth(currentRevenue) {
+    // Assuming we have a previous period data (previousRevenue)
+    const previousRevenue = 5000; // Example value, replace with actual previous data
+    const growth = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+    return growth.toFixed(2);
+}
+function renderSmartInsights(insights) {
+    // Example DOM element to show the insights
+    const insightsContainer = document.getElementById('smart-insights');
+
+    // Sales Growth
+    const salesGrowthElement = document.createElement('div');
+    salesGrowthElement.textContent = `Sales Growth: ${insights.salesGrowth}%`;
+    insightsContainer.appendChild(salesGrowthElement);
+
+    // Top Products
+    const topProductsElement = document.createElement('div');
+    topProductsElement.innerHTML = '<h5>Top Products</h5>';
+    insights.topProducts.forEach(product => {
+        const productElement = document.createElement('p');
+        productElement.textContent = `${product.name}: ${product.quantity} sold, $${product.revenue}`;
+        topProductsElement.appendChild(productElement);
+    });
+    insightsContainer.appendChild(topProductsElement);
+
+    // Low Stock Warning
+    const lowStockElement = document.createElement('div');
+    lowStockElement.innerHTML = '<h5>Low Stock Products</h5>';
+    insights.lowStockWarning.forEach(product => {
+        const productElement = document.createElement('p');
+        productElement.textContent = `${product} is low in stock`;
+        lowStockElement.appendChild(productElement);
+    });
+    insightsContainer.appendChild(lowStockElement);
+
+    // Highest Sales Day
+    const highestSalesElement = document.createElement('div');
+    highestSalesElement.textContent = `Highest Sales Day: ${insights.highestSalesDay.date}, Revenue: $${insights.highestSalesDay.revenue}`;
+    insightsContainer.appendChild(highestSalesElement);
+
+    // Lowest Sales Day
+    const lowestSalesElement = document.createElement('div');
+    lowestSalesElement.textContent = `Lowest Sales Day: ${insights.lowestSalesDay.date}, Revenue: $${insights.lowestSalesDay.revenue}`;
+    insightsContainer.appendChild(lowestSalesElement);
+
+    // Average Order Value (AOV)
+    const AOVElement = document.createElement('div');
+    AOVElement.textContent = `Average Order Value: $${insights.AOV.toFixed(2)}`;
+    insightsContainer.appendChild(AOVElement);
+}
+async function fetchSalesDataAndRenderInsights() {
+    try {
+        const snapshot = await db.collection("sales").get();
+        const salesData = [];
+
+        for (const doc of snapshot.docs) {
+            const sale = doc.data();
+            const productsSnapshot = await db.collection("sales").doc(doc.id).collection("productsSold").get();
+
+            const productsSold = [];
+            productsSnapshot.forEach(prodDoc => {
+                productsSold.push(prodDoc.data());
+            });
+
+            salesData.push({
+                ...sale,
+                productsSold,
+                date: doc.id
+            });
+        }
+
+        console.log("Mapped Sales Data with Products:", salesData);
+
+        const insights = getSmartInsights(salesData);
+        renderSmartInsights(insights);
+
+    } catch (error) {
+        console.error("Error fetching sales data:", error);
+    }
+}
+
+// #region Sales Comparisons {
 let isFetching = false;
 const activeCharts = {};
 let isFetchingComparison = false;
@@ -2446,9 +2682,9 @@ function renderComparisonChart(comparisonData, metric, canvasId, title) {
         }
     });
 }
-// #endregion
+// #endregion }
 
-// #region Category Disribution
+// #region Category Disribution {
 async function fetchCategoryDistribution() {
     const snapshot = await db.collection("products").get();
     const categoryCounts = {};
@@ -2514,9 +2750,9 @@ function renderCategoryChart(categoryCounts) {
         }
     });
 }
-// #endregion
+// #endregion }
 
-// #region Sales Over Time
+// #region Sales Over Time {
 function fetchYearlyProfitTrend() {
     const salesRef = db.collection("sales");
     salesRef.get().then(snapshot => {
@@ -2552,46 +2788,99 @@ function fetchYearlyProfitTrend() {
         console.error("Error fetching yearly profit trend:", error);
     });
 }
+async function fetchSalesOverTimeForRange(startDate, endDate) {
+    const dates = getDatesBetween(startDate, endDate);
+
+    // Fetch the sales documents for each date in the range
+    const promises = dates.map(date =>
+        db.collection("sales").doc(date).get()
+    );
+
+    const docs = await Promise.all(promises);
+
+    // Prepare the data to be displayed on the sales over time chart
+    const profitData = [];
+    docs.forEach(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            const profit = data.totalProfit || 0;
+            const totalProductsSold = data.totalProductsSold || 0;
+
+            profitData.push({
+                date: new Date(doc.id), // Store the date for each entry
+                profit,
+                productsSold: totalProductsSold
+            });
+        }
+    });
+
+    // Sort the data by date
+    profitData.sort((a, b) => a.date - b.date);
+
+    // Extract the labels (dates) and data (profit, products sold)
+    const labels = profitData.map(entry =>
+        entry.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    );
+
+    const profits = profitData.map(entry => entry.profit);
+    const productsSold = profitData.map(entry => entry.productsSold);
+
+    // Call the function to update the sales over time chart with new data
+    renderProfitTrendChart(labels, profits, productsSold);
+}
 function renderProfitTrendChart(labels, profits, productsSold) {
-    const ctx = document.getElementById('salesTrendChart')?.getContext('2d');
-    if (!ctx) {
-        console.error("Canvas for salesTrendChart not found");
+    const canvasId = 'salesTrendChart';
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.error(`Canvas element #${canvasId} not found`);
         return;
     }
 
-    const profitData = labels.map((dateStr, i) => ({
-        x: new Date(dateStr),
-        y: profits[i]
+    const ctx = canvas.getContext('2d');
+
+    // Destroy existing chart if it exists
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
+    // Create data points
+    const profitData = labels.map((label, i) => ({
+        x: label,
+        y: profits[i],
+        productsSold: productsSold[i]
     }));
 
-    const productData = labels.map((dateStr, i) => ({
-        x: new Date(dateStr),
+    const productsSoldData = labels.map((label, i) => ({
+        x: label,
         y: productsSold[i]
     }));
 
-    new Chart(ctx, {
+    chartInstances[canvasId] = new Chart(ctx, {
         type: 'line',
         data: {
+            labels,
             datasets: [
                 {
-                    label: 'Total Profit ($)',
+                    label: 'Total Profit',
                     data: profitData,
+                    fill: false,
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     tension: 0.3,
                     pointRadius: 3,
-                    borderWidth: 2,
-                    yAxisID: 'y1'
+                    borderWidth: 1,
+                    yAxisID: 'y'
                 },
                 {
                     label: 'Total Products Sold',
-                    data: productData,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    data: productsSoldData,
+                    fill: false,
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
                     tension: 0.3,
                     pointRadius: 3,
-                    borderWidth: 2,
-                    yAxisID: 'y2'
+                    borderWidth: 1,
+                    yAxisID: 'y1'
                 }
             ]
         },
@@ -2600,68 +2889,56 @@ function renderProfitTrendChart(labels, profits, productsSold) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Profit vs Products Sold Over the Year'
+                    text: 'Profit & Products Sold Trend'
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
                     callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return `${label}: ${label.includes("Profit") ? `$${value.toFixed(2)}` : value}`;
+                        label: function (context) {
+                            if (context.dataset.label === 'Total Profit') {
+                                return `Profit: $${context.parsed.y.toFixed(2)}`;
+                            } else if (context.dataset.label === 'Total Products Sold') {
+                                return `Products Sold: ${context.parsed.y}`;
+                            }
                         }
                     }
                 }
             },
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
             scales: {
                 x: {
-                    type: 'time',
-                    time: {
-                        unit: 'month',
-                        tooltipFormat: 'MMM d',
-                        displayFormats: {
-                            day: 'MMM d',
-                            month: 'MMM'
-                        }
-                    },
+                    type: 'category',
                     title: {
                         display: true,
                         text: 'Date'
                     }
                 },
-                y1: {
+                y: {
                     type: 'linear',
                     position: 'left',
+                    beginAtZero: true,
                     title: {
                         display: true,
                         text: 'Profit ($)'
-                    },
-                    beginAtZero: true
+                    }
                 },
-                y2: {
+                y1: {
                     type: 'linear',
                     position: 'right',
+                    beginAtZero: true,
                     title: {
                         display: true,
                         text: 'Products Sold'
                     },
-                    beginAtZero: true,
                     grid: {
-                        drawOnChartArea: false // avoids overlapping gridlines
+                        drawOnChartArea: false // Prevent grid overlap
                     }
                 }
             }
         }
     });
 }
-// #endregion
+// #endregion }
 
-//#region Proftability Margin
+//#region Proftability Margin {
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -2729,9 +3006,9 @@ function renderProfitMarginChart(products) {
         }
     });
 }
-// #endregion
+// #endregion }
 
-// #region Products Lifecycle
+// #region Products Lifecycle {
 function fetchProductLifecycleData() {
     const productsRef = db.collection("products");
     let products = [];
@@ -2797,9 +3074,9 @@ function renderProductAgeChart(products) {
         }
     });
 }
-// #endregion
+// #endregion }
 
-// #region Most Popular Products
+// #region Most Popular Products {
 function fetchMostPopularProducts() {
     const salesRef = db.collection("sales");
     let productSales = {};
@@ -2883,9 +3160,9 @@ function renderMostPopularProductsChart(productSales) {
         }
     });
 }
-// #endregion
+// #endregion }
 
-// #region Least Poplular Products
+// #region Least Poplular Products {
 function fetchLeastPopularProducts() {
     const salesRef = db.collection("sales");
     let productSales = {};
@@ -2968,7 +3245,7 @@ function renderLeastPopularProductsChart(productSales) {
         }
     });
 }
-// #endregion
+// #endregion }
 
 // #region Inventory Summary
 async function fetchInventorySummary() {
@@ -3019,8 +3296,7 @@ async function fetchInventorySummary() {
     }
 }
 // #endregion
-
-// #endregion
+// #endregion }
 
 // #endregion ]
 
