@@ -1207,10 +1207,43 @@ aside {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
   background-color: var(--accent-color);
   letter-spacing: 7px;
+  width: 100%;
 }
 
 #categoryChart{
   height: 100% !important; width: 100% !important;
+}
+
+#sales-trend{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.filter-container{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+.filter-container label{
+  font-weight: bolder;
+  padding: 0;
+}
+
+#sales-trend button, #sales-trend input{
+  width: 100%;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  border: 5px groove var(--input-color);
+  border-radius: 10px;
+  font-weight: bolder;
+  padding: 7px;
 }
 
 .profitability-analysis p{

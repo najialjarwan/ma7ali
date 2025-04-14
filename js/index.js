@@ -2163,10 +2163,12 @@ function initDashboard() {
             <!-- Sales Trend Chart -->
             <div id="sales-trend">
                 <h2>Sales Over Time</h2>
-                <label for="startDate">Start Date:</label>
-                <input type="date" id="startDate" name="startDate">
-                <label for="endDate">End Date:</label>
-                <input type="date" id="endDate" name="endDate">
+                <div class="filter-container">
+                    <label for="startDate">Start: </label>
+                    <input type="date" id="startDate" name="startDate">
+                    <label for="endDate">End: </label>
+                    <input type="date" id="endDate" name="endDate">
+                </div>
                 <button id="applyDateRange">Apply Filter</button>
                 <canvas id="salesTrendChart"></canvas>
                 <p><strong>Profit Growth: </strong><span id="profit-growth"></span></p>
