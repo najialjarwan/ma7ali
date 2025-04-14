@@ -1106,8 +1106,10 @@ function initProductPage() {
                 </select>
             </div>
 
-            <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>
-            <button class="func-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT PRODUCTS</button>
+            <div class="products-actions">
+                <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
+                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT PRODUCTS</button>
+            </div>
         </div>
         <div id="products-grid" class="products-grid"></div>
     `;
@@ -2165,21 +2167,22 @@ function initDashboard() {
                 <h2>Sales Over Time</h2>
                 <div class="filter-container">
                     <label for="startDate">Start: </label>
-                    <input type="date" id="startDate" name="startDate">
+                    <input type="date" id="startDate" class="func-btn" name="startDate">
                     <label for="endDate">End: </label>
-                    <input type="date" id="endDate" name="endDate">
+                    <input type="date" id="endDate" class="func-btn" name="endDate">
+                    <button id="applyDateRange" class="func-btn" >Apply</button>
                 </div>
-                <button id="applyDateRange">Apply Filter</button>
                 <canvas id="salesTrendChart"></canvas>
-                <p><strong>Profit Growth: </strong><span id="profit-growth"></span></p>
-                <p><strong>Products Sold Growth: </strong><span id="products-sold-growth"></span></p>
+                <p><strong class="profit-growth">Profit Growth: </strong><span id="profit-growth"></span></p>
+                <p><strong class="products-sold-growth">Products Sold Growth: </strong><span id="products-sold-growth"></span></p>
             </div>
             <hr>
 
             <!-- Profitability Analysis Section -->
             <div id="profitability-analysis" class="profitability-analysis">
+                <h2>Profit Margin</h2>
                 <div id="profit-margin-chart-container" class="chart-container">
-                    <h2>Profit Margin</h2>
+                    <h5 style="color: rgba(75, 192, 192, 1)">Product Margin Distribution</h5>
                     <canvas id="profitMarginChart"></canvas>
                 </div>
                 <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
@@ -2192,7 +2195,7 @@ function initDashboard() {
             <div id="product-lifecycle-analysis" class="product-lifecycle-analysis">
                 <h2>Product Lifecycle</h2>
                 <div id="product-age-chart-container" class="chart-container">
-                    <h5>Product Age Distribution</h5>
+                    <h5 style="color: rgba(54, 162, 235, 1);">Product Age Distribution</h5>
                     <canvas id="productAgeChart"></canvas>
                 </div>
                 <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
@@ -2203,7 +2206,7 @@ function initDashboard() {
             <div id="most-popular-products" class>
                 <h2>Most Popular</h2>
                 <div id="most-popular-products-chart-container" class="chart-container">
-                    <h5>Top 5 Most Sold Products</h5>
+                    <h5 style="color: rgba(153, 102, 255, 1);">Top 5 Most Sold Products</h5>
                     <canvas id="mostPopularProductsChart"></canvas>
                 </div>
             </div>
@@ -2213,14 +2216,14 @@ function initDashboard() {
             <div id="least-popular-products">
                 <h2>Least Popular</h2>
                 <div id="least-popular-products-chart-container" class="chart-container">
-                    <h5>Bottom 5 Least Sold Products</h5>
+                    <h5 style="color: rgba(255, 159, 64, 1);">Bottom 5 Least Sold Products</h5>
                     <canvas id="leastPopularProductsChart"></canvas>
                 </div>
             </div>
             <hr>
 
             <div id="smart-insights"></div>
-            <button id="exportAllChartsBtn" class="btn btn-danger">Export All Dashboard Charts</button>
+            <button id="exportAllChartsBtn" class="export-btn">Export All Dashboard Charts</button>
             <hr>
 
             <!-- Inventory Analytics -->
@@ -2280,17 +2283,21 @@ function initDashboard() {
 
         </div>
     `;
-
+    const apply = document.getElementById("applyDateRange");
     document.getElementById('applyDateRange').addEventListener('click', async () => {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
 
         if (!startDate || !endDate) {
             showModalMessage("Please select both the start and end dates!", false);
+            apply.style.color = "rgba(255, 99, 132, 1)";
+            apply.textContent = "Not Applied ❌";
             return;
         }
-
+        apply.style.color = "rgba(53, 162, 235, 1)";
+        apply.textContent = "Applied ✅";
         await fetchSalesOverTimeForRange(startDate, endDate);
+
     });
 
     document.getElementById("exportAllChartsBtn").addEventListener("click", exportAllChartsAsPDF);
@@ -2666,7 +2673,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     label: 'Total Profit',
                     data: profitData,
                     fill: false,
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderColor: 'rgba(0, 255, 34, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     tension: 0.3,
                     pointRadius: 3,

@@ -427,22 +427,19 @@ aside {
 }
 
 .func-btn {
+  width: 100%;
+  border: none;
   background-color: transparent;
   color: var(--text-color);
-  font-weight: bold;
-  width: 100%;
-  max-width: 300px;
-  border: 4px groove var(--input-color);
-  padding: 15px 25px;
-  border-radius: 12px;
-  font-size: 18px;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  border: 5px groove var(--input-color);
+  border-radius: 10px;
+  font-weight: bolder;
+  padding: 7px;
+  transition: transform 0.1 ease-in-out;
 }
 
 .func-btn:active {
-  transform: scale(0.95);
+  transform: scaleY(0.8);
 }
 
 /* Products Section */
@@ -498,9 +495,23 @@ aside {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
-
-.filter-options button {
-  padding: 5px 0;
+.products-actions{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+.products-actions button{
+  width: 50%;
+  transition: transform 0.1 ease-in-out;
+}
+.products-actions button:active{
+  transform: scaleY(0.8);
+}
+.products-actions .func-btn{
+  padding: 10px;
 }
 
 .products-grid {
@@ -607,10 +618,10 @@ aside {
   border-bottom: 1px solid var(--input-color);
   align-items: center;
   gap: 1px;
+  transition: transform 0.1 ease-in-out;
 }
-
 .customers-card:active{
-  transform: scale(0.8);
+  transform: scaleY(0.8);
 }
 
 .customer-name,
@@ -772,6 +783,7 @@ aside {
   color: var(--btnText-color);
   border-radius: 5px;
   width: 50%;
+  transition: transform 0.1s ease-in-out;
 }
 .export-sales:active{
   transform: scaleY(0.8);
@@ -1220,7 +1232,17 @@ aside {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+}
+#sales-trend p {
+  margin: 0;
+}
+.profit-growth{
+  color: rgb(0, 255, 34);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+.products-sold-growth{
+  color: rgba(255, 159, 64, 1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 .filter-container{
   width: 100%;
@@ -1235,20 +1257,10 @@ aside {
   padding: 0;
 }
 
-#sales-trend button, #sales-trend input{
-  width: 100%;
-  border: none;
-  background-color: transparent;
-  color: var(--text-color);
-  border: 5px groove var(--input-color);
-  border-radius: 10px;
-  font-weight: bolder;
-  padding: 7px;
-}
-
 .profitability-analysis p{
   margin: 0;
 }
+
 .profitability-analysis p strong{
   color: rgb(75, 192, 192);
 }
@@ -1257,7 +1269,7 @@ aside {
   width: 100%;
 }
 .product-lifecycle-analysis p strong{
-  color: rgb(54, 162, 235);
+  color: rgba(54, 162, 235, 1);
 }
 #profit-margin-chart-container {
   width: 100%;
@@ -1266,6 +1278,18 @@ aside {
 
 #profitMarginChart {
   width: max-content;
+}
+.export-btn{
+  color: var(--btnText-color);
+  background: linear-gradient(to right, white, rgb(255, 243, 177));
+  padding: 10px;
+  border-radius: 10px;
+  border: 5px groove var(--input-color);
+  font-weight: bolder;
+  transition: transform 0.1s ease-in-out;
+}
+.export-btn:active{
+  transform: scaleY(0.8);
 }
 
 .metrics-grid {
