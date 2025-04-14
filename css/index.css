@@ -25,9 +25,9 @@ body {
   grid-template-columns: 300px 1fr;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
-    "navbar navbar"
-    "sidebar main"
-    "sidebar footer";
+    "navbar"
+    "main"
+    "footer";
   background: url("../images/background10.png");
   background-size: cover;
   background-attachment: fixed;
@@ -35,6 +35,148 @@ body {
   overflow: hidden;
   touch-action: manipulation;
 }
+
+/* Sidebar hidden on the left */
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: -50%;
+  height: 100vh;
+  width: 50%;
+  max-width: 300px;
+  background-color: #ffffff;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s ease-in-out;
+  z-index: 1001;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Show sidebar */
+#sidebar.active {
+  left: 0;
+}
+
+/* Overlay to dim background */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: none;
+}
+
+/* Show overlay */
+#overlay.active {
+  display: block;
+}
+
+/* Optional: Style buttons and links */
+.sidebar-link {
+  margin: 1rem 0;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: #333;
+}
+
+#close-btn {
+  background: none;
+  border: none;
+  align-self: flex-end;
+  margin-bottom: 1rem;
+}
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+}
+
+.theme-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.sliderr {
+  background-color: #ccc;
+  border-radius: 34px;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: background-color 0.4s;
+}
+
+.sliderr::before {
+  content: "";
+  position: absolute;
+  height: 28px;
+  width: 28px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.4s;
+}
+
+input:checked + .sliderr {
+  background-color: #4f46e5;
+}
+
+input:checked + .sliderr::before {
+  transform: translateX(28px);
+}
+
+/* Icon container */
+.icon-container {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.icon {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 4px;
+  left: 4px;
+  transition: opacity 0.4s ease;
+}
+
+.sun-icon {
+  opacity: 1;
+}
+
+.moon-icon {
+  opacity: 0;
+}
+
+input:checked + .slider .sun-icon {
+  opacity: 0;
+}
+
+input:checked + .slider .moon-icon {
+  opacity: 1;
+}
+
+
 
 /* Top Nav */
 nav {
@@ -125,57 +267,6 @@ nav {
 @media (max-width: 800px) {
   body {
     grid-template-columns: 1fr;
-  }
-
-  aside {
-    position: fixed;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    background-color: var(--accent-color);
-    transition: transform 0.3s ease-in-out;
-    transform: translateX(-100%);
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: var(--accent-color);
-  }
-
-  
-  #close-btn {
-    border: none;
-    background-color: var(--accent-color);
-    cursor: pointer;
-  }
-
-  #close-btn img {
-    width: 50px;
-    height: 50px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    filter: brightness(0) invert(1);
-  }
-
-  .sidebar-link {
-    position: relative;
-    text-decoration: none;
-    background-color: var(--accent-color);
-    color: var(--input-color);
-    font-size: 30px;
-    border-bottom: 2px solid #ddd;
-    cursor: pointer;
-    padding: 5px;
-    width: 95%;
-    transition: background-color 0.3s ease;
-    text-align: center;
-  }
-
-  .show {
-    transform: translateX(0);
   }
 }
 
@@ -281,17 +372,6 @@ footer {
 }
 
 /* Slider */
-aside {
-  height: 100vh;
-  display: none;
-  width: 100%;
-  top: 0;
-  position: sticky;
-  align-self: start;
-  grid-area: sidebar;
-  background-color: var(--accent-color);
-  transition: transform 0.3s ease-in-out;
-}
 
 .slider {
   display: flex;

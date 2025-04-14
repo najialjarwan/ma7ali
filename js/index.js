@@ -16,7 +16,7 @@ window.db = db;
 
 firebase.firestore().enablePersistence()
     .then(() => {
-        console.log("Offline mode enabled!");
+
     })
     .catch((err) => {
         console.error("Failed to enable offline mode:", err);
@@ -30,9 +30,9 @@ if ("serviceWorker" in navigator) {
 
 function updateOnlineStatus() {
     if (navigator.onLine) {
-        console.log("You are online!");
+
     } else {
-        console.log("You are offline!");
+
     }
 }
 
@@ -78,7 +78,6 @@ function initializeEventListeners() {
     document.getElementById("add-sales-btn").addEventListener("click", function () {
         const section = this.getAttribute("data-section");
         if (section) {
-            console.log('Add sales is clicked, loading Sales content');
             removeActive();
             loadContent(section);
         }
@@ -98,7 +97,6 @@ function initializeEventListeners() {
         button.addEventListener("click", function () {
             const section = this.getAttribute("data-section");
             if (section) {
-                console.log("calling load content");
                 loadContent(section);
             }
             removeActive();
@@ -113,13 +111,31 @@ function initializeEventListeners() {
         });
     });
 
-    document.querySelector(".menu-btn").addEventListener("click", toggleSidebar);
-    document.querySelector("#close-btn").addEventListener("click", closeSidebar);
+    const menuBtn = document.querySelector('.menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('close-btn');
+  
+    function openSidebar() {
+      sidebar.classList.add('active');
+      overlay.classList.add('active');
+    }
+  
+    function closeSidebar() {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    }
+  
+    menuBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
 
+    
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
-        e.preventDefault();
+        // e.preventDefault(); // optionally remove this so checkbox toggle works visually
         toggleTheme();
     });
+    
 
     document.querySelector("#feedback-btn").addEventListener("click", (e) => {
         e.preventDefault();
@@ -143,7 +159,6 @@ function initializeEventListeners() {
 
 }
 async function loadContent(section) {
-    console.log("Load content is called");
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = "<p>Loading...</p>";
     try {
@@ -518,7 +533,7 @@ async function cancelCart() {
 
         currentCartId = null;
 
-        console.log("Cart canceled and all products restored from sales.");
+
     } catch (error) {
         console.error("Error canceling cart:", error);
     }
@@ -712,10 +727,10 @@ async function fetchProductToAdd() {
     }
 }
 async function displayProductToAdd(product, productId) {
-    console.log("displaying product: ", product.label);
+
     const productCardContainer = document.getElementById("cart-products-container");
     productCardContainer.innerHTML = ``;
-    console.log("Product Card Container: ", productCardContainer);
+
 
     const actionText = showSales ? "Add to Sales" : "Add to Cart";
     const actionFunction = showSales ? addToSales : addToCart;
@@ -830,7 +845,7 @@ function showSalesForm() {
 async function addToSales(productId, label, costPrice, profit) {
     const today = new Date().toLocaleDateString('en-CA');
     if (currentSaleId !== today) {
-        console.log("New day detected. Resetting local sale data.");
+
         currentSaleId = today;
         localSale = {};
     }
@@ -863,7 +878,7 @@ async function addToSales(productId, label, costPrice, profit) {
     refreshProductList();
 }
 async function syncSalesToFirestore() {
-    console.log("Syncing sale to Firestore:", currentSaleId);
+
 
     const saleDoc = db.collection("sales").doc(currentSaleId);
 
@@ -960,7 +975,7 @@ async function cancelSale(productId) {
         totalProfit
     }, { merge: true });
 
-    console.log(`Canceled one unit of ${productInSale.name}. Stock restored.`);
+
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
     const today = new Date().toLocaleDateString('en-CA');
@@ -994,7 +1009,7 @@ async function cancelProductQuantity(productId, quantityToCancel) {
 
     await loadTodaySaleToLocal();
 
-    console.log(`Canceled ${cancelQty} unit(s) of ${productData.name}. Stock restored.`);
+
 }
 async function loadTodaySaleToLocal() {
     const today = new Date().toLocaleDateString('en-CA');
@@ -1016,7 +1031,7 @@ async function loadTodaySaleToLocal() {
             dateSold: data.dateSold
         };
     });
-    console.log("Local Sale Content: ", localSale);
+
 }
 function showLoadingOverlay(duration = 400) {
     return new Promise((resolve) => {
@@ -1338,7 +1353,7 @@ function displayProducts(filteredProducts) {
 function refreshProductList() {
     fetchProductsForDoc().then((products) => {
         allProducts = products;
-        console.log("Products refreshed.");
+
     });
 }
 $(document).ready(function () {
@@ -1473,7 +1488,7 @@ function displayProductForm(product) {
                                     // Update product details in Firestore
                                     db.collection("products").doc(product.id).update(updatedProduct)
                                         .then(() => {
-                                            console.log("Product updated successfully!");
+
                                             showModalMessage("Product Updated Successfully!", true);
                                             fetchProducts().then((products) => {
                                                 allProducts = products; // Refresh the local array
@@ -1500,7 +1515,7 @@ function displayProductForm(product) {
             // Update Firestore directly if no image file is provided
             db.collection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
-                    console.log("Product updated successfully!");
+
                     showModalMessage("Product Updated Successfully!", true);
                     fetchProducts().then((products) => {
                         allProducts = products; // Update local array
@@ -1524,7 +1539,7 @@ function displayProductForm(product) {
 function removeProductFromFirebase(productId) {
     db.collection("products").doc(productId).delete()
         .then(() => {
-            console.log("Product removed successfully!");
+
             showModalMessage("Product Removed Successfully!", true);
             refreshProductList();
         })
@@ -1811,7 +1826,7 @@ function initCartsAndSalesSection() {
 }
 // #region Carts Section
 async function fetchCartsData() {
-    console.log("Fetching carts data...");
+
     try {
         const cartsSnapshot = await firebase.firestore().collection("carts").get();
         const carts = [];
@@ -1834,7 +1849,7 @@ async function fetchCartsData() {
     }
 }
 function renderCartsTable(carts) {
-    console.log("Rendering carts table...");
+
     const cartsTable = document.getElementById("carts-table");
     cartsTable.innerHTML = "";
 
@@ -1867,7 +1882,7 @@ function renderCartsTable(carts) {
         cartsTable.appendChild(cartDiv);
     });
 
-    console.log("Carts table rendered.");
+
 
     setupCartClickListeners();
 }
@@ -1882,20 +1897,20 @@ function setupCartClickListeners() {
             // Toggle visibility
             const isVisible = productsContainer.classList.contains("show");
             if (isVisible) {
-                console.log(`Hiding products for cart: ${cartId}`);
+
                 productsContainer.classList.remove("show");
                 return;
             }
 
             // If already loaded once, just show
             if (productsContainer.dataset.loaded === "true") {
-                console.log(`Showing cached products for cart: ${cartId}`);
+
                 productsContainer.classList.add("show");
 
                 return;
             }
 
-            console.log(`Fetching products for cart: ${cartId}...`);
+
             try {
                 const productsSnapshot = await firebase.firestore()
                     .collection("carts")
@@ -1923,7 +1938,7 @@ function setupCartClickListeners() {
 
                 productsContainer.classList.add("show");
                 productsContainer.dataset.loaded = "true";
-                console.log(`Products loaded for cart: ${cartId}`);
+
             } catch (error) {
                 console.error(`Error loading products for cart ${cartId}:`, error);
                 productsContainer.innerHTML = "<p>Error loading products.</p>";
@@ -1931,7 +1946,7 @@ function setupCartClickListeners() {
         });
     });
 
-    console.log("Cart click listeners set up.");
+
 }
 // #endregion
 
@@ -2574,7 +2589,7 @@ function fetchYearlyProfitTrend() {
     });
 }
 async function fetchSalesOverTimeForRange(startDate, endDate) {
-    console.log("fetchSalesOverTimeForRange is called");
+
 
     const dates = getDatesBetween(startDate, endDate);
     const promises = dates.map(date =>
@@ -2631,8 +2646,8 @@ function calculateAndDisplayGrowth(profits, productsSold) {
         productsSoldGrowth = firstSold === 0 ? 0 : ((lastSold - firstSold) / firstSold) * 100;
     }
 
-    console.log("Profit Growth:", profitGrowth);
-    console.log("Products Sold Growth:", productsSoldGrowth);
+
+
 
     document.getElementById("profit-growth").textContent = `${profitGrowth.toFixed(2)}%`;
     document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth.toFixed(2)}%`;
@@ -3172,14 +3187,14 @@ async function fetchInventorySummary() {
     }
 }
 function getSmartInsights(salesData) {
-    console.log("sales Data: ", salesData);
+
     let totalRevenue = 0, totalProductsSold = 0, totalProfit = 0;
     let highestSalesDay = { date: '', revenue: 0 };
     let lowestSalesDay = { date: '', revenue: Infinity };
     let totalOrders = 0;
 
     salesData.forEach(sale => {
-        console.log(sale);
+
         totalRevenue += sale.totalRevenue || 0;
         totalProductsSold += sale.totalProductsSold || 0;
         totalProfit += sale.totalProfit || 0;
@@ -3246,12 +3261,6 @@ async function fetchSalesDataAndRenderInsights() {
 
 
 // #region Sidebar Section
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.add("show");
-}
-function closeSidebar() {
-    document.getElementById("sidebar").classList.remove("show");
-}
 let initialBaseColor, initialTextColor, initialInputColor, initialAccentColor;
 function toggleTheme() {
     const root = document.documentElement;
@@ -3495,7 +3504,7 @@ async function fetchProductsforExporting() {
             };
         });
 
-        console.log(products);
+
         return products;
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -3859,5 +3868,9 @@ async function exportSalesTableToPDF(event) {
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
+    const accentColor = getComputedStyle(document.documentElement).getPropertyValue("--accent-color").trim();
+    if (accentColor === "rgb(10, 123, 168)") {
+      document.querySelector("#toggle-theme-btn").checked = true;
+    }
     showLoadingOverlay(1500);
 });

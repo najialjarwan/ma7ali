@@ -25,10 +25,22 @@
     <button type="button" id="close-btn">
       <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
     </button>
-    <a href="#" class="sidebar-link" id="toggle-theme-btn">🔄 Theme</a>
+    <div class="theme-switch-wrapper">
+      <label class="theme-switch">
+        <input type="checkbox" id="toggle-theme-btn" />
+        <span class="sliderr round">
+          <span class="icon-container">
+            <img src="icons/sun-solid.svg" class="icon sun-icon" />
+            <img src="icons/moon-solid.svg" class="icon moon-icon" />
+          </span>
+        </span>
+      </label>
+    </div> 
     <a href="#" class="sidebar-link" id="feedback-btn">💬 Feedback</a>
     <a href="#" class="sidebar-link logout-btn">🚪 Logout</a>
   </aside>
+  <div id="overlay"></div>
+
 
   <main>
     <div class="main-content" id="main-content">
