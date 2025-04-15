@@ -1280,14 +1280,17 @@ async function fetchProducts() {
             });
         };
 
-        document.getElementById("reset-filters").addEventListener("click", () => {
-            document.getElementById("category-select").value = "";
-            document.getElementById("price-select").value = "";
-            document.getElementById("stock-select").value = "";
-            document.getElementById("profit-select").value = "";
-            document.getElementById("sort-by-price-stock-profit").value = "";
-            applyFilters();
-        });
+        const resetFilters = document.getElementById("reset-filters");
+        if (resetFilters){
+            resetFilters.addEventListener("click", () => {
+                document.getElementById("category-select").value = "";
+                document.getElementById("price-select").value = "";
+                document.getElementById("stock-select").value = "";
+                document.getElementById("profit-select").value = "";
+                document.getElementById("sort-by-price-stock-profit").value = "";
+                applyFilters();
+            });
+        }
 
         categorySelect.addEventListener("change", applyFilters);
         priceSelect.addEventListener("change", applyFilters);
