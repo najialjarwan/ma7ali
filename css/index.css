@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
-  --accent-color: rgb(200, 200, 220);
+  --accent-color: #708090; 
   --text-color: #000000;
   --input-color: #ffffff;
-  --btnText-color:rgb(99, 148, 179);
+  --btnText-color:rgb(0, 157, 255);
 }
 
 * {
@@ -344,7 +344,7 @@ footer {
   width: 50px;
   height: 50px;
   margin: 10px;
-  filter: grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg);
+  filter: invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%);
 }
 
 /* Slider */
@@ -435,18 +435,18 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 5px;
   background-color: var(--text-color);
   color: var(--accent-color);
   padding: 20px;
   border-radius: 10px;
-  width: 400px;
+  width: 100%;
   text-align: center;
 }
 
 .close-modal {
   float: right;
-  font-size: 50px;
+  font-size: 25px;
   cursor: pointer;
   color: var(--accent-color);
 }
@@ -457,7 +457,10 @@ footer {
   padding: 10px;
   border-radius: 5px;
   background-color: var(--accent-color);
-  color: var(--text-color);
+  color: var(--input-color);
+}
+#feedback-text::placeholder{
+  color: var(--input-color);
 }
 
 #submit-feedback {
@@ -470,8 +473,7 @@ footer {
 }
 
 .feedback-message {
-  color: Yellow;
-  margin-top: 10px;
+  color: Yellow; 
 }
 
 .actions {
@@ -561,13 +563,14 @@ footer {
 }
 .products-actions button{
   width: 50%;
+  font-size: 1.1rem;
   transition: transform 0.1 ease-in-out;
 }
 .products-actions button:active{
   transform: scaleY(0.8);
 }
-.products-actions .func-btn{
-  padding: 10px;
+.products-actions .export-btn{
+  padding: 7px;
 }
 
 .products-grid {
@@ -686,6 +689,7 @@ footer {
   height: 100%;
   padding-left: 5px;
   background-color: var(--accent-color);
+  color: var(--input-color);
   display: flex;
   align-items: center;
 }
@@ -705,13 +709,13 @@ footer {
 .customer-table p{
   border: 1px solid black;
   background-color: var(--accent-color);
-  color: var(--text-color);
+  color: var(--input-color);
   margin: 0px;
 }
 
 .customer-table th {
   background-color: var(--accent-color);
-  color: var(--text-color);
+  color: var(--input-color);
   font-size: 1em;
   text-align: center;
   border: 1px solid black;
@@ -801,6 +805,7 @@ footer {
 .sales-table th{
   border: 1px solid var(--text-color);
   background-color: var(--accent-color);
+  color: var(--input-color);
   font-size: 0.7em;
   padding: 0 5px;
 }
@@ -846,7 +851,6 @@ footer {
 }
 
 /* Carts Section */
-/* Carts Section */
 .carts-container {
   width: 100%;
 }
@@ -862,6 +866,7 @@ footer {
 .cart-entry {
   border: 1px solid #ccc;
   border-radius: 8px;
+  color: var(--input-color);
   background-color: var(--accent-color);
   transition: background 0.3s ease;
   cursor: pointer;
@@ -907,11 +912,12 @@ footer {
 }
 
 .product-item {
-  background-color: #f1f1f1;
+  background-color: var(--input-color);
+  color: var(--text-color);
   border-radius: 8px;
   padding: 8px;
   min-width: 150px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
   flex-shrink: 0;
 }
 
@@ -1048,6 +1054,9 @@ footer {
   position: relative;
   filter: invert(86%) sepia(10%) saturate(300%) hue-rotate(210deg);
 }
+#cart-icon img{
+  filter: brightness(100) invert(1);
+}
 
 .cart-badge {
   position: absolute;
@@ -1056,7 +1065,7 @@ footer {
   background: red;
   color: white;
   font-size: 10px;
-  padding: 2px 6px;
+  padding: 2px 2px;
   border-radius: 50%;
   transform: translate(50%, -50%);
   z-index: 1;
@@ -1190,18 +1199,6 @@ footer {
   border-radius: 5px;
 }
 
-.export-product-btn {
-  background-color: var(--accent-color);
-  color: var(--btnText-color);
-  border: none;
-  border-radius: 10px;
-  width: 90%;
-  padding: 0;
-  margin: 10px;
-  height: 30px;
-  text-align: center;
-}
-
 /* Overlay styling */
 #loading-overlay {
   position: fixed;
@@ -1270,7 +1267,8 @@ footer {
 .inventory-analytics h2{
   font-style: italic;
   text-transform: uppercase;
-  font-size: 1.6rem;
+  font-size: 1rem;
+  padding: 5px;
   color: var(--input-color);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
   background-color: var(--accent-color);
@@ -1278,8 +1276,16 @@ footer {
   width: 100%;
 }
 
+canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+
 #categoryChart{
   height: 100% !important; width: 100% !important;
+}
+#sales-trend{
+  width: 100%;
 }
 
 #sales-trend{
@@ -1369,8 +1375,9 @@ footer {
 }
 
 .low-stock-table th{
-  color: var(--text-color);
+  color: var(--input-color);
   background-color: var(--accent-color);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .low-stock-table th, .low-stock-table td {
@@ -1397,6 +1404,8 @@ footer {
 .low-stock-list-table th{
   background-color: var(--accent-color);
   border: 1px solid var(--text-color);
+  color: var(--input-color);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 .low-stock-list-table td{
   text-align: left;

@@ -1123,7 +1123,7 @@ function initProductPage() {
 
             <div class="products-actions">
                 <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
-                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT PRODUCTS</button>
+                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT</button>
             </div>
         </div>
         <div id="products-grid" class="products-grid"></div>
@@ -3284,16 +3284,15 @@ function toggleTheme() {
     const popImg = document.querySelector(".pop img");
 
     if (baseColor === initialBaseColor) {
-        root.style.setProperty("--accent-color", "rgb(82, 206, 255)");
+        root.style.setProperty("--accent-color", "rgb(200, 200, 220)");
         root.style.setProperty("--input-color", "rgb(255, 255, 255)");
-        popImg.style.filter = "invert(71%) sepia(91%) saturate(748%) hue-rotate(172deg) brightness(103%) contrast(102%)";
-
+        popImg.style.filter = "grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg)";
     } else {
         root.style.setProperty("--accent-color", initialBaseColor);
         root.style.setProperty("--text-color", initialTextColor);
         root.style.setProperty("--input-color", initialInputColor);
         root.style.setProperty("--accent-color", initialAccentColor);
-        popImg.style.filter = "grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg)";
+        popImg.style.filter = "invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%)";
     }
 }
 function openFeedbackModal() {
