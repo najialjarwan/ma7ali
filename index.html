@@ -18,24 +18,20 @@
       <input type="text" class="search-bar" placeholder="Search Product" />
       <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon" />
     </div>
-    <img src="icons/inventry3.svg" alt="" class="logo">
+    <div class="theme-switch-wrapper">
+      <label class="theme-switch">
+        <input type="checkbox" id="toggle-theme-btn" />
+        <span class="sliderr round">
+        </span>
+      </label>
+    </div> 
   </nav>
 
   <aside id="sidebar">
     <button type="button" id="close-btn">
       <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
     </button>
-    <div class="theme-switch-wrapper">
-      <label class="theme-switch">
-        <input type="checkbox" id="toggle-theme-btn" />
-        <span class="sliderr round">
-          <span class="icon-container">
-            <img src="icons/sun-solid.svg" class="icon sun-icon" />
-            <img src="icons/moon-solid.svg" class="icon moon-icon" />
-          </span>
-        </span>
-      </label>
-    </div> 
+
     <a href="#" class="sidebar-link" id="feedback-btn">💬 Feedback</a>
     <a href="#" class="sidebar-link logout-btn">🚪 Logout</a>
   </aside>
@@ -59,7 +55,7 @@
 
       <!--Pop Button-->
       <button class="pop" id="pop">
-        <img src="icons/circle-plus-solid.svg" alt="Cart" width="35" height="35" />
+        <img src="icons/circle-plus-solid.svg" id = "pop-img" alt="Cart" width="35" height="35" />
       </button>
       <div class="slider" id="slider">
         <button class="add-sales-btn" id="add-sales-btn" data-section="addSales">

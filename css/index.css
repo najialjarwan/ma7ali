@@ -44,7 +44,7 @@ body {
   height: 100vh;
   width: 50%;
   max-width: 300px;
-  background-color: #ffffff;
+  background-color: var(--accent-color);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
   transition: left 0.3s ease-in-out;
   z-index: 1001;
@@ -89,11 +89,12 @@ body {
   align-self: flex-end;
   margin-bottom: 1rem;
 }
+
 .theme-switch-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0;
 }
 
 .theme-switch {
@@ -110,7 +111,7 @@ body {
 }
 
 .sliderr {
-  background-color: #ccc;
+  background-color: var(--accent-color);
   border-radius: 34px;
   position: absolute;
   cursor: pointer;
@@ -134,49 +135,12 @@ body {
 }
 
 input:checked + .sliderr {
-  background-color: #4f46e5;
+  background-color: var(--accent-color);
 }
 
 input:checked + .sliderr::before {
   transform: translateX(28px);
 }
-
-/* Icon container */
-.icon-container {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 28px;
-  height: 28px;
-  pointer-events: none;
-}
-
-.icon {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  top: 4px;
-  left: 4px;
-  transition: opacity 0.4s ease;
-}
-
-.sun-icon {
-  opacity: 1;
-}
-
-.moon-icon {
-  opacity: 0;
-}
-
-input:checked + .slider .sun-icon {
-  opacity: 0;
-}
-
-input:checked + .slider .moon-icon {
-  opacity: 1;
-}
-
-
 
 /* Top Nav */
 nav {
@@ -346,7 +310,7 @@ footer {
   content: "";
   height: 3px;
   position: absolute;
-  background-color: rgb(0, 0, 0);
+  background-color: var(--text-color);
   top: 0;
   left: 0;
   transform: translateX(0);

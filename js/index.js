@@ -115,27 +115,27 @@ function initializeEventListeners() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
-  
+
     function openSidebar() {
-      sidebar.classList.add('active');
-      overlay.classList.add('active');
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
     }
-  
+
     function closeSidebar() {
-      sidebar.classList.remove('active');
-      overlay.classList.remove('active');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
     }
-  
+
     menuBtn.addEventListener('click', openSidebar);
     closeBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
-    
+
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
         // e.preventDefault(); // optionally remove this so checkbox toggle works visually
         toggleTheme();
     });
-    
+
 
     document.querySelector("#feedback-btn").addEventListener("click", (e) => {
         e.preventDefault();
@@ -3281,17 +3281,18 @@ function toggleTheme() {
     }
 
     const baseColor = getComputedStyle(root).getPropertyValue("--accent-color").trim();
+    const popImg = document.querySelector(".pop img");
 
     if (baseColor === initialBaseColor) {
-        root.style.setProperty("--accent-color", "rgb(10, 123, 168)");
+        root.style.setProperty("--accent-color", "rgb(82, 206, 255)");
         root.style.setProperty("--input-color", "rgb(255, 255, 255)");
-        document.body.style.backgroundImage = `url('../images/background9.jpg')`;
+        popImg.style.filter = "invert(71%) sepia(91%) saturate(748%) hue-rotate(172deg) brightness(103%) contrast(102%)";
     } else {
         root.style.setProperty("--accent-color", initialBaseColor);
         root.style.setProperty("--text-color", initialTextColor);
         root.style.setProperty("--input-color", initialInputColor);
         root.style.setProperty("--accent-color", initialAccentColor);
-        document.body.style.backgroundImage = `url('../images/background10.png')`;
+        popImg.style.filter = "grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg)";
     }
 }
 function openFeedbackModal() {
@@ -3868,9 +3869,5 @@ async function exportSalesTableToPDF(event) {
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
-    const accentColor = getComputedStyle(document.documentElement).getPropertyValue("--accent-color").trim();
-    if (accentColor === "rgb(10, 123, 168)") {
-      document.querySelector("#toggle-theme-btn").checked = true;
-    }
     showLoadingOverlay(1500);
 });
