@@ -1088,9 +1088,9 @@ function initProductPage() {
                 <label for="stock-select">Filter Stock:</label>
                 <select id="stock-select">
                         <option value="">All Stocks</option>
-                        <option value="low-stock" style="color: red;">Low Stock (0-10)</option>
-                        <option value="medium-stock" style="color: yellow;">Medium Stock (11-50)</option>
-                        <option value="high-stock" style="color: green;">High Stock (51+)</option>
+                        <option value="low-stock">Low Stock (0-10)</option>
+                        <option value="medium-stock">Medium Stock (11-50)</option>
+                        <option value="high-stock">High Stock (51+)</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -2174,9 +2174,9 @@ function initDashboard() {
             <!-- Sales Comparison Chart -->
             <div id="sales-comparison">
                 <h2>Sales Comparison</h2>
-                <div><canvas id="revenueChart"></canvas></div>
-                <div><canvas id="profitChart"></canvas></div>
-                <div><canvas id="quantityChart"></canvas></div>
+                <div><canvas id="revenueChart" height = "300"></canvas></div>
+                <div><canvas id="profitChart" height = "300"></canvas></div>
+                <div><canvas id="quantityChart" height = "300"></canvas></div>
             </div>
             <hr>
 
@@ -2190,7 +2190,7 @@ function initDashboard() {
                     <input type="date" id="endDate" class="func-btn" name="endDate">
                     <button id="applyDateRange" class="func-btn" >Apply</button>
                 </div>
-                <canvas id="salesTrendChart"></canvas>
+                <canvas id="salesTrendChart" height = "350"></canvas>
                 <p><strong class="profit-growth">Profit Growth: </strong><span id="profit-growth"></span></p>
                 <p><strong class="products-sold-growth">Products Sold Growth: </strong><span id="products-sold-growth"></span></p>
             </div>
@@ -2201,7 +2201,7 @@ function initDashboard() {
                 <h2>Profit Margin</h2>
                 <div id="profit-margin-chart-container" class="chart-container">
                     <h5 style="color: rgba(75, 192, 192, 1)">Product Margin Distribution</h5>
-                    <canvas id="profitMarginChart"></canvas>
+                    <canvas id="profitMarginChart" height = "300"></canvas>
                 </div>
                 <p><strong>Highest Profit Margin: </strong><span id="highest-profit-margin"></span></p>
                 <p><strong>Lowest Profit Margin: </strong><span id="lowest-profit-margin"></span></p>
@@ -2214,7 +2214,7 @@ function initDashboard() {
                 <h2>Product Lifecycle</h2>
                 <div id="product-age-chart-container" class="chart-container">
                     <h5 style="color: rgba(54, 162, 235, 1);">Product Age Distribution</h5>
-                    <canvas id="productAgeChart"></canvas>
+                    <canvas id="productAgeChart" height = "300"></canvas>
                 </div>
                 <p><strong>Average Product Age (Days): </strong><span id="average-product-age"></span></p>
             </div>
@@ -2225,7 +2225,7 @@ function initDashboard() {
                 <h2>Most Popular</h2>
                 <div id="most-popular-products-chart-container" class="chart-container">
                     <h5 style="color: rgba(153, 102, 255, 1);">Top 5 Most Sold Products</h5>
-                    <canvas id="mostPopularProductsChart"></canvas>
+                    <canvas id="mostPopularProductsChart" height = "300"></canvas>
                 </div>
             </div>
             <hr>
@@ -2235,7 +2235,7 @@ function initDashboard() {
                 <h2>Least Popular</h2>
                 <div id="least-popular-products-chart-container" class="chart-container">
                     <h5 style="color: rgba(255, 159, 64, 1);">Bottom 5 Least Sold Products</h5>
-                    <canvas id="leastPopularProductsChart"></canvas>
+                    <canvas id="leastPopularProductsChart" height = "300"></canvas>
                 </div>
             </div>
             <hr>
@@ -2625,9 +2625,10 @@ function processSalesDocsAndRender(docs) {
     // Sort by date ascending
     profitData.sort((a, b) => a.date - b.date);
 
-    const labels = profitData.map(entry =>
-        entry.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    );
+    const labels = profitData.map(entry => {
+        const date = entry.date; // Ensure `entry.date` is a JavaScript Date object
+        return date.getDate(); // Returns day number (1-31)
+    });
     const profits = profitData.map(entry => entry.profit);
     const productsSold = profitData.map(entry => entry.productsSold);
 
@@ -2648,9 +2649,6 @@ function calculateAndDisplayGrowth(profits, productsSold) {
         profitGrowth = firstProfit === 0 ? 0 : ((lastProfit - firstProfit) / firstProfit) * 100;
         productsSoldGrowth = firstSold === 0 ? 0 : ((lastSold - firstSold) / firstSold) * 100;
     }
-
-
-
 
     document.getElementById("profit-growth").textContent = `${profitGrowth.toFixed(2)}%`;
     document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth.toFixed(2)}%`;
@@ -2735,7 +2733,15 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     type: 'category',
                     title: {
                         display: true,
-                        text: 'Date'
+                        text: 'Day',
+                        font: {
+                            size: 10
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 8
+                        }
                     }
                 },
                 y: {
@@ -2744,7 +2750,15 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Profit ($)'
+                        text: 'Profit ($)',
+                        font: {
+                            size: 10
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 8
+                        }
                     }
                 },
                 y1: {
@@ -2753,10 +2767,18 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Products Sold'
+                        text: 'Products Sold',
+                        font: {
+                            size: 10
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 8
+                        }
                     },
                     grid: {
-                        drawOnChartArea: false // Prevent grid overlap
+                        drawOnChartArea: false
                     }
                 }
             }
