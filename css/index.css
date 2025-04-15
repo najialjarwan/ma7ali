@@ -48,9 +48,27 @@ body {
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
   transition: left 0.3s ease-in-out;
   z-index: 1001;
-  padding: 1rem;
+  padding: 3px;
   display: flex;
   flex-direction: column;
+}
+#sidebar > div{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.sidebar-link {
+  margin: 5px;
+  font-size: 1.5rem;
+  text-decoration: none;
+  color: var(--input-color);
+  width: 100%;
+  border-top: 1px solid var(--input-color);
+}
+.sidebar-link:first-child{
+  border-top: none;
 }
 
 /* Show sidebar */
@@ -73,14 +91,6 @@ body {
 /* Show overlay */
 #overlay.active {
   display: block;
-}
-
-/* Optional: Style buttons and links */
-.sidebar-link {
-  margin: 1rem 0;
-  font-size: 1.1rem;
-  text-decoration: none;
-  color: #333;
 }
 
 #close-btn {
@@ -129,8 +139,8 @@ body {
   width: 28px;
   left: 2px;
   top: 2px;
-  background-color: white;
   border-radius: 50%;
+  background-color: white;
   transition: transform 0.4s;
 }
 
@@ -156,6 +166,7 @@ nav {
   align-items: center;
   gap: 5px;
   z-index: 10;
+  padding: 5px;
 }
 
 .search-container-main {
@@ -202,10 +213,11 @@ nav {
 }
 
 .menu-btn {
+  margin-left: 5px;
   background-color: var(--accent-color);
   width: 50px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 5px;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;

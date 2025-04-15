@@ -3287,6 +3287,7 @@ function toggleTheme() {
         root.style.setProperty("--accent-color", "rgb(82, 206, 255)");
         root.style.setProperty("--input-color", "rgb(255, 255, 255)");
         popImg.style.filter = "invert(71%) sepia(91%) saturate(748%) hue-rotate(172deg) brightness(103%) contrast(102%)";
+
     } else {
         root.style.setProperty("--accent-color", initialBaseColor);
         root.style.setProperty("--text-color", initialTextColor);
