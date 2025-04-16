@@ -3350,7 +3350,7 @@ function toggleTheme() {
     const popImg = document.querySelector(".pop img");
 
     if (baseColor === initialBaseColor) {
-        root.style.setProperty("--accent-color", "rgb(200, 200, 220)");
+        root.style.setProperty("--accent-color", "rgb(151, 184, 216)");
         root.style.setProperty("--input-color", "rgb(255, 255, 255)");
         popImg.style.filter = "grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg)";
     } else {
@@ -3567,12 +3567,12 @@ async function setPDFLayout(pdf, titleText) {
     else if (align === "right") x = pageWidth - 10;
 
     pdf.text(titleText, x, 15, { align: align });
-    
+
     return settings;
 }
-function getPDFTableStyles(settings) {
+async function getPDFTableStyles(settings) {
     const headerRGB = hexToRgb(settings.headerColor || "#708090");
-    const headerTextRGB = hexToRgb(settings.headerTextColor || "#000000");
+    const headerTextRGB = hexToRgb(settings.headerTextColor || "#ffffff");
     const evenRGB = hexToRgb(settings.evenRowColor || "#e6e6d2");
     const evenTextRGB = hexToRgb(settings.evenRowTextColor || "#000000");
     const oddRGB = hexToRgb(settings.oddRowColor || "#ffffff");
@@ -3719,9 +3719,6 @@ async function fetchProductsforExporting() {
     }
 }
 
-
-
-
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
     let total = 0;
@@ -3739,78 +3736,103 @@ async function fetchDebtDetailsForExport(customerId) {
     return { debts, total: total.toFixed(2) };
 }
 async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
+    try {
+        const { pdf, settings } = await createStyledPDF("Customer Debt Details");
+        const tableStyles = await getPDFTableStyles(settings);
 
-    const pdf = await createStyledPDF();
-
-    pdf.setFontSize(16);
-    pdf.text("Customer Debt Details", 10, 10);
-
-    const columns = ["Details", "Balance ($)", "Created At"];
-    const rows = debtDetails.map(debt => [
-        debt.details,
-        debt.balance,
-        debt.createdAt
-    ]);
-
-    // Add final total row with merged cells
-    rows.push([
-        { content: `Total Balance: $${totalBalance}`, colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 210] } }
-    ]);
-
-    const customerInfo = [
-        [
-            { content: "Customer Name:", styles: { fillColor: [255, 255, 255], fontStyle: "bold", halign: "left", cellWidth: 35 } },
-            { content: customerName, styles: { fillColor: [250, 250, 210], halign: "left", cellWidth: 84 } }
-        ],
-        [
-            { content: "Phone Number:", styles: { fillColor: [255, 255, 255], fontStyle: "bold", halign: "left", cellWidth: 35 } },
-            { content: customerPhone, styles: { fillColor: [250, 250, 210], halign: "left", cellWidth: 84 } }
-        ]
-    ];
-
-    pdf.autoTable({
-        head: [columns],
-        body: rows,
-        startY: 50,
-        margin: { top: 10 },
-        theme: "grid",
-        styles: {
-            valign: "middle",
-            halign: "center",
-            fontSize: 10,
-            lineWidth: 0.3,
-            lineColor: [0, 0, 0],
-        },
-        alternateRowStyles: false,
-        didParseCell: data => {
-            if (data.section === "head") {
-                data.cell.styles.fillColor = [255, 255, 255];
-                data.cell.styles.fontStyle = "bold";
-                data.cell.styles.textColor = [0, 0, 0];
-            } else if (data.section === "body") {
-                if (data.row.index % 2 === 0) {
-                    data.cell.styles.fillColor = [250, 250, 210];
-                } else {
-                    data.cell.styles.fillColor = [255, 240, 100];
+        const columns = ["Details", "Balance ($)", "Created At"];
+        const rows = debtDetails.map(debt => [
+            debt.details,
+            debt.balance,
+            debt.createdAt
+        ]);
+        console.log(settings);
+        const headerColor = hexToRgb(settings.headerColor || "#708090");
+        const headerTextColor = hexToRgb(settings.headerTextColor || "#ffffff");
+        rows.push([
+            {
+                content: `Total Balance: $${totalBalance}`,
+                colSpan: 3,
+                styles: {
+                    halign: 'center',
+                    fontStyle: 'bold',
+                    fillColor: [headerColor.r, headerColor.g, headerColor.b],
+                    textColor: [headerTextColor.r, headerTextColor.g, headerTextColor.b]
                 }
             }
-        },
-        didDrawPage: function () {
-            pdf.autoTable({
-                body: customerInfo,
-                startY: 20,
-                theme: "plain",
-                styles: {
-                    fontSize: 11,
-                    textColor: [0, 0, 0],
-                    lineWidth: 0.3,
-                    lineColor: [0, 0, 0],
-                }
-            });
-        }
-    });
+        ]);
 
-    pdf.save(`${customerName}_debt_details.pdf`);
+        const oddFillColor = hexToRgb(settings.oddRowColor || "#ffffff");
+        const oddTextColor = hexToRgb(settings.oddRowTextColor || "#000000");
+        const evenFillColor = hexToRgb(settings.evenRowColor || "#e6e6d2");
+        const evenTextColor = hexToRgb(settings.evenRowTextColor || "#000000");
+
+        const customerInfo = [
+            [
+                {
+                    content: "Customer Name:",
+                    styles: {
+                        fontStyle: "bold",
+                        halign: "left",
+                        cellWidth: 40,
+                        fillColor: [oddFillColor.r, oddFillColor.g, oddFillColor.b],
+                        textColor: [oddTextColor.r, oddTextColor.g, oddTextColor.b]
+                    }
+                },
+                {
+                    content: customerName,
+                    styles: {
+                        halign: "left",
+                        fillColor: [oddFillColor.r, oddFillColor.g, oddFillColor.b],
+                        textColor: [oddTextColor.r, oddTextColor.g, oddTextColor.b]
+                    }
+                }
+            ],
+            [
+                {
+                    content: "Phone Number:",
+                    styles: {
+                        fontStyle: "bold",
+                        halign: "left",
+                        cellWidth: 40,
+                        fillColor: [evenFillColor.r, evenFillColor.g, evenFillColor.b],
+                        textColor: [evenTextColor.r, evenTextColor.g, evenTextColor.b]
+                    }
+                },
+                {
+                    content: customerPhone,
+                    styles: {
+                        halign: "left",
+                        fillColor: [evenFillColor.r, evenFillColor.g, evenFillColor.b],
+                        textColor: [evenTextColor.r, evenTextColor.g, evenTextColor.b]
+                    }
+                }
+            ]
+        ];
+
+        pdf.autoTable({
+            body: customerInfo,
+            startY: 30,
+            theme: "plain",
+            styles: {
+                fontSize: 11,
+                lineWidth: 0.3,
+                lineColor: [0, 0, 0],
+                cellPadding: 3
+            },
+        });
+
+        pdf.autoTable({
+            head: [columns],
+            body: rows,
+            startY: pdf.lastAutoTable.finalY + 10,
+            ...tableStyles,
+        });
+
+        pdf.save(`${customerName.replace(/[^a-z0-9]/gi, '_')}_debt_details.pdf`);
+    } catch (err) {
+        console.error("Error exporting debt details PDF:", err);
+    }
 }
 
 async function exportCartToPDF() {
@@ -3845,8 +3867,8 @@ async function exportCartToPDF() {
         };
     });
 
-    const pdf = await createStyledPDF();
-
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
     // Title
     pdf.setFontSize(16);
     pdf.text("Cart Details", 10, 10);
