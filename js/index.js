@@ -3373,12 +3373,6 @@ function initpdfLayout() {
         <input type="color" id="titleTextColor" value="#000000" />
         <label>Title Font Size:</label>
         <input type="number" id="titleFontSizeInput" value="16" min="8" max="30" />
-        <label>Title Font Style:</label>
-        <select id="titleFontStyle">
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="italic">Italic</option>
-        </select>
         <label>Title Alignment:</label>
         <select id="titleAlign">
             <option value="left">Left</option>
@@ -3390,34 +3384,16 @@ function initpdfLayout() {
         <input type="color" id="headerColorPicker" value="#708090" />
         <label>Header Text Color:</label>
         <input type="color" id="headerTextColor" value="#000000" />
-        <label>Header Font Style:</label>
-        <select id="headerFontStyle">
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="italic">Italic</option>
-        </select>
 
         <label>Even Row Color:</label>
         <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
         <label>Even Row Text Color:</label>
         <input type="color" id="evenRowTextColor" value="#000000" />
-        <label>Even Row Font Style:</label>
-        <select id="evenRowFontStyle">
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="italic">Italic</option>
-        </select>
 
         <label>Odd Row Color:</label>
         <input type="color" id="oddRowColorPicker" value="#ffffff" />
         <label>Odd Row Text Color:</label>
         <input type="color" id="oddRowTextColor" value="#000000" />
-        <label>Odd Row Font Style:</label>
-        <select id="oddRowFontStyle">
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="italic">Italic</option>
-        </select>
 
         <button type="submit" id="save-layout">Save</button>
         <button type="button" id="exit-btn">Exit</button>
@@ -3446,39 +3422,31 @@ async function saveLayout() {
     // Title
     const titleTextColor = document.getElementById("titleTextColor").value;
     const titleFontSize = document.getElementById("titleFontSizeInput").value;
-    const titleFontStyle = document.getElementById("titleFontStyle").value;
     const titleAlign = document.getElementById("titleAlign").value;
 
     // Header row
     const headerColor = document.getElementById("headerColorPicker").value;
     const headerTextColor = document.getElementById("headerTextColor").value;
-    const headerFontStyle = document.getElementById("headerFontStyle").value;
 
     // Even row
     const evenRowColor = document.getElementById("evenRowColorPicker").value;
     const evenRowTextColor = document.getElementById("evenRowTextColor").value;
-    const evenRowFontStyle = document.getElementById("evenRowFontStyle").value;
 
     // Odd row
     const oddRowColor = document.getElementById("oddRowColorPicker").value;
     const oddRowTextColor = document.getElementById("oddRowTextColor").value;
-    const oddRowFontStyle = document.getElementById("oddRowFontStyle").value;
 
     const settings = {
         fillColor,
         titleTextColor,
         titleFontSize,
-        titleFontStyle,
         titleAlign,
         headerColor,
         headerTextColor,
-        headerFontStyle,
         evenRowColor,
         evenRowTextColor,
-        evenRowFontStyle,
         oddRowColor,
         oddRowTextColor,
-        oddRowFontStyle
     };
 
     try {
