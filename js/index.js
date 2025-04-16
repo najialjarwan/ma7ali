@@ -199,83 +199,7 @@ async function loadContent(section) {
     }
 }
 
-function initpdfLayout() {
-    document.body.innerHTML = `
-        <div id="pdf-layout-controls">
-            <h2>Change PDF Exporting Layout</h2>
-            <form id="pdf-layout-form" class="produc-form">
-                <label>Background Color:</label>
-                <input type="color" id="fillColorPicker" value="#ffffff" />
 
-                <label>Header Row Color:</label>
-                <input type="color" id="headerColorPicker" value="#708090" />
-
-                <label>Even Row Color:</label>
-                <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
-
-                <label>Odd Row Color:</label>
-                <input type="color" id="oddRowColorPicker" value="#ffffff" />
-
-                <label>Text Color:</label>
-                <input type="color" id="textColorPicker" value="#000000" />
-
-                <label>Title Font Size:</label>
-                <input type="number" id="titleFontSizeInput" value="16" min="8" max="30" />
-
-                <label>Title Font Style:</label>
-                <select id="titleFontStyle">
-                    <option value="normal">Normal</option>
-                    <option value="bold">Bold</option>
-                    <option value="italic">Italic</option>
-                </select>
-
-                <label>Title Alignment:</label>
-                <select id="titleAlign">
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                </select>
-
-                <button type="submit" id="save-layout">Save</button>
-                <button type="button" id="exit-btn">Exit</button>
-            </form>
-        </div>
-
-    `;
-    const saveLayoutBtn = document.getElementById("save-layout");
-    saveLayoutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        saveLayout();
-    });
-
-    const exitBtn = document.getElementById("exit-btn");
-    console.log(exitBtn);
-    exitBtn.addEventListener("click", () => {
-        location.reload();
-    });
-}
-async function saveLayout() {
-    const userId = "demo-user";
-
-    const settings = {
-        fillColor: document.getElementById("fillColorPicker").value,
-        headerBgColor: document.getElementById("headerColorPicker").value,
-        evenRowColor: document.getElementById("evenRowColorPicker").value,
-        oddRowColor: document.getElementById("oddRowColorPicker").value,
-        textColor: document.getElementById("textColorPicker").value,
-        titleFontSize: parseInt(document.getElementById("titleFontSizeInput").value),
-        fontStyle: document.getElementById("titleFontStyle").value,
-        titleAlign: document.getElementById("titleAlign").value,
-    };
-
-    try {
-        await db.collection("pdfLayout").doc(userId).set(settings);
-        alert("Layout saved!");
-        showModalMessage(`<p>Layout Changed Successfully.</p>`, true);
-    } catch (err) {
-        console.error("Error saving layout:", err);
-    }
-}
 
 
 // #endregion
@@ -3437,6 +3361,134 @@ function toggleTheme() {
         popImg.style.filter = "invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%)";
     }
 }
+function initpdfLayout() {
+    document.body.innerHTML = `
+<div id="pdf-layout-controls">
+    <h2>Change PDF Exporting Layout</h2>
+    <form id="pdf-layout-form" class="produc-form">
+        <label>Background Color:</label>
+        <input type="color" id="fillColorPicker" value="#ffffff" />
+
+        <label>Title Text Color:</label>
+        <input type="color" id="titleTextColor" value="#000000" />
+        <label>Title Font Size:</label>
+        <input type="number" id="titleFontSizeInput" value="16" min="8" max="30" />
+        <label>Title Font Style:</label>
+        <select id="titleFontStyle">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="italic">Italic</option>
+        </select>
+        <label>Title Alignment:</label>
+        <select id="titleAlign">
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+        </select>
+
+        <label>Header Row Color:</label>
+        <input type="color" id="headerColorPicker" value="#708090" />
+        <label>Header Text Color:</label>
+        <input type="color" id="headerTextColor" value="#000000" />
+        <label>Header Font Style:</label>
+        <select id="headerFontStyle">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="italic">Italic</option>
+        </select>
+
+        <label>Even Row Color:</label>
+        <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
+        <label>Even Row Text Color:</label>
+        <input type="color" id="evenRowTextColor" value="#000000" />
+        <label>Even Row Font Style:</label>
+        <select id="evenRowFontStyle">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="italic">Italic</option>
+        </select>
+
+        <label>Odd Row Color:</label>
+        <input type="color" id="oddRowColorPicker" value="#ffffff" />
+        <label>Odd Row Text Color:</label>
+        <input type="color" id="oddRowTextColor" value="#000000" />
+        <label>Odd Row Font Style:</label>
+        <select id="oddRowFontStyle">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="italic">Italic</option>
+        </select>
+
+        <button type="submit" id="save-layout">Save</button>
+        <button type="button" id="exit-btn">Exit</button>
+    </form>
+</div>
+    `;
+
+    const saveLayoutBtn = document.getElementById("save-layout");
+    saveLayoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        saveLayout();
+    });
+
+    const exitBtn = document.getElementById("exit-btn");
+    console.log(exitBtn);
+    exitBtn.addEventListener("click", () => {
+        location.reload();
+    });
+}
+async function saveLayout() {
+    const userId = "demo-user";
+
+    // Background color
+    const fillColor = document.getElementById("fillColorPicker").value;
+
+    // Title
+    const titleTextColor = document.getElementById("titleTextColor").value;
+    const titleFontSize = document.getElementById("titleFontSizeInput").value;
+    const titleFontStyle = document.getElementById("titleFontStyle").value;
+    const titleAlign = document.getElementById("titleAlign").value;
+
+    // Header row
+    const headerColor = document.getElementById("headerColorPicker").value;
+    const headerTextColor = document.getElementById("headerTextColor").value;
+    const headerFontStyle = document.getElementById("headerFontStyle").value;
+
+    // Even row
+    const evenRowColor = document.getElementById("evenRowColorPicker").value;
+    const evenRowTextColor = document.getElementById("evenRowTextColor").value;
+    const evenRowFontStyle = document.getElementById("evenRowFontStyle").value;
+
+    // Odd row
+    const oddRowColor = document.getElementById("oddRowColorPicker").value;
+    const oddRowTextColor = document.getElementById("oddRowTextColor").value;
+    const oddRowFontStyle = document.getElementById("oddRowFontStyle").value;
+
+    const settings = {
+        fillColor,
+        titleTextColor,
+        titleFontSize,
+        titleFontStyle,
+        titleAlign,
+        headerColor,
+        headerTextColor,
+        headerFontStyle,
+        evenRowColor,
+        evenRowTextColor,
+        evenRowFontStyle,
+        oddRowColor,
+        oddRowTextColor,
+        oddRowFontStyle
+    };
+
+    try {
+        await db.collection("pdfLayout").doc(userId).set(settings);
+        alert("Layout saved!");
+        showModalMessage(`<p>Layout Changed Successfully.</p>`, true);
+    } catch (err) {
+        console.error("Error saving layout:", err);
+    }
+}
 function openFeedbackModal() {
     document.getElementById("feedback-modal").style.display = "flex";
 }
@@ -3519,89 +3571,41 @@ async function createStyledPDF(titleText) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
-    const userId = "demo-user";
-    const doc = await db.collection("pdfLayout").doc(userId).get();
-    const settings = doc.exists ? doc.data() : {};
+    // Apply layout (background, title, etc.)
+    const settings = await setPDFLayout(pdf, titleText);
 
-    // Apply background + title
-    const bg = hexToRgb(settings.fillColor || "#ffffff");
-    pdf.setFillColor(bg.r, bg.g, bg.b);
-    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), "F");
-
-    const titleFontSize = settings.titleFontSize || 16;
-    const fontStyle = settings.fontStyle || "normal";
-    const textColor = hexToRgb(settings.textColor || "#000000");
-    const align = settings.titleAlign || "left";
-
-    pdf.setFontSize(titleFontSize);
-    pdf.setFont(undefined, fontStyle);
-    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let x = 10;
-    if (align === "center") x = pageWidth / 2;
-    else if (align === "right") x = pageWidth - 10;
-
-    pdf.text(titleText, x, 15, { align });
-
+    // Return the PDF and settings
     return { pdf, settings };
 }
-async function setPDFLayout(pdf, titleText) {
-    const userId = "demo-user";
-    const doc = await db.collection("pdfLayout").doc(userId).get();
-
-    const settings = doc.exists ? doc.data() : {};
-
-    // Background
-    const bgRGB = hexToRgb(settings.fillColor || "#ffffff");
-    pdf.setFillColor(bgRGB.r, bgRGB.g, bgRGB.b);
-    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
-
-    // Title
-    const titleFontSize = settings.titleFontSize || 16;
-    const fontStyle = settings.fontStyle || 'normal';
-    const textColor = hexToRgb(settings.textColor || "#000000");
-    const align = settings.titleAlign || "left";
-
-    pdf.setFontSize(titleFontSize);
-    pdf.setFont(undefined, fontStyle);
-    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let x = 10;
-    if (align === "center") x = pageWidth / 2;
-    else if (align === "right") x = pageWidth - 10;
-
-    pdf.text(titleText, x, 15, { align: align });
-}
-function getPDFTableStyles(settings) {
-    const headerRGB = hexToRgb(settings.headerBgColor || "#708090");
-    const evenRGB = hexToRgb(settings.evenRowColor || "#e6e6d2");
-    const oddRGB = hexToRgb(settings.oddRowColor || "#ffffff");
-    const textRGB = hexToRgb(settings.textColor || "#000000");
-
-    return {
-        theme: "grid",
-        styles: {
-            valign: "middle",
-            halign: "center",
-            fontSize: 10,
-            lineWidth: 0.3,
-            lineColor: [0, 0, 0],
-            textColor: [textRGB.r, textRGB.g, textRGB.b],
-        },
-        alternateRowStyles: false,
-        didParseCell: (data) => {
-            if (data.section === "head") {
-                data.cell.styles.fillColor = [headerRGB.r, headerRGB.g, headerRGB.b];
-                data.cell.styles.fontStyle = "bold";
-                data.cell.styles.textColor = [textRGB.r, textRGB.g, textRGB.b];
-            } else if (data.section === "body") {
-                const fill = data.row.index % 2 === 0 ? evenRGB : oddRGB;
-                data.cell.styles.fillColor = [fill.r, fill.g, fill.b];
-            }
-        }
+async function getPDFTableStyles() {
+    const userId = "demo-user"; // Later replace with auth UID
+    let settings = {
+        fillColor: "#ffffff",
+        headerColor: "#708090",
+        evenRowColor: "#e6e6d2",
+        oddRowColor: "#ffffff",
+        titleFontSize: 16,
+        titleFontStyle: "normal",
+        titleAlign: "center",
+        titleTextColor: "#000000",
+        headerTextColor: "#000000",
+        headerFontStyle: "normal",
+        evenRowTextColor: "#000000",
+        evenRowFontStyle: "normal",
+        oddRowTextColor: "#000000",
+        oddRowFontStyle: "normal"
     };
+
+    try {
+        const doc = await db.collection("pdfLayout").doc(userId).get();
+        if (doc.exists) {
+            settings = doc.data();
+        }
+    } catch (error) {
+        console.error("Error fetching PDF layout settings:", error);
+    }
+
+    return settings;
 }
 function hexToRgb(hex) {
     const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
@@ -3612,7 +3616,93 @@ function hexToRgb(hex) {
         b: parseInt(match[3], 16)
     };
 }
+async function setPDFLayout(pdf, titleText) {
+    const userId = "demo-user"; // Replace with actual user ID when needed
+    const doc = await db.collection("pdfLayout").doc(userId).get();
+    const settings = doc.exists ? doc.data() : {};
 
+    // Apply Background Color
+    const bgRGB = hexToRgb(settings.fillColor || "#ffffff");
+    pdf.setFillColor(bgRGB.r, bgRGB.g, bgRGB.b);
+    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F'); // Fill the page background
+
+    // Title Styling
+    const titleFontSize = settings.titleFontSize || 16;
+    const titleFontStyle = settings.titleFontStyle || 'normal';
+    const titleTextColor = hexToRgb(settings.titleTextColor || "#000000");
+    const titleAlign = settings.titleAlign || "left";
+
+    pdf.setFontSize(titleFontSize);
+    pdf.setFont(titleFontStyle);
+    pdf.setTextColor(titleTextColor.r, titleTextColor.g, titleTextColor.b);
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let titleX = 10;
+    if (titleAlign === "center") titleX = pageWidth / 2;
+    else if (titleAlign === "right") titleX = pageWidth - 10;
+
+    pdf.text(titleText, titleX, 15, { align: titleAlign });
+    
+    return settings; // Return settings for further use
+}
+async function exportToPDF(data) {
+    try {
+        // Create the styled PDF with title
+        const { pdf, settings } = await createStyledPDF("Products List");
+
+        // Table content
+        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
+        const rows = data.map(product => [
+            product.label,
+            product.barcode,
+            product.costPrice.toFixed(2),
+            product.profit.toFixed(2),
+            product.category,
+            product.stock,
+            product.createdAt
+        ]);
+
+        // Apply table styles
+        pdf.autoTable({
+            head: [columns],
+            body: rows,
+            startY: 20,
+            theme: "grid",
+            styles: {
+                valign: "middle",
+                halign: "center",
+                fontSize: 10,
+                lineWidth: 0.3,
+                lineColor: [0, 0, 0]
+            },
+            alternateRowStyles: false, // We will manually handle alternating row styles
+            didParseCell: data => {
+                if (data.section === "head") {
+                    // Header row styles
+                    data.cell.styles.fillColor = hexToRgb(settings.headerColor || "#708090");
+                    data.cell.styles.textColor = hexToRgb(settings.headerTextColor || "#ffffff");
+                    data.cell.styles.fontStyle = settings.headerFontStyle || "bold";
+                } else if (data.section === "body") {
+                    // Even and odd row styles
+                    const evenRowColor = hexToRgb(settings.evenRowColor || "#e6e6d2");
+                    const oddRowColor = hexToRgb(settings.oddRowColor || "#ffffff");
+
+                    if (data.row.index % 2 === 0) {
+                        data.cell.styles.fillColor = evenRowColor;
+                    } else {
+                        data.cell.styles.fillColor = oddRowColor;
+                    }
+                    data.cell.styles.textColor = hexToRgb(settings.rowTextColor || "#000000");
+                }
+            }
+        });
+
+        // Save the PDF
+        pdf.save("product-list.pdf");
+    } catch (error) {
+        console.error("Error exporting PDF:", error);
+    }
+}
 async function fetchProductsforExporting() {
     try {
         const categoryFilter = document.getElementById("category-select").value;
@@ -3692,33 +3782,9 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
-async function exportToPDF(data) {
-    try {
-        const { pdf, settings } = await createStyledPDF("Products List");
 
-        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
-        const rows = data.map(product => [
-            product.label,
-            product.barcode,
-            product.costPrice.toFixed(2),
-            product.profit.toFixed(2),
-            product.category,
-            product.stock,
-            product.createdAt
-        ]);
 
-        pdf.autoTable({
-            head: [columns],
-            body: rows,
-            startY: 20,
-            ...getPDFTableStyles(settings)
-        });
 
-        pdf.save("product-list.pdf");
-    } catch (err) {
-        console.error("Error exporting PDF:", err);
-    }
-}
 
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
