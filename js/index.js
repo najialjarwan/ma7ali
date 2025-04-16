@@ -115,20 +115,26 @@ function initializeEventListeners() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
+    const pdfLayoutLink = document.getElementById('pdf-layout');
+  
+    pdfLayoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadContent("pdflayout");
+    });
 
+    menuBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
     function openSidebar() {
         sidebar.classList.add('active');
         overlay.classList.add('active');
     }
-
     function closeSidebar() {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
     }
 
-    menuBtn.addEventListener('click', openSidebar);
-    closeBtn.addEventListener('click', closeSidebar);
-    overlay.addEventListener('click', closeSidebar);
+
 
 
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
@@ -136,14 +142,11 @@ function initializeEventListeners() {
         toggleTheme();
     });
 
-
     document.querySelector("#feedback-btn").addEventListener("click", (e) => {
         e.preventDefault();
         openFeedbackModal();
     });
-
     document.querySelector("#submit-feedback").addEventListener("click", submitFeedback);
-
     document.querySelector(".close-modal").addEventListener("click", () => {
         document.getElementById("feedback-modal").style.display = "none";
     });
@@ -188,11 +191,57 @@ async function loadContent(section) {
             showSalesForm();
         //
 
+        if(section === "pdflayout")
+            initpdfLayout();
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
     }
 }
+
+function initpdfLayout(){
+    document.body.innerHTML = `
+    <div id="pdf-layout-controls">
+        <h2>Change PDF Exporting Layout</h2>
+
+        <form id = "pdf-layout-form" class = "produc-form">
+            <label for="fillColorPicker">Background Color:</label>
+            <input type="color" id="fillColorPicker" value="#ffffff"/>
+            <button type = "save" id = "save-layout">Save</button>
+        </form>
+        <button type = "submit" id = "exit-btn">Exit</button>
+    </div>
+    `;
+
+    const saveLayoutBtn = document.getElementById("save-layout");
+    saveLayoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        saveLayout();
+    });
+
+    const exitBtn = document.getElementById("exit-btn");
+    console.log(exitBtn);
+    exitBtn.addEventListener("click", () => {
+        location.reload();
+    });
+}
+async function saveLayout() {
+    const fillColor = document.getElementById("fillColorPicker").value;
+  
+    // Simulated user ID (replace later with auth)
+    const userId = "demo-user";
+  
+    try {
+      await db.collection("pdfLayout").doc(userId).set({
+        fillColor: fillColor,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      location.reload();
+    } catch (error) {
+      console.error("Error saving layout settings:", error);
+    }
+  }
+  
 // #endregion
 
 
@@ -1281,7 +1330,7 @@ async function fetchProducts() {
         };
 
         const resetFilters = document.getElementById("reset-filters");
-        if (resetFilters){
+        if (resetFilters) {
             resetFilters.addEventListener("click", () => {
                 document.getElementById("category-select").value = "";
                 document.getElementById("price-select").value = "";
@@ -1356,7 +1405,6 @@ function displayProducts(filteredProducts) {
 function refreshProductList() {
     fetchProductsForDoc().then((products) => {
         allProducts = products;
-
     });
 }
 $(document).ready(function () {
@@ -2338,6 +2386,81 @@ function initDashboard() {
 
     fetchInventorySummary();
 }
+// #region Category Disribution {
+async function fetchCategoryDistribution() {
+    const snapshot = await db.collection("products").get();
+    const categoryCounts = {};
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const category = data.category || "Uncategorized";
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    renderCategoryChart(categoryCounts);
+}
+function renderCategoryChart(categoryCounts) {
+    const canvasId = 'categoryChart';
+    const ctx = document.getElementById(canvasId).getContext("2d");
+
+    // 💥 Destroy existing chart if it exists
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
+    const labels = Object.keys(categoryCounts);
+    const data = Object.values(categoryCounts);
+
+    chartInstances[canvasId] = new Chart(ctx, {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Products by Category",
+                data: data,
+                backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(255, 159, 64, 0.2)"
+                ],
+                borderColor: [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutCubic'
+            },
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.label}: ${context.raw} products`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// #endregion }
+
 // #region Sales Comparisons {
 let isFetching = false;
 const activeCharts = {};
@@ -2504,74 +2627,6 @@ function renderComparisonChart(comparisonData, metric, canvasId, title) {
                         maxRotation: 0,
                         minRotation: 0,
                         font: { size: 10 }
-                    }
-                }
-            }
-        }
-    });
-}
-// #endregion }
-
-// #region Category Disribution {
-async function fetchCategoryDistribution() {
-    const snapshot = await db.collection("products").get();
-    const categoryCounts = {};
-
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const category = data.category || "Uncategorized";
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-
-    renderCategoryChart(categoryCounts);
-}
-function renderCategoryChart(categoryCounts) {
-    const labels = Object.keys(categoryCounts);
-    const data = Object.values(categoryCounts);
-
-    const ctx = document.getElementById("categoryChart").getContext("2d");
-
-    new Chart(ctx, {
-        type: "pie",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Products by Category",
-                data: data,
-                backgroundColor: [
-                    "rgba(255, 99, 132, 0.2)",
-                    "rgba(54, 162, 235, 0.2)",
-                    "rgba(255, 206, 86, 0.2)",
-                    "rgba(75, 192, 192, 0.2)",
-                    "rgba(153, 102, 255, 0.2)",
-                    "rgba(255, 159, 64, 0.2)"
-                ],
-                borderColor: [
-                    "rgba(255, 99, 132, 1)",
-                    "rgba(54, 162, 235, 1)",
-                    "rgba(255, 206, 86, 1)",
-                    "rgba(75, 192, 192, 1)",
-                    "rgba(153, 102, 255, 1)",
-                    "rgba(255, 159, 64, 1)"
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            animation: {
-                duration: 2000,
-                easing: 'easeOutCubic'
-            },
-            plugins: {
-                legend: {
-                    position: "top",
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return `${context.label}: ${context.raw} products`;
-                        }
                     }
                 }
             }
@@ -2819,11 +2874,18 @@ function renderProfitabilityMetrics(products) {
     document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
 }
 function renderProfitMarginChart(products) {
-    const ctx = document.getElementById('profitMarginChart').getContext('2d');
+    const canvasId = 'profitMarginChart';
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    // 💥 Destroy existing chart if it exists
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
     const labels = products.map(product => product.label);
     const profitMargins = products.map(product => product.profitMargin);
 
-    new Chart(ctx, {
+    chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -2846,15 +2908,16 @@ function renderProfitMarginChart(products) {
                 },
                 x: {
                     ticks: {
-                        autoSkip: true,  // Automatically skips some labels if there are too many
-                        maxRotation: 90,  // Rotate labels to 90 degrees (vertical)
-                        minRotation: 90   // Ensure labels are always 90 degrees
+                        autoSkip: true,
+                        maxRotation: 90,
+                        minRotation: 90
                     }
                 }
             }
         }
     });
 }
+
 // #endregion }
 
 // #region Products Lifecycle {
@@ -2887,11 +2950,18 @@ function renderProductLifecycleMetrics(products) {
     document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
 }
 function renderProductAgeChart(products) {
-    const ctx = document.getElementById('productAgeChart').getContext('2d');
+    const canvasId = 'productAgeChart';
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    // 💥 Destroy existing chart if it exists
+    if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+    }
+
     const labels = products.map(product => product.label);
     const ages = products.map(product => product.ageInDays);
 
-    new Chart(ctx, {
+    chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -2923,6 +2993,7 @@ function renderProductAgeChart(products) {
         }
     });
 }
+
 // #endregion }
 
 // #region Most Popular Products {
@@ -3009,6 +3080,7 @@ function renderMostPopularProductsChart(productSales) {
         }
     });
 }
+
 // #endregion }
 
 // #region Least Poplular Products {
@@ -3049,6 +3121,15 @@ function fetchLeastPopularProducts() {
     });
 }
 function renderLeastPopularProductsChart(productSales) {
+    const canvas = document.getElementById('leastPopularProductsChart');
+    if (!canvas) return; // Exit early if the canvas is not found
+    const ctx = canvas.getContext('2d');    
+
+    // 💥 Destroy previous chart if it exists
+    if (chartInstances[canvas]) {
+        chartInstances[canvas].destroy();
+    }
+
     const labels = Object.keys(productSales);
     const salesVolumes = Object.values(productSales);
 
@@ -3059,13 +3140,12 @@ function renderLeastPopularProductsChart(productSales) {
             salesVolume: salesVolumes[index]
         }))
         .sort((a, b) => a.salesVolume - b.salesVolume)
-        .slice(0, 5); // Get least 5
+        .slice(0, 5);
 
     const bottomLabels = bottomProducts.map(product => product.label);
     const bottomSalesVolumes = bottomProducts.map(product => product.salesVolume);
 
-    const ctx = document.getElementById('leastPopularProductsChart').getContext('2d');
-    new Chart(ctx, {
+    chartInstances[canvas] = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: bottomLabels,
@@ -3094,6 +3174,7 @@ function renderLeastPopularProductsChart(productSales) {
         }
     });
 }
+
 // #endregion }
 
 // #region Exports All Charts {
@@ -3400,17 +3481,33 @@ function showModalMessage(message, isSuccess) {
 // #region Exporting
 async function exportToPDF(data) {
     try {
-        const { jsPDF } = window.jspdf; // Ensure jsPDF is loaded from the CDN
+        const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
+    
+        const userId = "demo-user"; // Later replace with auth UID
+    
+        // Step 1: Get the saved color from Firestore
+        let fillColor = "#ffffff"; // Default fallback
+        const doc = await db.collection("pdfLayout").doc(userId).get();
+        if (doc.exists) {
+          const settings = doc.data();
+          if (settings.fillColor) {
+            fillColor = settings.fillColor;
+          }
+        }
+    
+        // Step 2: Convert to RGB and apply
+        const rgb = hexToRgb(fillColor);
+        if (rgb) {
+          pdf.setFillColor(rgb.r, rgb.g, rgb.b);
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        }
 
-        pdf.setFillColor(255, 255, 255); // RGB color
-        pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
-
-        // Add title
         pdf.setFontSize(16);
         pdf.text("Products List", 10, 10);
 
-        // Define table headers and rows
         const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
         const rows = data.map(product => [
             product.label,
@@ -3452,12 +3549,20 @@ async function exportToPDF(data) {
             }
         });
 
-        // Save the PDF
         pdf.save("product-list.pdf");
     } catch (error) {
         console.error("Error exporting to PDF:", error);
     }
 }
+function hexToRgb(hex) {
+    const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+    if (!match) return null;
+    return {
+      r: parseInt(match[1], 16),
+      g: parseInt(match[2], 16),
+      b: parseInt(match[3], 16)
+    };
+  }
 async function fetchProductsforExporting() {
     try {
         const categoryFilter = document.getElementById("category-select").value;
