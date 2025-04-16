@@ -3383,7 +3383,7 @@ function initpdfLayout() {
         <label>Header Row Color:</label>
         <input type="color" id="headerColorPicker" value="#708090" />
         <label>Header Text Color:</label>
-        <input type="color" id="headerTextColor" value="#000000" />
+        <input type="color" id="headerTextColor" value="#ffffff" />
 
         <label>Even Row Color:</label>
         <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
@@ -3451,7 +3451,6 @@ async function saveLayout() {
 
     try {
         await db.collection("pdfLayout").doc(userId).set(settings);
-        alert("Layout saved!");
         showModalMessage(`<p>Layout Changed Successfully.</p>`, true);
     } catch (err) {
         console.error("Error saving layout:", err);
@@ -3539,30 +3538,7 @@ async function createStyledPDF(titleText) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
-    const userId = "demo-user";
-    const doc = await db.collection("pdfLayout").doc(userId).get();
-    const settings = doc.exists ? doc.data() : {};
-
-    // Apply background + title
-    const bg = hexToRgb(settings.fillColor || "#ffffff");
-    pdf.setFillColor(bg.r, bg.g, bg.b);
-    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), "F");
-
-    const titleFontSize = settings.titleFontSize || 16;
-    const fontStyle = settings.fontStyle || "normal";
-    const textColor = hexToRgb(settings.textColor || "#000000");
-    const align = settings.titleAlign || "left";
-
-    pdf.setFontSize(titleFontSize);
-    pdf.setFont(undefined, fontStyle);
-    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let x = 10;
-    if (align === "center") x = pageWidth / 2;
-    else if (align === "right") x = pageWidth - 10;
-
-    pdf.text(titleText, x, 15, { align });
+    const settings = await setPDFLayout(pdf, titleText);
 
     return { pdf, settings };
 }
@@ -3578,14 +3554,12 @@ async function setPDFLayout(pdf, titleText) {
     pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
 
     // Title
+    const titleTextColor = hexToRgb(settings.titleTextColor || "#000000");
     const titleFontSize = settings.titleFontSize || 16;
-    const fontStyle = settings.fontStyle || 'normal';
-    const textColor = hexToRgb(settings.textColor || "#000000");
     const align = settings.titleAlign || "left";
 
     pdf.setFontSize(titleFontSize);
-    pdf.setFont(undefined, fontStyle);
-    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
+    pdf.setTextColor(titleTextColor.r, titleTextColor.g, titleTextColor.b);
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     let x = 10;
@@ -3593,12 +3567,16 @@ async function setPDFLayout(pdf, titleText) {
     else if (align === "right") x = pageWidth - 10;
 
     pdf.text(titleText, x, 15, { align: align });
+    
+    return settings;
 }
 function getPDFTableStyles(settings) {
-    const headerRGB = hexToRgb(settings.headerBgColor || "#708090");
+    const headerRGB = hexToRgb(settings.headerColor || "#708090");
+    const headerTextRGB = hexToRgb(settings.headerTextColor || "#000000");
     const evenRGB = hexToRgb(settings.evenRowColor || "#e6e6d2");
+    const evenTextRGB = hexToRgb(settings.evenRowTextColor || "#000000");
     const oddRGB = hexToRgb(settings.oddRowColor || "#ffffff");
-    const textRGB = hexToRgb(settings.textColor || "#000000");
+    const oddTextRGB = hexToRgb(settings.oddRowTextColor || "#000000");
 
     return {
         theme: "grid",
@@ -3608,30 +3586,32 @@ function getPDFTableStyles(settings) {
             fontSize: 10,
             lineWidth: 0.3,
             lineColor: [0, 0, 0],
-            textColor: [textRGB.r, textRGB.g, textRGB.b],
         },
-        alternateRowStyles: false,
-        didParseCell: (data) => {
-            if (data.section === "head") {
-                data.cell.styles.fillColor = [headerRGB.r, headerRGB.g, headerRGB.b];
-                data.cell.styles.fontStyle = "bold";
-                data.cell.styles.textColor = [textRGB.r, textRGB.g, textRGB.b];
-            } else if (data.section === "body") {
-                const fill = data.row.index % 2 === 0 ? evenRGB : oddRGB;
-                data.cell.styles.fillColor = [fill.r, fill.g, fill.b];
-            }
+        headStyles: {
+            fillColor: [headerRGB.r, headerRGB.g, headerRGB.b],
+            textColor: [headerTextRGB.r, headerTextRGB.g, headerTextRGB.b],
+            fontStyle: 'bold'
+        },
+        bodyStyles: {
+            textColor: [oddTextRGB.r, oddTextRGB.g, oddTextRGB.b],
+            fillColor: [oddRGB.r, oddRGB.g, oddRGB.b],
+        },
+        alternateRowStyles: {
+            fillColor: [evenRGB.r, evenRGB.g, evenRGB.b],
+            textColor: [evenTextRGB.r, evenTextRGB.g, evenTextRGB.b],
         }
     };
 }
 function hexToRgb(hex) {
     const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-    if (!match) return null;
+    if (!match) return { r: 0, g: 0, b: 0 }; // Return black as default if invalid
     return {
         r: parseInt(match[1], 16),
         g: parseInt(match[2], 16),
         b: parseInt(match[3], 16)
     };
 }
+
 async function exportToPDF(data) {
     try {
         const { pdf, settings } = await createStyledPDF("Products List");
@@ -3651,7 +3631,7 @@ async function exportToPDF(data) {
             head: [columns],
             body: rows,
             startY: 20,
-            ...getPDFTableStyles(settings)
+            ...getPDFTableStyles(settings) // Apply table styling here
         });
 
         pdf.save("product-list.pdf");
