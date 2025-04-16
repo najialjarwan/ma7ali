@@ -187,6 +187,9 @@ input:checked + .sliderr::before {
   height: 50px;
   margin-top: 10px;
 }
+#pdf-layout-controls #exit-btn{
+  background-color: transparent;
+}
 /* Top Nav */
 nav {
   height: 5rem;
@@ -1062,7 +1065,8 @@ footer {
 
 #cancel-button,
 #cancel-customer-btn,
-#cancel-debt-btn {
+#cancel-debt-btn,
+#exit-btn {
   background-color: transparent !important;
   color: var(--text-color) !important;
   border: 4px groove var(--input-color) !important;

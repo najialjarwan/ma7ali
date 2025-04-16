@@ -116,10 +116,10 @@ function initializeEventListeners() {
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
     const pdfLayoutLink = document.getElementById('pdf-layout');
-  
+
     pdfLayoutLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      loadContent("pdflayout");
+        e.preventDefault();
+        loadContent("pdflayout");
     });
 
     menuBtn.addEventListener('click', openSidebar);
@@ -191,7 +191,7 @@ async function loadContent(section) {
             showSalesForm();
         //
 
-        if(section === "pdflayout")
+        if (section === "pdflayout")
             initpdfLayout();
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
@@ -199,20 +199,49 @@ async function loadContent(section) {
     }
 }
 
-function initpdfLayout(){
+function initpdfLayout() {
     document.body.innerHTML = `
-    <div id="pdf-layout-controls">
-        <h2>Change PDF Exporting Layout</h2>
+        <div id="pdf-layout-controls">
+            <h2>Change PDF Exporting Layout</h2>
+            <form id="pdf-layout-form" class="produc-form">
+                <label>Background Color:</label>
+                <input type="color" id="fillColorPicker" value="#ffffff" />
 
-        <form id = "pdf-layout-form" class = "produc-form">
-            <label for="fillColorPicker">Background Color:</label>
-            <input type="color" id="fillColorPicker" value="#ffffff"/>
-            <button type = "save" id = "save-layout">Save</button>
-        </form>
-        <button type = "submit" id = "exit-btn">Exit</button>
-    </div>
+                <label>Header Row Color:</label>
+                <input type="color" id="headerColorPicker" value="#708090" />
+
+                <label>Even Row Color:</label>
+                <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
+
+                <label>Odd Row Color:</label>
+                <input type="color" id="oddRowColorPicker" value="#ffffff" />
+
+                <label>Text Color:</label>
+                <input type="color" id="textColorPicker" value="#000000" />
+
+                <label>Title Font Size:</label>
+                <input type="number" id="titleFontSizeInput" value="16" min="8" max="30" />
+
+                <label>Title Font Style:</label>
+                <select id="titleFontStyle">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="italic">Italic</option>
+                </select>
+
+                <label>Title Alignment:</label>
+                <select id="titleAlign">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                </select>
+
+                <button type="submit" id="save-layout">Save</button>
+                <button type="button" id="exit-btn">Exit</button>
+            </form>
+        </div>
+
     `;
-
     const saveLayoutBtn = document.getElementById("save-layout");
     saveLayoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -226,22 +255,29 @@ function initpdfLayout(){
     });
 }
 async function saveLayout() {
-    const fillColor = document.getElementById("fillColorPicker").value;
-  
-    // Simulated user ID (replace later with auth)
     const userId = "demo-user";
-  
+
+    const settings = {
+        fillColor: document.getElementById("fillColorPicker").value,
+        headerBgColor: document.getElementById("headerColorPicker").value,
+        evenRowColor: document.getElementById("evenRowColorPicker").value,
+        oddRowColor: document.getElementById("oddRowColorPicker").value,
+        textColor: document.getElementById("textColorPicker").value,
+        titleFontSize: parseInt(document.getElementById("titleFontSizeInput").value),
+        fontStyle: document.getElementById("titleFontStyle").value,
+        titleAlign: document.getElementById("titleAlign").value,
+    };
+
     try {
-      await db.collection("pdfLayout").doc(userId).set({
-        fillColor: fillColor,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      location.reload();
-    } catch (error) {
-      console.error("Error saving layout settings:", error);
+        await db.collection("pdfLayout").doc(userId).set(settings);
+        alert("Layout saved!");
+        showModalMessage(`<p>Layout Changed Successfully.</p>`, true);
+    } catch (err) {
+        console.error("Error saving layout:", err);
     }
-  }
-  
+}
+
+
 // #endregion
 
 
@@ -3123,7 +3159,7 @@ function fetchLeastPopularProducts() {
 function renderLeastPopularProductsChart(productSales) {
     const canvas = document.getElementById('leastPopularProductsChart');
     if (!canvas) return; // Exit early if the canvas is not found
-    const ctx = canvas.getContext('2d');    
+    const ctx = canvas.getContext('2d');
 
     // 💥 Destroy previous chart if it exists
     if (chartInstances[canvas]) {
@@ -3479,90 +3515,104 @@ function showModalMessage(message, isSuccess) {
 
 
 // #region Exporting
-async function exportToPDF(data) {
-    try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
-    
-        const userId = "demo-user"; // Later replace with auth UID
-    
-        // Step 1: Get the saved color from Firestore
-        let fillColor = "#ffffff"; // Default fallback
-        const doc = await db.collection("pdfLayout").doc(userId).get();
-        if (doc.exists) {
-          const settings = doc.data();
-          if (settings.fillColor) {
-            fillColor = settings.fillColor;
-          }
-        }
-    
-        // Step 2: Convert to RGB and apply
-        const rgb = hexToRgb(fillColor);
-        if (rgb) {
-          pdf.setFillColor(rgb.r, rgb.g, rgb.b);
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
-          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-        }
+async function createStyledPDF(titleText) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
 
-        pdf.setFontSize(16);
-        pdf.text("Products List", 10, 10);
+    const userId = "demo-user";
+    const doc = await db.collection("pdfLayout").doc(userId).get();
+    const settings = doc.exists ? doc.data() : {};
 
-        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
-        const rows = data.map(product => [
-            product.label,
-            product.barcode,
-            product.costPrice.toFixed(2),
-            product.profit.toFixed(2),
-            product.category,
-            product.stock,
-            product.createdAt
-        ]);
+    // Apply background + title
+    const bg = hexToRgb(settings.fillColor || "#ffffff");
+    pdf.setFillColor(bg.r, bg.g, bg.b);
+    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), "F");
 
-        pdf.autoTable({
-            head: [columns],
-            body: rows,
-            startY: 20,
-            theme: "grid",
-            styles: {
-                valign: "middle",
-                halign: "center",
-                fontSize: 10,
-                lineWidth: 0.3,
-                lineColor: [0, 0, 0]
-            },
-            alternateRowStyles: false, // We'll handle this manually
-            didParseCell: data => {
-                if (data.section === "head") {
-                    data.cell.styles.fillColor = [200, 200, 220]; // Header background
-                    data.cell.styles.fontStyle = "bold";
-                    data.cell.styles.textColor = [0, 0, 0];
-                } else if (data.section === "body") {
-                    if (data.row.index % 2 === 0) {
-                        // Even rows
-                        data.cell.styles.fillColor = [250, 250, 210]; // Light background
-                    } else {
-                        // Odd rows
-                        data.cell.styles.fillColor = [255, 255, 255]; // White background
-                    }
-                }
+    const titleFontSize = settings.titleFontSize || 16;
+    const fontStyle = settings.fontStyle || "normal";
+    const textColor = hexToRgb(settings.textColor || "#000000");
+    const align = settings.titleAlign || "left";
+
+    pdf.setFontSize(titleFontSize);
+    pdf.setFont(undefined, fontStyle);
+    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let x = 10;
+    if (align === "center") x = pageWidth / 2;
+    else if (align === "right") x = pageWidth - 10;
+
+    pdf.text(titleText, x, 15, { align });
+
+    return { pdf, settings };
+}
+async function setPDFLayout(pdf, titleText) {
+    const userId = "demo-user";
+    const doc = await db.collection("pdfLayout").doc(userId).get();
+
+    const settings = doc.exists ? doc.data() : {};
+
+    // Background
+    const bgRGB = hexToRgb(settings.fillColor || "#ffffff");
+    pdf.setFillColor(bgRGB.r, bgRGB.g, bgRGB.b);
+    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
+
+    // Title
+    const titleFontSize = settings.titleFontSize || 16;
+    const fontStyle = settings.fontStyle || 'normal';
+    const textColor = hexToRgb(settings.textColor || "#000000");
+    const align = settings.titleAlign || "left";
+
+    pdf.setFontSize(titleFontSize);
+    pdf.setFont(undefined, fontStyle);
+    pdf.setTextColor(textColor.r, textColor.g, textColor.b);
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let x = 10;
+    if (align === "center") x = pageWidth / 2;
+    else if (align === "right") x = pageWidth - 10;
+
+    pdf.text(titleText, x, 15, { align: align });
+}
+function getPDFTableStyles(settings) {
+    const headerRGB = hexToRgb(settings.headerBgColor || "#708090");
+    const evenRGB = hexToRgb(settings.evenRowColor || "#e6e6d2");
+    const oddRGB = hexToRgb(settings.oddRowColor || "#ffffff");
+    const textRGB = hexToRgb(settings.textColor || "#000000");
+
+    return {
+        theme: "grid",
+        styles: {
+            valign: "middle",
+            halign: "center",
+            fontSize: 10,
+            lineWidth: 0.3,
+            lineColor: [0, 0, 0],
+            textColor: [textRGB.r, textRGB.g, textRGB.b],
+        },
+        alternateRowStyles: false,
+        didParseCell: (data) => {
+            if (data.section === "head") {
+                data.cell.styles.fillColor = [headerRGB.r, headerRGB.g, headerRGB.b];
+                data.cell.styles.fontStyle = "bold";
+                data.cell.styles.textColor = [textRGB.r, textRGB.g, textRGB.b];
+            } else if (data.section === "body") {
+                const fill = data.row.index % 2 === 0 ? evenRGB : oddRGB;
+                data.cell.styles.fillColor = [fill.r, fill.g, fill.b];
             }
-        });
-
-        pdf.save("product-list.pdf");
-    } catch (error) {
-        console.error("Error exporting to PDF:", error);
-    }
+        }
+    };
 }
 function hexToRgb(hex) {
     const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
     if (!match) return null;
     return {
-      r: parseInt(match[1], 16),
-      g: parseInt(match[2], 16),
-      b: parseInt(match[3], 16)
+        r: parseInt(match[1], 16),
+        g: parseInt(match[2], 16),
+        b: parseInt(match[3], 16)
     };
-  }
+}
+
 async function fetchProductsforExporting() {
     try {
         const categoryFilter = document.getElementById("category-select").value;
@@ -3642,6 +3692,33 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
+async function exportToPDF(data) {
+    try {
+        const { pdf, settings } = await createStyledPDF("Products List");
+
+        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
+        const rows = data.map(product => [
+            product.label,
+            product.barcode,
+            product.costPrice.toFixed(2),
+            product.profit.toFixed(2),
+            product.category,
+            product.stock,
+            product.createdAt
+        ]);
+
+        pdf.autoTable({
+            head: [columns],
+            body: rows,
+            startY: 20,
+            ...getPDFTableStyles(settings)
+        });
+
+        pdf.save("product-list.pdf");
+    } catch (err) {
+        console.error("Error exporting PDF:", err);
+    }
+}
 
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
@@ -3659,12 +3736,9 @@ async function fetchDebtDetailsForExport(customerId) {
 
     return { debts, total: total.toFixed(2) };
 }
-function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
+async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
 
-    pdf.setFillColor(200, 200, 220);
-    pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
+    const pdf = await createStyledPDF();
 
     pdf.setFontSize(16);
     pdf.text("Customer Debt Details", 10, 10);
@@ -3769,11 +3843,7 @@ async function exportCartToPDF() {
         };
     });
 
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-
-    pdf.setFillColor(180, 180, 250); // RGB color
-    pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
+    const pdf = await createStyledPDF();
 
     // Title
     pdf.setFontSize(16);
@@ -3904,18 +3974,11 @@ async function exportCartToPDF() {
 
 async function exportSalesTableToPDF(event) {
     try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
 
-        pdf.setFillColor(250, 250, 210); // RGB color
-        pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
-
-        // Locate the button that triggered the export
         const button = event.target;
 
-        // Find the associated table and its header
-        const table = button.closest(".table-actions").previousElementSibling; // <table>
-        const salesHeader = table.previousElementSibling; // <h3>Sales on DATE
+        const table = button.closest(".table-actions").previousElementSibling;
+        const salesHeader = table.previousElementSibling;
 
         if (!table || !salesHeader) {
             console.error("Table or header not found.");
@@ -3924,19 +3987,12 @@ async function exportSalesTableToPDF(event) {
 
         const salesDate = salesHeader.textContent.replace("Sales on ", "").trim();
 
-        // Set PDF title
-        pdf.setFontSize(16);
-        pdf.text(`Sales Report - ${salesDate}`, 10, 10);
-
-        // Extract headers from <thead>
         const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText);
 
-        // Extract rows from <tbody>
         const bodyRows = Array.from(table.querySelectorAll("tbody tr")).map(row =>
             Array.from(row.querySelectorAll("td")).map(td => td.innerText)
         );
 
-        // Extract the footer row from <tfoot>
         const footerRow = table.querySelector("tfoot tr");
         const footerCells = Array.from(footerRow.querySelectorAll("td")).map((td, index) => {
             if (index === 0) {
@@ -3950,10 +4006,12 @@ async function exportSalesTableToPDF(event) {
             }
         });
 
-        // Combine body rows and footer row
         const rowsWithFooter = [...bodyRows, footerCells];
 
-        // Generate the table in the PDF with row styling
+        const pdf = await createStyledPDF();
+        pdf.setFontSize(16);
+        pdf.text(`Sales Report - ${salesDate}`, 10, 10);
+
         pdf.autoTable({
             head: [headers],
             body: rowsWithFooter,
@@ -3989,12 +4047,13 @@ async function exportSalesTableToPDF(event) {
             }
         });
 
-        // Save the PDF
         pdf.save(`sales-report-${salesDate}.pdf`);
     } catch (error) {
         console.error("Error exporting sales table:", error);
     }
 }
+
+
 // #endregion
 
 document.addEventListener("DOMContentLoaded", () => {
