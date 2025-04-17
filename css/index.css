@@ -435,7 +435,7 @@ footer {
 .slider.active {
   transform: translateY(-5rem) scaleX(1.1);
   border-radius: 20px;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(2px);
   border-top: 1px solid var(--text-color);
   border-bottom: 1px solid var(--text-color);
   padding-left:  10px !important;

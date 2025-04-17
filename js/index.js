@@ -3635,7 +3635,7 @@ async function setPDFLayout(pdf, titleText) {
 
     return settings;
 }
-async function getPDFTableStyles(settings) {
+function getPDFTableStyles(settings) {
     const headerRGB = hexToRgb(settings.headerColor || "#708090");
     const headerTextRGB = hexToRgb(settings.headerTextColor || "#ffffff");
     const evenRGB = hexToRgb(settings.evenRowColor || "#e6e6d2");
@@ -3696,7 +3696,7 @@ async function exportToPDF(data) {
             head: [columns],
             body: rows,
             startY: 20,
-            ...getPDFTableStyles(settings) // Apply table styling here
+            ...getPDFTableStyles(settings)
         });
 
         pdf.save("product-list.pdf");
@@ -3917,10 +3917,6 @@ async function exportCartToPDF() {
 
     // Fetch cart products from the subcollection
     const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
-    if (cartProductsSnapshot.empty) {
-        alert("Cart is empty. Please add products before exporting.");
-        return;
-    }
 
     const cartProducts = cartProductsSnapshot.docs.map(doc => {
         const data = doc.data();
