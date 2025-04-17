@@ -32,7 +32,7 @@ body {
   background-size: cover;
   background-attachment: fixed;
   background-position: center center;
-  overflow: scroll;
+  overflow: hidden;
   touch-action: manipulation;
 }
 
@@ -151,7 +151,10 @@ input:checked + .sliderr {
 input:checked + .sliderr::before {
   transform: translateX(28px);
 }
-
+#pdf-layout-controls{
+  max-height: 100vh;
+  overflow-y: auto;
+}
 #pdf-layout-controls h2{
   padding: 1rem;
   margin: 1rem;
@@ -1255,15 +1258,23 @@ footer {
   align-items: center;
   border-bottom: 3px solid var(--accent-color);
 }
-
+.cart-products-list-container{
+  width: 100%;
+}
 .cart-products-list{
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-top: 3px solid var(--accent-color);
+  border-bottom: 3px solid var(--accent-color);
   border-radius: 5px;
+}
+
+#export-cart{
+  width: 96%;
+  padding: 10px 0 !important;
+  margin: 10px 0;
 }
 
 /* Overlay styling */
@@ -1332,13 +1343,13 @@ footer {
 }
 
 .inventory-analytics h2{
+  color: var(--text-color);
   width: 100%;
   padding: 1rem;
-  margin: 1rem;
   font-size: 1.3rem;
-  border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   font-family: sans-serif;
+  font-weight: bolder;
 }
 
 canvas {

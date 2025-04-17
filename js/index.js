@@ -620,7 +620,7 @@ async function displayCart(cartId) {
                 if (!exportBtn) {
                     exportBtn = document.createElement("button");
                     exportBtn.id = "export-cart";
-                    exportBtn.className = "export-product-btn";
+                    exportBtn.className = "export-btn";
                     exportBtn.textContent = "Export Cart";
                     exportBtn.style.padding = "20px";
                     exportBtn.addEventListener("click", exportCartToPDF);
@@ -701,24 +701,27 @@ async function fetchProductToAdd() {
             ...doc.data()
         }));
 
-        // Initial display of all products
-        displayProducts(allProducts);
 
-        // Debounce the search input to avoid frequent calls
+        if (showSales)
+            displayProducts(allProducts);
+
         let debounceTimer;
         searchInput.addEventListener("input", function () {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const searchValue = searchInput.value.toLowerCase().trim();
+                if (searchValue === "" && !showSales) {
+                    return;
+                }
                 const filteredProducts = allProducts.filter(product =>
-                    product.label.toLowerCase().includes(searchValue)
+                    showSales ? product.label.toLowerCase().includes(searchValue) : product.label.toLowerCase() === (searchValue)
                 );
                 displayProducts(filteredProducts);
-            }, 500); // Adjust debounce delay as needed
+            }, 500);
         });
 
         async function displayProducts(products) {
-            productCardContainer.innerHTML = ""; // Clear previous results
+            productCardContainer.innerHTML = "";
             if (products.length === 0) {
                 productCardContainer.innerHTML = `
                     <div class="no-products-message">
@@ -2166,7 +2169,7 @@ function renderSalesTable(salesData) {
 // #endregion
 // #endregion }
 
-// #region Dashboard Section [
+// #region Dashboard Section {
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -3322,6 +3325,8 @@ async function fetchSalesDataAndRenderInsights() {
 }
 // #endregion }
 
+// #endregion }
+
 // #endregion ]
 
 
@@ -3351,7 +3356,7 @@ function toggleTheme() {
     if (baseColor === initialBaseColor) {
         root.style.setProperty("--accent-color", "rgb(151, 184, 216)");
         root.style.setProperty("--input-color", "rgb(255, 255, 255)");
-        popImg.style.filter = "grayscale(10%) brightness(100%) invert(92%) sepia(60%) saturate(150%) hue-rotate(210deg)";
+        popImg.style.filter = "invert(81%) sepia(17%) saturate(1410%) hue-rotate(180deg) brightness(94%) contrast(92%)";
     } else {
         root.style.setProperty("--accent-color", initialBaseColor);
         root.style.setProperty("--text-color", initialTextColor);
@@ -3597,7 +3602,7 @@ function showModalMessage(message, isSuccess) {
 }
 // #endregion
 
-
+  
 // #region Exporting
 async function createStyledPDF(titleText) {
     const { jsPDF } = window.jspdf;
