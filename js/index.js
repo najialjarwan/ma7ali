@@ -3856,7 +3856,6 @@ async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, 
     }
 }
 
-
 async function exportCartToPDF() {
     if (!currentCartId) {
         console.error("No active cart to export.");
@@ -3884,93 +3883,27 @@ async function exportCartToPDF() {
         };
     });
 
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.setFontSize(16);
-    pdf.text("Cart Details", 10, 10);
+    const { pdf, settings } = await createStyledPDF("Customer Debt Details");
+    const styles = getPDFTableStyles(settings);
 
-    const cartDetails = [
-        [
-            {
-                content: "Cart Name:",
-                styles: {
-                    fillColor: [200, 200, 220],
-                    fontStyle: "bold",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 30
-                }
-            },
-            {
-                content: cartData.name,
-                styles: {
-                    fillColor: [250, 250, 210],
-                    fontStyle: "normal",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 63
-                }
-            }
-        ],
-        [
-            {
-                content: "Date Created:",
-                styles: {
-                    fillColor: [200, 200, 220],
-                    fontStyle: "bold",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 30
-                }
-            },
-            {
-                content: cartData.dateCreated.toDate().toLocaleString(),
-                styles: {
-                    fillColor: [250, 250, 210],
-                    fontStyle: "normal",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 63
-                }
-            }
-        ],
-        [
-            {
-                content: "Total Cost:",
-                styles: {
-                    fillColor: [200, 200, 220],
-                    fontStyle: "bold",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 30
-                }
-            },
-            {
-                content: `$${cartData.totalCost.toFixed(2)}`,
-                styles: {
-                    fillColor: [250, 250, 210],
-                    fontStyle: "normal",
-                    halign: "left",
-                    textColor: [0, 0, 0],
-                    cellWidth: 63
-                }
-            }
-        ]
+    const cartDetailsHead = [["Field", "Value"]];
+    const cartDetailsBody = [
+        ["Cart Name:", cartData.name],
+        ["Date Created:", cartData.dateCreated.toDate().toLocaleString()],
+        ["Total Cost:", `$${cartData.totalCost.toFixed(2)}`]
     ];
 
     pdf.autoTable({
-        body: cartDetails,
+        head: cartDetailsHead,
+        body: cartDetailsBody,
         startY: 20,
-        theme: "grid",
-        styles: {
-            fontSize: 11,
-            valign: "middle",
-            lineWidth: 0.3,
-            lineColor: [0, 0, 0]
+        ...styles,
+        columnStyles: {
+            0: { cellWidth: 35, halign: 'left', fontStyle: 'bold' },
+            1: { cellWidth: 55, halign: 'left' }
         }
     });
 
-    // --- Styled Cart Products Table ---
     const finalY = pdf.lastAutoTable.finalY + 10;
     const columns = ["Product Name", "Quantity", "Cost Price ($)", "Total ($)"];
     const rows = cartProducts.map(product => [
@@ -3984,30 +3917,9 @@ async function exportCartToPDF() {
         head: [columns],
         body: rows,
         startY: finalY,
-        theme: "grid",
-        styles: {
-            valign: "middle",
-            halign: "center",
-            fontSize: 10,
-            lineWidth: 0.3,
-            lineColor: [0, 0, 0]
-        },
-        alternateRowStyles: false,
-        didParseCell: data => {
-            if (data.section === "head") {
-                data.cell.styles.fillColor = [200, 200, 220];
-                data.cell.styles.fontStyle = "bold";
-                data.cell.styles.textColor = [0, 0, 0];
-            } else if (data.section === "body") {
-                data.cell.styles.fillColor = data.row.index % 2 === 0
-                    ? [250, 250, 210]
-                    : [255, 255, 255];
-                data.cell.styles.textColor = [0, 0, 0];
-            }
-        }
+        ...styles,
     });
 
-    // Save PDF
     pdf.save(`${cartData.name}_export.pdf`);
 }
 
