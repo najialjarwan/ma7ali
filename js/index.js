@@ -885,30 +885,25 @@ async function addToSales(productId, label, costPrice, profit) {
 
     if (updateSaleTimer) clearTimeout(updateSaleTimer);
     updateSaleTimer = setTimeout(() => {
-        syncSalesToFirestore();
+        syncSalesToFirestore(productId);
     }, 300);
     refreshProductList();
 }
-async function syncSalesToFirestore() {
-
-
+async function syncSalesToFirestore(productId) {
+    const product = localSale[productId];
     const saleDoc = db.collection("sales").doc(currentSaleId);
 
-    // Sync each product to the productsSold subcollection
-    for (const productId in localSale) {
-        const product = localSale[productId];
-        await saleDoc.collection("productsSold").doc(productId).set({
-            name: product.name,
-            quantity: product.quantity,
-            costPrice: product.costPrice,
-            profit: product.profit,
-            total: product.total,
-            totalProfit: product.totalProfit,
-            dateSold: firebase.firestore.Timestamp.now()
-        }, { merge: true });
-    }
+    await saleDoc.collection("productsSold").doc(productId).set({
+        name: product.name,
+        quantity: product.quantity,
+        costPrice: product.costPrice,
+        profit: product.profit,
+        total: product.total,
+        totalProfit: product.totalProfit,
+        dateSold: firebase.firestore.Timestamp.now()
+    }, { merge: true });
 
-    // Now calculate totals from productsSold collection
+    // Recalculate totals
     const productsSnapshot = await saleDoc.collection("productsSold").get();
     let totalProductsSold = 0;
     let totalRevenue = 0;
