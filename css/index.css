@@ -32,7 +32,7 @@ body {
   background-size: cover;
   background-attachment: fixed;
   background-position: center center;
-  overflow: hidden;
+  overflow: scroll;
   touch-action: manipulation;
 }
 
@@ -161,17 +161,41 @@ input:checked + .sliderr::before {
   font-family: sans-serif;
 }
 
+#pdf-layout-controls hr {
+  margin: 20px 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--accent-color);
+}
+
 #pdf-layout-controls form{
-  padding: 5px 20px;
+  padding: 0 20px 50px 20px;
+}
+
+#pdf-layout-controls select{
+  width: 100%;
+  height: 50px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--input-color);
+  color: var(--text-color);
+  font-size: 20px;
 }
 
 #pdf-layout-controls label {
   font-weight: bold;
+  display: flex;
+  justify-content: flex-start;
 }
 
 #pdf-layout-controls input{
-  width: 50%;
+  -webkit-appearance: none;
+  appearance: none;
   border: none;
+  border-radius: 5px;
+  width: 100%;
+  height: 50px;
+  font-size: 20px;
 }
 
 #pdf-layout-controls button{
@@ -186,6 +210,9 @@ input:checked + .sliderr::before {
   width: 100%;
   height: 50px;
   margin-top: 10px;
+}
+#pdf-layout-controls button:active{
+  transform: scaleY(0.8);
 }
 #pdf-layout-controls #exit-btn{
   background-color: transparent;

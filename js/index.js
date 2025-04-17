@@ -963,8 +963,9 @@ async function cancelSale(productId) {
 
     // Step 2: Restore stock in the products collection
     await productRef.update({
-        stock: firebase.firestore.FieldValue.increment(1) // Restores stock by 1
+        stock: firebase.firestore.FieldValue.increment(1)
     });
+    refreshProductList();
 
     // Step 3: Recalculate the totals of all sales
     let totalProductsSold = 0;
@@ -983,8 +984,6 @@ async function cancelSale(productId) {
         totalRevenue: totalRevenue,
         totalProfit
     }, { merge: true });
-
-
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
     const today = new Date().toLocaleDateString('en-CA');
@@ -3361,44 +3360,81 @@ function toggleTheme() {
         popImg.style.filter = "invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%)";
     }
 }
-function initpdfLayout() {
+async function initpdfLayout() {
+
+    const userId = "demo-user";
+
+    const doc = await db.collection("pdfLayout").doc(userId).get();
+    const settings = doc.exists ? doc.data() : {};
+
+    const originalSettings = {
+        fillColor: settings.fillColor || "#ffffff",
+        titleTextColor: settings.titleTextColor || "#000000",
+        titleFontSize: settings.titleFontSize || 16,
+        titleAlign: settings.titleAlign || "left",
+        headerColor: settings.headerColor || "#708090",
+        headerTextColor: settings.headerTextColor || "#ffffff",
+        evenRowColor: settings.evenRowColor || "#e6e6d2",
+        evenRowTextColor: settings.evenRowTextColor || "#000000",
+        oddRowColor: settings.oddRowColor || "#ffffff",
+        oddRowTextColor: settings.oddRowTextColor || "#000000"
+    };
+
+    const factoryDefaults = {
+        fillColor: "#ffffff",
+        titleTextColor: "#000000",
+        titleFontSize: 16,
+        titleAlign: "left",
+        headerColor: "#708090",
+        headerTextColor: "#ffffff",
+        evenRowColor: "#e6e6d2",
+        evenRowTextColor: "#000000",
+        oddRowColor: "#ffffff",
+        oddRowTextColor: "#000000"
+    };
+
     document.body.innerHTML = `
-<div id="pdf-layout-controls">
-    <h2>Change PDF Exporting Layout</h2>
-    <form id="pdf-layout-form" class="produc-form">
-        <label>Background Color:</label>
-        <input type="color" id="fillColorPicker" value="#ffffff" />
+    <div id="pdf-layout-controls">
+        <h2>Change PDF Exporting Layout</h2>
+        <form id="pdf-layout-form" class="produc-form">
+            <label>Background Color:</label>
+            <input type="color" id="fillColorPicker" value="${originalSettings.fillColor}" />
+    
+            <label>Title Text Color:</label>
+            <input type="color" id="titleTextColor" value="${originalSettings.titleTextColor}" />
+            <label>Title Font Size:</label>
+            <input type="number" id="titleFontSizeInput" value="${originalSettings.titleFontSize}" min="8" max="30" />
+            <label>Title Alignment:</label>
+            <select id="titleAlign">
+                <option value="left" ${originalSettings.titleAlign === 'left' ? 'selected' : ''}>Left</option>
+                <option value="center" ${originalSettings.titleAlign === 'center' ? 'selected' : ''}>Center</option>
+                <option value="right" ${originalSettings.titleAlign === 'right' ? 'selected' : ''}>Right</option>
+            </select>
+    
+            <label>Header Row Color:</label>
+            <input type="color" id="headerColorPicker" value="${originalSettings.headerColor}" />
+            <label>Header Text Color:</label>
+            <input type="color" id="headerTextColor" value="${originalSettings.headerTextColor}" />
+    
+            <label>Even Row Color:</label>
+            <input type="color" id="evenRowColorPicker" value="${originalSettings.evenRowColor}" />
+            <label>Even Row Text Color:</label>
+            <input type="color" id="evenRowTextColor" value="${originalSettings.evenRowTextColor}" />
+    
+            <label>Odd Row Color:</label>
+            <input type="color" id="oddRowColorPicker" value="${originalSettings.oddRowColor}" />
+            <label>Odd Row Text Color:</label>
+            <input type="color" id="oddRowTextColor" value="${originalSettings.oddRowTextColor}" />
+    
+            <hr>
+    
+            <button type="submit" id="save-layout">Save</button>
+            <button id="reset-changes" type="button" class="func-btn">Reset Changes</button>
+            <button id="reset-layout-default" type="button" class="func-btn" style="color: red;">Reset to Default</button>
+            <button type="button" id="exit-btn">Exit</button>
 
-        <label>Title Text Color:</label>
-        <input type="color" id="titleTextColor" value="#000000" />
-        <label>Title Font Size:</label>
-        <input type="number" id="titleFontSizeInput" value="16" min="8" max="30" />
-        <label>Title Alignment:</label>
-        <select id="titleAlign">
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-        </select>
-
-        <label>Header Row Color:</label>
-        <input type="color" id="headerColorPicker" value="#708090" />
-        <label>Header Text Color:</label>
-        <input type="color" id="headerTextColor" value="#ffffff" />
-
-        <label>Even Row Color:</label>
-        <input type="color" id="evenRowColorPicker" value="#e6e6d2" />
-        <label>Even Row Text Color:</label>
-        <input type="color" id="evenRowTextColor" value="#000000" />
-
-        <label>Odd Row Color:</label>
-        <input type="color" id="oddRowColorPicker" value="#ffffff" />
-        <label>Odd Row Text Color:</label>
-        <input type="color" id="oddRowTextColor" value="#000000" />
-
-        <button type="submit" id="save-layout">Save</button>
-        <button type="button" id="exit-btn">Exit</button>
-    </form>
-</div>
+        </form>
+    </div>
     `;
 
     const saveLayoutBtn = document.getElementById("save-layout");
@@ -3407,8 +3443,37 @@ function initpdfLayout() {
         saveLayout();
     });
 
+    function applyInputValue(settingKey, value) {
+        const map = {
+            fillColor: "fillColorPicker",
+            titleTextColor: "titleTextColor",
+            titleFontSize: "titleFontSizeInput",
+            titleAlign: "titleAlign",
+            headerColor: "headerColorPicker",
+            headerTextColor: "headerTextColor",
+            evenRowColor: "evenRowColorPicker",
+            evenRowTextColor: "evenRowTextColor",
+            oddRowColor: "oddRowColorPicker",
+            oddRowTextColor: "oddRowTextColor"
+        };
+        const elementId = map[settingKey];
+        if (elementId) {
+            document.getElementById(elementId).value = value;
+        }
+    }
+    document.getElementById("reset-changes").addEventListener("click", () => {
+        Object.entries(originalSettings).forEach(([key, value]) => {
+            applyInputValue(key, value);
+        });
+    });
+
+    document.getElementById("reset-layout-default").addEventListener("click", () => {
+        Object.entries(factoryDefaults).forEach(([key, value]) => {
+            applyInputValue(key, value);
+        });
+    });
+
     const exitBtn = document.getElementById("exit-btn");
-    console.log(exitBtn);
     exitBtn.addEventListener("click", () => {
         location.reload();
     });
@@ -3746,7 +3811,7 @@ async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, 
             debt.balance,
             debt.createdAt
         ]);
-        console.log(settings);
+
         const headerColor = hexToRgb(settings.headerColor || "#708090");
         const headerTextColor = hexToRgb(settings.headerTextColor || "#ffffff");
         rows.push([
