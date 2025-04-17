@@ -1,4 +1,4 @@
-// #region Firebase Config
+// #region ✅ Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
@@ -42,7 +42,7 @@ window.addEventListener("offline", updateOnlineStatus);
 // #endregion
 
 
-// #region EventListeners and LoadContent
+// #region ▶️ EventListeners and LoadContent {
 function initializeEventListeners() {
 
     // #region Pop Button And Adders
@@ -198,16 +198,10 @@ async function loadContent(section) {
         console.error(error);
     }
 }
+// #endregion }
 
 
-
-
-// #endregion
-
-
-// #region Adder Section [
-
-// #region Add Product Section {
+// #region 1️⃣ Add Product Section {
 function showProductForm() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -382,7 +376,7 @@ async function addProduct() {
 }
 // #endregion }
 
-// #region Add Customer Section {
+// #region 2️⃣ Add Customer Section {
 function showCustomerForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -456,7 +450,7 @@ async function addCustomer() {
 }
 // #endregion }
 
-// #region Add Cart Secton {
+// #region 3️⃣ Add Cart Secton {
 function showCartForm() {
     showSales = false;
     localSale = {};
@@ -835,7 +829,7 @@ async function displayProductToAdd(product, productId) {
 }
 // #endregion }
 
-// #region Add Sales Section {
+// #region 4️⃣ Add Sales Section {
 let showSales = false;
 let localSale = {};
 let updateSaleTimer = null;
@@ -1065,12 +1059,8 @@ function showLoadingOverlay(duration = 400) {
 }
 // #endregion }
 
-// #endregion ]
 
-
-// #region Sections Content [
-
-// #region Products Section {
+// #region 1️⃣ Products Section {
 function initProductPage() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -1557,7 +1547,7 @@ function removeProductFromFirebase(productId) {
 }
 // #endregion }
 
-// #region Customers Section {
+// #region 2️⃣ Customers Section {
 function initCustomersPage() {
 
     const mainContent = document.querySelector(".main-content");
@@ -1795,7 +1785,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 }
 // #endregion }
 
-// #region Cart And Sales Section {
+// #region 3️⃣ Cart And Sales Section {
 function initCartsAndSalesSection() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -2164,7 +2154,7 @@ function renderSalesTable(salesData) {
 // #endregion
 // #endregion }
 
-// #region Dashboard Section {
+// #region 4️⃣ Dashboard Section {
 function initDashboard() {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -3322,10 +3312,8 @@ async function fetchSalesDataAndRenderInsights() {
 
 // #endregion }
 
-// #endregion ]
 
-
-// #region Sidebar Section
+// #region 🟦 Sidebar Region
 let initialBaseColor, initialTextColor, initialInputColor, initialAccentColor;
 function toggleTheme() {
     const root = document.documentElement;
@@ -3597,8 +3585,8 @@ function showModalMessage(message, isSuccess) {
 }
 // #endregion
 
-  
-// #region Exporting
+
+// #region 🟨 Exporting Region
 async function createStyledPDF(titleText) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
@@ -3840,8 +3828,8 @@ async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, 
             },
             ...styles
         });
-        
-              
+
+
 
         pdf.autoTable({
             head: [columns],
@@ -3944,58 +3932,42 @@ async function exportSalesTableToPDF(event) {
             Array.from(row.querySelectorAll("td")).map(td => td.innerText)
         );
 
+        const { pdf, settings } = await createStyledPDF(`sales on ${salesDate}`);
+        const styles = getPDFTableStyles(settings);
+        const headerColor = hexToRgb(settings.headerColor || "#708090");
+        const headerTextColor = hexToRgb(settings.headerTextColor || "#ffffff");
+
         const footerRow = table.querySelector("tfoot tr");
         const footerCells = Array.from(footerRow.querySelectorAll("td")).map((td, index) => {
             if (index === 0) {
                 return {
                     content: td.innerText,
                     colSpan: 3,
-                    styles: { halign: "center", fontStyle: "bold" }
+                    styles: {
+                        fontStyle: 'bold',
+                        fillColor: [headerColor.r, headerColor.g, headerColor.b],
+                        textColor: [headerTextColor.r, headerTextColor.g, headerTextColor.b]
+                    }
                 };
             } else {
-                return { content: td.innerText, styles: { fontStyle: "bold" } };
+                return {
+                    content: td.innerText,
+                    styles: {
+                        fontStyle: 'bold',
+                        fillColor: [headerColor.r, headerColor.g, headerColor.b],
+                        textColor: [headerTextColor.r, headerTextColor.g, headerTextColor.b]
+                    }
+                };
             }
         });
 
         const rowsWithFooter = [...bodyRows, footerCells];
 
-        const pdf = await createStyledPDF();
-        pdf.setFontSize(16);
-        pdf.text(`Sales Report - ${salesDate}`, 10, 10);
-
         pdf.autoTable({
             head: [headers],
             body: rowsWithFooter,
             startY: 20,
-            theme: "grid",
-            styles: {
-                valign: "middle", // Vertically center content in all cells
-                halign: "center", // Horizontally center content in all cells
-                fontSize: 10,
-                lineWidth: 0.3, // Set border thickness to 3 pixels for all cells
-                lineColor: [0, 0, 0] // Border color (black in RGB)
-            },
-            alternateRowStyles: false, // Disable default row styling
-            didParseCell: data => {
-                if (data.section === "head") {
-                    // Apply specific styles for header cells
-                    data.cell.styles.fillColor = [200, 200, 220]; // Background color for headers
-                    data.cell.styles.fontStyle = "bold"; // Bold font for headers
-                    data.cell.styles.textColor = [0, 0, 0]; // Black text for headers
-                } else if (data.section === "body") {
-                    if (data.row.index === bodyRows.length) {
-                        // Styling for totals row (footer)
-                        data.cell.styles.fillColor = [211, 211, 211]; // Light goldenrod yellow
-                        data.cell.styles.fontStyle = "bold"; // Bold font
-                    } else if (data.row.index % 2 === 0) {
-                        // Even row styling
-                        data.cell.styles.fillColor = [250, 250, 210]; // Light gray
-                    } else {
-                        // Odd row styling
-                        data.cell.styles.fillColor = [255, 255, 255]; // White background
-                    }
-                }
-            }
+            ...styles
         });
 
         pdf.save(`sales-report-${salesDate}.pdf`);
