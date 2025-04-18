@@ -218,16 +218,16 @@ function showProductForm() {
             <button type="button" id="customFileButton">Choose File</button>
 
             <label for="costPrice">Cost Price($): </label>
-            <input type="text" id="costPrice" name="costPrice" ><br>
+            <input type="text" id="costPrice" name="costPrice"><br>
 
             <label for="profit">Profit($): </label>
-            <input type="number" id="profit" name="profit" ><br>
+            <input type="text" id="profit" name="profit" ><br>
 
             <label for="category">Category: </label>
             <input type="text" id="category" name="category"><br>
 
             <label for="stock">Stock Quantity: </label>
-            <input type="number" id="stock" name="stock" ><br>
+            <input type="text" id="stock" name="stock" ><br>
 
             <button type="submit">Add</button>
         </form>
@@ -241,12 +241,117 @@ function showProductForm() {
         document.getElementById("fileName").textContent = `Selected: ${fileName}`;
     });
 }
-async function addProduct() {
+function addProduct() {
     const form = document.getElementById("product-form");
+
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        showLoadingOverlay(3000);
+        console.log("[FORM SUBMIT] Form submitted.");
+
+        clearFieldErrors();
+        console.log("[CLEAR ERRORS] All previous field errors cleared.");
+
+        function setFieldError(fieldId, message) {
+            console.log("set field erro is called");
+            const input = document.getElementById(fieldId);
+            input.classList.add("input-error");
+            let errorMsg = input.parentNode.querySelector(`.error-text[data-for="${fieldId}"]`);
+            if (!errorMsg) {
+                errorMsg = document.createElement("span");
+                errorMsg.className = "error-text";
+                errorMsg.dataset.for = fieldId;
+                input.insertAdjacentElement("afterend", errorMsg);
+            }
+            errorMsg.textContent = message;
+        }
+
+        function clearFieldErrors() {
+            document.querySelectorAll(".input-error").forEach((el) => el.classList.remove("input-error"));
+            document.querySelectorAll(".error-text").forEach((el) => el.remove());
+        }
+
+        function showToast(message) {
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
         const formData = new FormData(form);
+        console.log("[FORM DATA] Dumping form values:");
+        formData.forEach((value, key) => {
+            console.log(`${key}:`, value);
+        });
+
+        // 3. Extract raw values from formData
+        const rawBarcode = formData.get("barcode");
+        const rawLabel = formData.get("label");
+        const rawCostPrice = formData.get("costPrice");
+        const rawProfit = formData.get("profit");
+        const rawCategory = formData.get("category");
+        const rawStock = formData.get("stock");
+        const imageFile = formData.get("img");
+
+        // 4. Validation logic
+        let hasError = false;
+
+        if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length <= 10) {
+            if (!rawBarcode)
+                setFieldError("barcode", "BARCODE is required AND must be a 10 digit number!");
+            else if (isNaN(rawBarcode))
+                setFieldError("barcode", "Barcode must be a number!");
+            else if (rawBarcode.length <= 10)
+                setFieldError("barcode", "BARCODE must be at least 10 digit number!");
+            hasError = true;
+        }
+        if (isEmpty(rawLabel)) {
+            setFieldError("label", "Product label is required.");
+            hasError = true;
+        }
+        if (!imageFile || !imageFile.name || imageFile.size === 0) {
+            setFieldError("img", "Please upload a valid image file.");
+            hasError = true;
+        }
+        if (isEmpty(rawCostPrice) || isNaN(rawCostPrice)) {
+            setFieldError("costPrice", "Cost price must be a valid number.");
+            hasError = true;
+        }
+        if (isEmpty(rawProfit) || isNaN(rawProfit)) {
+            setFieldError("profit", "Profit must be a valid number.");
+            hasError = true;
+        }
+        if (isEmpty(rawCategory)) {
+            setFieldError("category", "Category is required.");
+            hasError = true;
+        }
+        if (isEmpty(rawStock) || isNaN(rawStock)) {
+            setFieldError("stock", "Stock must be a valid number.");
+            hasError = true;
+        }
+
+        if (hasError) {
+            console.log("[VALIDATION] Errors found, stopping submission.");
+            showToast("Please fix the errors above before submitting.");
+            return;
+        }
+        console.log("[VALIDATION] All fields passed.");
+
+        // 5. Prepare productData object
+        const productData = {
+            barcode: rawBarcode,
+            label: rawLabel.toLowerCase(),
+            img: "",  // Will be updated later with URL if image is uploaded
+            costPrice: parseFloat(rawCostPrice),
+            profit: parseFloat(rawProfit),
+            category: rawCategory,
+            stock: parseInt(rawStock, 10),
+        };
+
+        // 6. Image upload logic (only if a file is selected)
         const convertToJPEG = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -291,47 +396,23 @@ async function addProduct() {
                 reader.readAsDataURL(file);
             });
         };
-
-        const imageFile = formData.get("img");
-        let imgUrl = "";
-        if (imageFile) {
+        if (imageFile && imageFile.name && imageFile.size > 0) {
             try {
-                console.time("ImageResizeAndUpload");
+                console.time("[IMAGE] Resize and upload");
                 const resizedImage = await convertToJPEG(imageFile);
                 const storageRef = storage.ref();
                 const imageRef = storageRef.child(`product-images/${imageFile.name}`);
                 await imageRef.put(resizedImage);
-                imgUrl = await imageRef.getDownloadURL();
-                console.timeEnd("ImageResizeAndUpload");
+                productData.img = await imageRef.getDownloadURL();
+                console.timeEnd("[IMAGE] Resize and upload");
             } catch (error) {
-                console.error("Image upload failed:", error);
+                console.error("[IMAGE] Upload failed:", error);
                 showModalMessage("Image upload failed. Please try again.", false);
                 return;
             }
         }
 
-        const productData = {
-            barcode: formData.get("barcode"),
-            label: formData.get("label").toLowerCase(),
-            img: imgUrl,
-            costPrice: parseFloat(formData.get("costPrice")),
-            profit: parseFloat(formData.get("profit")),
-            category: formData.get("category"),
-            stock: parseInt(formData.get("stock"), 10),
-        };
-
-        if (
-            !productData.barcode ||
-            !productData.label ||
-            isNaN(productData.costPrice) ||
-            isNaN(productData.profit) ||
-            isNaN(productData.stock) ||
-            !formData.get("img")
-        ) {
-            showModalMessage("Please fill in all required fields, including the product image.", false);
-            return;
-        }
-
+        // 7. Check if product with the same barcode or label exists
         try {
             const snapshot = await db.collection("products")
                 .where("barcode", "==", productData.barcode)
@@ -342,35 +423,38 @@ async function addProduct() {
                 .get();
 
             if (!snapshot.empty || !labelSnapshot.empty) {
-                showModalMessage("Item already exists. update or check the item details.", false);
+                showModalMessage("Item already exists. Update or check the item details.", false);
                 form.reset();
                 return;
             }
 
+            // 8. Add product to Firestore
             try {
                 const docRef = await db.collection("products").add({
                     ...productData,
-                    createdAt: firebase.firestore.Timestamp.now()
+                    createdAt: firebase.firestore.Timestamp.now(),
                 });
-
 
                 const newDoc = await docRef.get();
                 const newProductData = newDoc.data();
 
+                // Optionally push the new product data to your frontend collection
                 allProducts.push({
                     ...newProductData,
                     id: docRef.id,
-                    createdAt: newProductData.createdAt.toDate().toLocaleDateString()
+                    createdAt: newProductData.createdAt.toDate().toLocaleDateString(),
                 });
+
+                // 9. Show success message
                 showModalMessage("Product added successfully!", true);
                 form.reset();
             } catch (error) {
-                console.error("Error adding product:", error);
+                console.error("[PRODUCT] Error adding product:", error);
                 showModalMessage(`Failed to add product: ${error.message}`, false);
             }
         } catch (error) {
             showModalMessage(`Failed to add product: ${error.message}`, false);
-            console.error("Error adding product:", error);
+            console.error("[PRODUCT] Error checking existing product:", error);
         }
     });
 }
@@ -1398,7 +1482,7 @@ function displayProductForm(product) {
             
             <button type="submit" id="update-button">Update</button>
             <button type="button" id="remove-button">Remove Product</button>
-            <button type="button" id="cancel-button">Cancel</button>
+            <button type="button" id="cancel-button">Cancel/Go Back</button>
         </form>
     `;
 
@@ -1442,12 +1526,10 @@ function displayProductForm(product) {
                 img.src = e.target.result;
 
                 img.onload = () => {
-                    // Create a canvas for image resizing and conversion
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
 
-                    // Set maximum dimensions for the image (control pixels)
-                    const maxWidth = 250; // Adjust as needed
+                    const maxWidth = 250;
                     const maxHeight = 250;
 
                     let width = img.width;
@@ -1468,10 +1550,8 @@ function displayProductForm(product) {
                     canvas.width = width;
                     canvas.height = height;
 
-                    // Draw the resized image onto the canvas
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Convert the canvas content to WEBP or JPEG and control quality
                     canvas.toBlob(
                         (blob) => {
                             const storageRef = storage.ref(`product-images/${product.id}/${file.name.split(".")[0]}.webp`);
@@ -1508,9 +1588,8 @@ function displayProductForm(product) {
                 };
             };
 
-            reader.readAsDataURL(file); // Read the image as a Data URL
+            reader.readAsDataURL(file);
         } else {
-            // Update Firestore directly if no image file is provided
             db.collection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
 
@@ -2092,7 +2171,7 @@ function renderSalesTable(salesData) {
         tableActions.innerHTML = `
             <button type="button" class="export-sales">Export</button>
         `;
-        
+
         const exportButton = tableActions.querySelector(".export-sales");
         exportButton.addEventListener("click", event => exportSalesTableToPDF(event));
 
