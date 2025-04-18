@@ -1116,26 +1116,6 @@ footer {
   font-size: 12px;
   margin-left: 5px;
 }
-.toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #ff4d4d;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 1em;
-  z-index: 9999;
-  animation: fadeInOut 3s ease-in-out;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  90% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-}
 
 /* Adder Section */
 /* addCart - addSales*/

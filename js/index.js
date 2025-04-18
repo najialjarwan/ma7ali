@@ -246,13 +246,10 @@ function addProduct() {
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        console.log("[FORM SUBMIT] Form submitted.");
 
         clearFieldErrors();
-        console.log("[CLEAR ERRORS] All previous field errors cleared.");
 
         function setFieldError(fieldId, message) {
-            console.log("set field erro is called");
             const input = document.getElementById(fieldId);
             input.classList.add("input-error");
             let errorMsg = input.parentNode.querySelector(`.error-text[data-for="${fieldId}"]`);
@@ -270,24 +267,8 @@ function addProduct() {
             document.querySelectorAll(".error-text").forEach((el) => el.remove());
         }
 
-        function showToast(message) {
-            const toast = document.createElement("div");
-            toast.className = "toast";
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
         const formData = new FormData(form);
-        console.log("[FORM DATA] Dumping form values:");
-        formData.forEach((value, key) => {
-            console.log(`${key}:`, value);
-        });
 
-        // 3. Extract raw values from formData
         const rawBarcode = formData.get("barcode");
         const rawLabel = formData.get("label");
         const rawCostPrice = formData.get("costPrice");
@@ -295,63 +276,70 @@ function addProduct() {
         const rawCategory = formData.get("category");
         const rawStock = formData.get("stock");
         const imageFile = formData.get("img");
-
-        // 4. Validation logic
+        
         let hasError = false;
 
-        if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length <= 10) {
+        if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 10) {
             if (!rawBarcode)
                 setFieldError("barcode", "BARCODE is required AND must be a 10 digit number!");
             else if (isNaN(rawBarcode))
                 setFieldError("barcode", "Barcode must be a number!");
-            else if (rawBarcode.length <= 10)
+            else if (rawBarcode.length < 10)
                 setFieldError("barcode", "BARCODE must be at least 10 digit number!");
             hasError = true;
         }
-        if (isEmpty(rawLabel)) {
-            setFieldError("label", "Product label is required.");
+        if (!rawLabel) {
+            setFieldError("label", "PRODUCT LABEL is REQUIRED!");
             hasError = true;
         }
         if (!imageFile || !imageFile.name || imageFile.size === 0) {
-            setFieldError("img", "Please upload a valid image file.");
+            if (!imageFile.name)
+                setFieldError("img", "IMAGE file is REQUIRED");
+            else if (!imageFile.size === 0)
+                setFieldError("img", "Upload a valid image file!");
             hasError = true;
         }
-        if (isEmpty(rawCostPrice) || isNaN(rawCostPrice)) {
-            setFieldError("costPrice", "Cost price must be a valid number.");
+        if (!rawCostPrice || isNaN(rawCostPrice)) {
+            if (!rawCostPrice)
+                setFieldError("costPrice", "PRODUCT COST PRICE is REQUIRED!");
+            else if (isNaN(rawCostPrice))
+                setFieldError("costPrice", "PRODUCT COST PRICE must be a NUMBER!");
             hasError = true;
         }
-        if (isEmpty(rawProfit) || isNaN(rawProfit)) {
-            setFieldError("profit", "Profit must be a valid number.");
+        if (!rawProfit || isNaN(rawProfit)) {
+            if (!rawProfit)
+                setFieldError("profit", "PRODUCT PROFIT is REQUIRED!");
+            else if (isNaN(rawProfit))
+                setFieldError("profit", "PRODUCT PROFIT must be a NUMBER!");
             hasError = true;
         }
-        if (isEmpty(rawCategory)) {
-            setFieldError("category", "Category is required.");
+        if (!rawCategory) {
+            setFieldError("category", "PRODUCT CATEGORY is REQUIRED");
             hasError = true;
         }
-        if (isEmpty(rawStock) || isNaN(rawStock)) {
-            setFieldError("stock", "Stock must be a valid number.");
+        if (!rawStock || isNaN(rawStock)) {
+            if (!rawStock)
+                setFieldError("stock", "PRODUCT STOCK is REQUIRED!");
+            else if (isNaN(rawStock))
+                setFieldError("stock", "PRODUCT STOCK must be a NUMBER!");
             hasError = true;
         }
 
         if (hasError) {
-            console.log("[VALIDATION] Errors found, stopping submission.");
-            showToast("Please fix the errors above before submitting.");
+            showModalMessage(`<p>Failed to add the product!</p><p>Check ALL input fields.</p>`);
             return;
         }
-        console.log("[VALIDATION] All fields passed.");
-
-        // 5. Prepare productData object
+        
         const productData = {
-            barcode: rawBarcode,
+            barcode: parseInt(rawBarcode),
             label: rawLabel.toLowerCase(),
-            img: "",  // Will be updated later with URL if image is uploaded
-            costPrice: parseFloat(rawCostPrice),
-            profit: parseFloat(rawProfit),
+            img: "",
+            costPrice: parseInt(rawCostPrice),
+            profit: parseInt(rawProfit),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
         };
 
-        // 6. Image upload logic (only if a file is selected)
         const convertToJPEG = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -412,8 +400,8 @@ function addProduct() {
             }
         }
 
-        // 7. Check if product with the same barcode or label exists
         try {
+            showLoadingOverlay(1500);
             const snapshot = await db.collection("products")
                 .where("barcode", "==", productData.barcode)
                 .get();
@@ -423,13 +411,15 @@ function addProduct() {
                 .get();
 
             if (!snapshot.empty || !labelSnapshot.empty) {
-                showModalMessage("Item already exists. Update or check the item details.", false);
-                form.reset();
+                setTimeout(() => {
+                    showModalMessage("Item with the enterd label already exists. Update or change product label.", false);
+                }, 1500);
                 return;
             }
 
             // 8. Add product to Firestore
             try {
+                showLoadingOverlay(1500);
                 const docRef = await db.collection("products").add({
                     ...productData,
                     createdAt: firebase.firestore.Timestamp.now(),
@@ -446,8 +436,10 @@ function addProduct() {
                 });
 
                 // 9. Show success message
-                showModalMessage("Product added successfully!", true);
-                form.reset();
+                setTimeout(() => {
+                    showModalMessage("Product added successfully!", true);
+                    form.reset();
+                }, 1500);
             } catch (error) {
                 console.error("[PRODUCT] Error adding product:", error);
                 showModalMessage(`Failed to add product: ${error.message}`, false);
@@ -669,7 +661,7 @@ async function displayCart(cartId) {
             document.getElementById("cart-details").innerHTML = `
                 <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
                 <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
-                <p><strong>Total Cost: </strong>$${cart.totalCost.toFixed(2)}</p>
+                <p><strong>Total Cost: </strong>$${cart.totalCost}</p>
             `;
         }
     });
@@ -1348,8 +1340,8 @@ async function fetchProducts() {
                     <div class="product-details">
                         <p><strong>Label:</strong> ${product.label}</p>
                         <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Cost Price:</strong> $${product.costPrice.toFixed(2)}</p>
-                        <p><strong>Profit</strong> $${product.profit.toFixed(2)}</p>
+                        <p><strong>Cost Price:</strong> $${product.costPrice}</p>
+                        <p><strong>Profit</strong> $${product.profit}</p>
                         <p><strong>Category:</strong> ${product.category}</p>
                         <p><strong>Stock:</strong> ${product.stock}</p>
                         <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1380,7 +1372,6 @@ async function fetchProducts() {
 
         renderProducts(products);
     } catch (error) {
-        productsGrid.innerHTML = `<p>Error fetching products: ${error.message}</p>`;
         console.error("Error fetching products:", error);
     }
 }
@@ -1395,6 +1386,7 @@ function fetchProductsForDoc() {
                 label: data.label,
                 barcode: data.barcode,
                 costPrice: data.costPrice || 0,
+                profit: data.profit || 0,
                 category: data.category || "Unknown",
                 stock: data.stock || 0,
                 img: data.img || "placeholder.jpg",
@@ -1417,6 +1409,7 @@ function displayProducts(filteredProducts) {
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
                 <p><strong>Cost Price:</strong> $${product.costPrice}</p>
+                <p><strong>Profit:</strong> $${product.profit}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1510,9 +1503,9 @@ function displayProductForm(product) {
 
         const updatedProduct = {
             label: $("#label").val(),
-            barcode: $("#barcode").val(),
-            costPrice: parseFloat($("#costPrice").val()),
-            profit: parseFloat($("profit").val()),
+            barcode: parseInt($("#barcode").val()),
+            costPrice: parseInt($("#costPrice").val()),
+            profit: parseInt($("#profit").val()),
             category: $("#category").val(),
             stock: parseInt($("#stock").val(), 10),
         };
@@ -1594,10 +1587,8 @@ function displayProductForm(product) {
                 .then(() => {
 
                     showModalMessage("Product Updated Successfully!", true);
-                    fetchProducts().then((products) => {
-                        allProducts = products; // Update local array
-                        displayProducts(products); // Refresh UI
-                    });
+                    refreshProductList();
+                    displayProducts(allProducts);
                 })
                 .catch(error => {
                     console.error("Error updating product:", error);
@@ -1619,6 +1610,7 @@ function removeProductFromFirebase(productId) {
 
             showModalMessage("Product Removed Successfully!", true);
             refreshProductList();
+            displayProducts(allProducts);
         })
         .catch(error => {
             console.error("Error removing product:", error);
@@ -1837,7 +1829,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         document.getElementById("customer-debt").addEventListener("submit", async (event) => {
             event.preventDefault();
             const details = document.getElementById("debt-details").value.trim();
-            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+            const balance = parseInt(document.getElementById("debt-balance").value.trim());
 
             if (!details || isNaN(balance) || balance <= 0) {
                 showModalMessage("Invalid input. Please enter valid details and balance!", false);
@@ -1948,7 +1940,7 @@ function renderCartsTable(carts) {
         cartDiv.innerHTML = `
             <div class="cart-summary">
                 <p><strong>Name:</strong> ${cart.name}</p>
-                <p><strong>Total Cost:</strong> $${cart.totalCost.toFixed(2)}</p>
+                <p><strong>Total Cost:</strong> $${cart.totalCost}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
             </div>
             <div class="hidden-products" id="products-${cart.id}">
@@ -2004,8 +1996,8 @@ function setupCartClickListeners() {
                             <div class="product-item">
                                 <p><strong>${p.name}</strong></p>
                                 <p>Quantity: ${p.quantity}</p>
-                                <p>Cost Price: $${p.costPrice.toFixed(2)}</p>
-                                <p>Total: $${p.total.toFixed(2)}</p>
+                                <p>Cost Price: $${p.costPrice}</p>
+                                <p>Total: $${p.total}</p>
                             </div>
                         `;
                     }).join("");
@@ -2143,10 +2135,10 @@ function renderSalesTable(salesData) {
                 row.innerHTML = `
                     <td>${product.name || "N/A"}</td>
                     <td>${date}</td>
-                    <td>$${(product.costPrice ?? 0).toFixed(2)}</td>
+                    <td>$${(product.costPrice ?? 0)}</td>
                     <td>${product.quantity ?? 0}</td>
-                    <td>$${(product.total ?? 0).toFixed(2)}</td>
-                    <td>$${(product.totalProfit ?? 0).toFixed(2)}</td>
+                    <td>$${(product.total ?? 0)}</td>
+                    <td>$${(product.totalProfit ?? 0)}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -2161,8 +2153,8 @@ function renderSalesTable(salesData) {
             <tr class="sales-summary">
                 <td colspan="3"><strong>Totals:</strong></td>
                 <td><strong>${sale.totalProductsSold}</strong></td>
-                <td><strong>$${sale.totalRevenue.toFixed(2)}</strong></td>
-                <td><strong>$${sale.totalProfit.toFixed(2)}</strong></td>
+                <td><strong>$${sale.totalRevenue}</strong></td>
+                <td><strong>$${sale.totalProfit}</strong></td>
             </tr>
         `;
 
@@ -2733,8 +2725,8 @@ function calculateAndDisplayGrowth(profits, productsSold) {
         productsSoldGrowth = firstSold === 0 ? 0 : ((lastSold - firstSold) / firstSold) * 100;
     }
 
-    document.getElementById("profit-growth").textContent = `${profitGrowth.toFixed(2)}%`;
-    document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth.toFixed(2)}%`;
+    document.getElementById("profit-growth").textContent = `${profitGrowth}%`;
+    document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth}%`;
 }
 function renderProfitTrendChart(labels, profits, productsSold) {
     const canvasId = 'salesTrendChart';
@@ -2803,7 +2795,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     callbacks: {
                         label: function (context) {
                             if (context.dataset.label === 'Total Profit') {
-                                return `Profit: $${context.parsed.y.toFixed(2)}`;
+                                return `Profit: $${context.parsed.y}`;
                             } else if (context.dataset.label === 'Total Products Sold') {
                                 return `Products Sold: ${context.parsed.y}`;
                             }
@@ -2897,9 +2889,9 @@ function renderProfitabilityMetrics(products) {
     const lowestProfitMargin = Math.min(...products.map(product => product.profitMargin));
     const averageProfitMargin = products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length;
 
-    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin.toFixed(2)}%`;
-    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin.toFixed(2)}%`;
-    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
+    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin}%`;
+    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin}%`;
+    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin}%`;
 }
 function renderProfitMarginChart(products) {
     const canvasId = 'profitMarginChart';
@@ -2975,7 +2967,7 @@ function renderProductLifecycleMetrics(products) {
     const totalAge = products.reduce((acc, product) => acc + product.ageInDays, 0);
     const averageAge = totalAge / products.length;
 
-    document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
+    document.getElementById("average-product-age").textContent = averageAge;
 }
 function renderProductAgeChart(products) {
     const canvasId = 'productAgeChart';
@@ -3294,7 +3286,7 @@ async function fetchInventorySummary() {
         const totalValue = allProducts.reduce((sum, product) => {
             return sum + ((product.stock || 0) * (product.costPrice || 0));
         }, 0);
-        document.querySelector("#inventory-value span").textContent = `$${totalValue.toFixed(2)}`;
+        document.querySelector("#inventory-value span").textContent = `$${totalValue}`;
 
         // Low Stock (<= 5)
         const lowStockProducts = allProducts.filter(product => (product.stock || 0) <= 5);
@@ -3359,7 +3351,7 @@ function renderSmartInsights(insights) {
 
     document.querySelector("#lowest-sales-day").textContent = `${insights.lowestSalesDay.date}, Revenue: $${insights.lowestSalesDay.revenue}`;
 
-    document.querySelector("#average-order-value").textContent = `$${insights.AOV.toFixed(2)}`;
+    document.querySelector("#average-order-value").textContent = `$${insights.AOV}`;
 }
 async function fetchSalesDataAndRenderInsights() {
     try {
@@ -3754,8 +3746,8 @@ async function exportToPDF(data) {
         const rows = data.map(product => [
             product.label,
             product.barcode,
-            product.costPrice.toFixed(2),
-            product.profit.toFixed(2),
+            product.costPrice,
+            product.profit,
             product.category,
             product.stock,
             product.createdAt
@@ -3862,12 +3854,12 @@ async function fetchDebtDetailsForExport(customerId) {
         total += data.balance;
         return {
             details: data.details,
-            balance: data.balance.toFixed(2),
+            balance: data.balance,
             createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Unknown Date",
         };
     });
 
-    return { debts, total: total.toFixed(2) };
+    return { debts, total: total };
 }
 async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
     try {
@@ -3959,7 +3951,7 @@ async function exportCartToPDF() {
     const cartDetailsBody = [
         ["Cart Name:", cartData.name],
         ["Date Created:", cartData.dateCreated.toDate().toLocaleString()],
-        ["Total Cost:", `$${cartData.totalCost.toFixed(2)}`]
+        ["Total Cost:", `$${cartData.totalCost}`]
     ];
 
     pdf.autoTable({
@@ -3978,8 +3970,8 @@ async function exportCartToPDF() {
     const rows = cartProducts.map(product => [
         product.name,
         product.quantity,
-        product.costPrice.toFixed(2),
-        product.total.toFixed(2)
+        product.costPrice,
+        product.total
     ]);
 
     pdf.autoTable({
