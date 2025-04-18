@@ -1007,7 +1007,21 @@ footer {
   border-radius: 10px;
   text-align: left;
 }
-
+.header-container{
+  display: flex;
+  justify-content: flex-start;
+  position: relative;
+  width: 100%;
+  border-bottom: 1px solid var(--text-color);
+  padding-bottom: 20px;
+}
+.header-container button{
+  position:absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  border-radius: 6px;
+}
 .product-form label {
   display: block;
   font-weight: bold;

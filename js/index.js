@@ -1436,7 +1436,6 @@ $(document).ready(function () {
         allProducts = products;
         displayProducts(products);
     });
-
     $(".search-bar").on("input", function () {
         let searchText = $(this).val().toLowerCase().trim();
         let filtered = allProducts.filter(product =>
@@ -1447,7 +1446,10 @@ $(document).ready(function () {
 });
 function displayProductForm(product) {
     const formHtml = `
-        <h3>Update Product: </h3>
+        <div class = "header-container">
+            <h5>Update Product</h5>
+            <button type="button" id="cancel-button">Done</button>
+        </div>
         <form id="product-form" class="product-form">
             <label for="label">Label:</label>
             <input type="text" id="label" name="label" value="${product.label}">
@@ -1475,19 +1477,17 @@ function displayProductForm(product) {
             
             <button type="submit" id="update-button">Update</button>
             <button type="button" id="remove-button">Remove Product</button>
-            <button type="button" id="cancel-button">Cancel/Go Back</button>
         </form>
     `;
 
     $(".main-content").html(formHtml);
 
-    // Custom behavior for file input
     const fileInput = document.getElementById("img");
     const customFileButton = document.getElementById("customFileButton");
     const fileNameSpan = document.getElementById("fileName");
 
     customFileButton.addEventListener("click", () => {
-        fileInput.click(); // Trigger the hidden file input
+        fileInput.click();
     });
 
     fileInput.addEventListener("change", () => {
@@ -1561,10 +1561,8 @@ function displayProductForm(product) {
                                         .then(() => {
 
                                             showModalMessage("Product Updated Successfully!", true);
-                                            fetchProducts().then((products) => {
-                                                allProducts = products; // Refresh the local array
-                                                displayProducts(products); // Refresh UI
-                                            });
+                                            refreshProductList();
+                                            displayProducts(allProducts);
                                         })
                                         .catch(error => {
                                             console.error("Error updating product:", error);
@@ -1596,9 +1594,8 @@ function displayProductForm(product) {
         }
     });
 
-    // Cancel button functionality
     $("#cancel-button").on("click", function () {
-        displayProducts(allProducts); // Return to products grid
+        displayProducts(allProducts);
     });
     $("#remove-button").on("click", function () {
         removeProductFromFirebase(product.id);
