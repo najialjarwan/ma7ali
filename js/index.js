@@ -258,7 +258,7 @@ function addProduct() {
             showModalMessage(`<p>Failed to add the product!</p><p>Check ALL input fields.</p>`);
             return;
         }
-        
+
         const {
             rawBarcode,
             rawLabel,
@@ -414,6 +414,7 @@ function validateProductForm(formData) {
     const rawCategory = formData.get("category");
     const rawStock = formData.get("stock");
     const imageFile = formData.get("img");
+    const isUpdate = formData.get("formType") === "update";
 
     if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 10) {
         errors.barcode = !rawBarcode
@@ -428,10 +429,12 @@ function validateProductForm(formData) {
         errors.label = "PRODUCT LABEL is REQUIRED!";
         hasError = true;
     }
-
-    if (!imageFile || !imageFile.name || imageFile.size === 0) {
-        errors.img = !imageFile.name ? "IMAGE file is REQUIRED" : "Upload a valid image file!";
-        hasError = true;
+    
+    if (!isUpdate) {
+        if (!imageFile || !imageFile.name || imageFile.size === 0) {
+            errors.img = "IMAGE is REQUIRED";
+            hasError = true;
+        }
     }
 
     if (!rawCostPrice || isNaN(rawCostPrice)) {
@@ -1470,12 +1473,15 @@ function displayProductForm(product) {
             <button type="button" id="cancel-button">Done</button>
         </div>
         <form id="product-form" class="product-form">
-            <label for="label">Label:</label>
-            <input type="text" id="label" name="label" value="${product.label}">
-            
+
+            <input type="hidden" name="formType" value="update">
+
             <label for="barcode">Barcode:</label>
             <input type="text" id="barcode" name="barcode" value="${product.barcode}">
 
+            <label for="label">Label:</label>
+            <input type="text" id="label" name="label" value="${product.label}">
+            
             <div class="file-container">
                 <label for="img">Image: <span id="fileName">No file selected!</span> </label>
                 <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
@@ -1520,15 +1526,43 @@ function displayProductForm(product) {
     $("#product-form").on("submit", function (e) {
         e.preventDefault();
 
+        const form = document.getElementById("product-form");
+        const formData = new FormData(form);
+
+        clearFieldErrors(); // Clear previous errors
+
+        const { hasError, errors, values } = validateProductForm(formData);
+
+        if (hasError) {
+            for (let fieldId in errors) {
+                setFieldError(fieldId, errors[fieldId]);
+            }
+            showModalMessage(`<p>Failed to update product!</p><p>Check the input fields.</p>`);
+            return;
+        }
+
+        const {
+            rawBarcode,
+            rawLabel,
+            rawCostPrice,
+            rawProfit,
+            rawCategory,
+            rawStock,
+            imageFile
+        } = values;
+
         const updatedProduct = {
-            label: $("#label").val(),
-            barcode: parseInt($("#barcode").val()),
-            costPrice: parseInt($("#costPrice").val()),
-            profit: parseInt($("#profit").val()),
-            category: $("#category").val(),
-            stock: parseInt($("#stock").val(), 10),
+            label: rawLabel,
+            barcode: parseInt(rawBarcode),
+            costPrice: parseInt(rawCostPrice),
+            profit: parseInt(rawProfit),
+            category: rawCategory,
+            stock: parseInt(rawStock, 10),
+            img: imageFile?.name || product.img // Keep old image if not updated
         };
 
+
+        //other code to handle the submitting after validation...
         const file = $("#img")[0].files[0];
         if (file && file.size > 0) {
             const reader = new FileReader();
