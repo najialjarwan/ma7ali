@@ -2001,7 +2001,6 @@ async function fetchSalesData() {
             ...productDoc.data()
         }));
 
-        // Sort by time (not date)
         productsSold.sort((a, b) => {
             const aTime = a.dateSold?.toDate?.().getTime?.() || 0;
             const bTime = b.dateSold?.toDate?.().getTime?.() || 0;
@@ -2017,52 +2016,13 @@ async function fetchSalesData() {
             productsSold
         });
     }
+    salesData.sort((a, b) => {
+        const dateA = new Date(a.salesDate);
+        const dateB = new Date(b.salesDate);
+        return dateB - dateA;
+    });
 
     return salesData;
-}
-function populateDropdown(salesData) {
-    const optGroup = document.getElementById("specific-dates-group");
-    if (!optGroup)
-        return;
-
-    optGroup.innerHTML = "";
-    salesData.forEach(sale => {
-        const option = document.createElement("option");
-        option.value = sale.salesDate;
-        option.textContent = sale.salesDate;
-        optGroup.appendChild(option);
-    });
-}
-function filterSales(salesData, filterType) {
-    const todayDate = new Date(); // Keep the Date object
-    const todayStr = todayDate.toLocaleDateString('en-CA'); // YYYY-MM-DD (local timezone)
-
-    const yesterdayDate = new Date(todayDate); // Clone the date
-    yesterdayDate.setDate(todayDate.getDate() - 1);
-    const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA'); // Same format, local timezone
-
-    if (filterType === "today") {
-        return salesData.filter(sale => sale.salesDate === todayStr);
-    }
-    if (filterType === "yesterday") {
-        return salesData.filter(sale => sale.salesDate === yesterdayStr);
-    }
-    if (filterType === "thisWeek") {
-        const startOfWeek = new Date(todayDate);
-        startOfWeek.setDate(todayDate.getDate() - todayDate.getDay()); // Get Monday
-        const startOfWeekStr = startOfWeek.toLocaleDateString('en-CA');
-        return salesData.filter(sale => new Date(sale.salesDate) >= new Date(startOfWeekStr));
-    }
-    if (filterType === "thisMonth") {
-        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 7))); // Match YYYY-MM
-    }
-    if (filterType === "thisYear") {
-        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 4))); // Match YYYY
-    }
-    if (salesData.some(sale => sale.salesDate === filterType)) {
-        return salesData.filter(sale => sale.salesDate === filterType);
-    }
-    return salesData; // Return all sales if "All Sales" is selected
 }
 function renderSalesTable(salesData) {
     const container = document.getElementById("sales-table-container");
@@ -2129,10 +2089,12 @@ function renderSalesTable(salesData) {
 
         const tableActions = document.createElement("div");
         tableActions.classList.add("table-actions");
-        tableActions.id = "table-actions";
         tableActions.innerHTML = `
             <button type="button" class="export-sales">Export</button>
         `;
+        
+        const exportButton = tableActions.querySelector(".export-sales");
+        exportButton.addEventListener("click", event => exportSalesTableToPDF(event));
 
         table.appendChild(thead);
         table.appendChild(tbody);
@@ -2144,13 +2106,53 @@ function renderSalesTable(salesData) {
         container.appendChild(header);
         container.appendChild(table);
         container.appendChild(tableActions);
-
-        const exportButtons = container.querySelectorAll(".export-sales");
-        exportButtons.forEach((button, index) => {
-            button.addEventListener("click", event => exportSalesTableToPDF(event, index));
-        });
     });
 }
+function populateDropdown(salesData) {
+    const optGroup = document.getElementById("specific-dates-group");
+    if (!optGroup)
+        return;
+
+    optGroup.innerHTML = "";
+    salesData.forEach(sale => {
+        const option = document.createElement("option");
+        option.value = sale.salesDate;
+        option.textContent = sale.salesDate;
+        optGroup.appendChild(option);
+    });
+}
+function filterSales(salesData, filterType) {
+    const todayDate = new Date();
+    const todayStr = todayDate.toLocaleDateString('en-CA');
+
+    const yesterdayDate = new Date(todayDate);
+    yesterdayDate.setDate(todayDate.getDate() - 1);
+    const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA');
+
+    if (filterType === "today") {
+        return salesData.filter(sale => sale.salesDate === todayStr);
+    }
+    if (filterType === "yesterday") {
+        return salesData.filter(sale => sale.salesDate === yesterdayStr);
+    }
+    if (filterType === "thisWeek") {
+        const startOfWeek = new Date(todayDate);
+        startOfWeek.setDate(todayDate.getDate() - todayDate.getDay()); // Get Monday
+        const startOfWeekStr = startOfWeek.toLocaleDateString('en-CA');
+        return salesData.filter(sale => new Date(sale.salesDate) >= new Date(startOfWeekStr));
+    }
+    if (filterType === "thisMonth") {
+        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 7))); // Match YYYY-MM
+    }
+    if (filterType === "thisYear") {
+        return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 4))); // Match YYYY
+    }
+    if (salesData.some(sale => sale.salesDate === filterType)) {
+        return salesData.filter(sale => sale.salesDate === filterType);
+    }
+    return salesData;
+}
+
 // #endregion
 // #endregion }
 
