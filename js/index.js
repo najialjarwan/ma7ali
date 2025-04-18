@@ -248,88 +248,27 @@ function addProduct() {
         event.preventDefault();
 
         clearFieldErrors();
-
-        function setFieldError(fieldId, message) {
-            const input = document.getElementById(fieldId);
-            input.classList.add("input-error");
-            let errorMsg = input.parentNode.querySelector(`.error-text[data-for="${fieldId}"]`);
-            if (!errorMsg) {
-                errorMsg = document.createElement("span");
-                errorMsg.className = "error-text";
-                errorMsg.dataset.for = fieldId;
-                input.insertAdjacentElement("afterend", errorMsg);
-            }
-            errorMsg.textContent = message;
-        }
-
-        function clearFieldErrors() {
-            document.querySelectorAll(".input-error").forEach((el) => el.classList.remove("input-error"));
-            document.querySelectorAll(".error-text").forEach((el) => el.remove());
-        }
-
         const formData = new FormData(form);
-
-        const rawBarcode = formData.get("barcode");
-        const rawLabel = formData.get("label");
-        const rawCostPrice = formData.get("costPrice");
-        const rawProfit = formData.get("profit");
-        const rawCategory = formData.get("category");
-        const rawStock = formData.get("stock");
-        const imageFile = formData.get("img");
-        
-        let hasError = false;
-
-        if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 10) {
-            if (!rawBarcode)
-                setFieldError("barcode", "BARCODE is required AND must be a 10 digit number!");
-            else if (isNaN(rawBarcode))
-                setFieldError("barcode", "Barcode must be a number!");
-            else if (rawBarcode.length < 10)
-                setFieldError("barcode", "BARCODE must be at least 10 digit number!");
-            hasError = true;
-        }
-        if (!rawLabel) {
-            setFieldError("label", "PRODUCT LABEL is REQUIRED!");
-            hasError = true;
-        }
-        if (!imageFile || !imageFile.name || imageFile.size === 0) {
-            if (!imageFile.name)
-                setFieldError("img", "IMAGE file is REQUIRED");
-            else if (!imageFile.size === 0)
-                setFieldError("img", "Upload a valid image file!");
-            hasError = true;
-        }
-        if (!rawCostPrice || isNaN(rawCostPrice)) {
-            if (!rawCostPrice)
-                setFieldError("costPrice", "PRODUCT COST PRICE is REQUIRED!");
-            else if (isNaN(rawCostPrice))
-                setFieldError("costPrice", "PRODUCT COST PRICE must be a NUMBER!");
-            hasError = true;
-        }
-        if (!rawProfit || isNaN(rawProfit)) {
-            if (!rawProfit)
-                setFieldError("profit", "PRODUCT PROFIT is REQUIRED!");
-            else if (isNaN(rawProfit))
-                setFieldError("profit", "PRODUCT PROFIT must be a NUMBER!");
-            hasError = true;
-        }
-        if (!rawCategory) {
-            setFieldError("category", "PRODUCT CATEGORY is REQUIRED");
-            hasError = true;
-        }
-        if (!rawStock || isNaN(rawStock)) {
-            if (!rawStock)
-                setFieldError("stock", "PRODUCT STOCK is REQUIRED!");
-            else if (isNaN(rawStock))
-                setFieldError("stock", "PRODUCT STOCK must be a NUMBER!");
-            hasError = true;
-        }
+        const { hasError, errors, values } = validateProductForm(formData);
 
         if (hasError) {
+            for (let fieldId in errors) {
+                setFieldError(fieldId, errors[fieldId]);
+            }
             showModalMessage(`<p>Failed to add the product!</p><p>Check ALL input fields.</p>`);
             return;
         }
         
+        const {
+            rawBarcode,
+            rawLabel,
+            rawCostPrice,
+            rawProfit,
+            rawCategory,
+            rawStock,
+            imageFile
+        } = values;
+
         const productData = {
             barcode: parseInt(rawBarcode),
             label: rawLabel.toLowerCase(),
@@ -386,7 +325,6 @@ function addProduct() {
         };
         if (imageFile && imageFile.name && imageFile.size > 0) {
             try {
-                console.time("[IMAGE] Resize and upload");
                 const resizedImage = await convertToJPEG(imageFile);
                 const storageRef = storage.ref();
                 const imageRef = storageRef.child(`product-images/${imageFile.name}`);
@@ -412,7 +350,7 @@ function addProduct() {
 
             if (!snapshot.empty || !labelSnapshot.empty) {
                 setTimeout(() => {
-                    showModalMessage("Item with the enterd label already exists. Update or change product label.", false);
+                    showModalMessage("Item with the enterd label already exists. Update or change product label and barcode.", false);
                 }, 1500);
                 return;
             }
@@ -420,6 +358,11 @@ function addProduct() {
             // 8. Add product to Firestore
             try {
                 showLoadingOverlay(1500);
+                setTimeout(() => {
+                    showModalMessage("Product added successfully!", true);
+                    form.reset();
+                    document.getElementById("fileName").textContent = `No file selected`;
+                }, 1500);
                 const docRef = await db.collection("products").add({
                     ...productData,
                     createdAt: firebase.firestore.Timestamp.now(),
@@ -428,18 +371,12 @@ function addProduct() {
                 const newDoc = await docRef.get();
                 const newProductData = newDoc.data();
 
-                // Optionally push the new product data to your frontend collection
                 allProducts.push({
                     ...newProductData,
                     id: docRef.id,
                     createdAt: newProductData.createdAt.toDate().toLocaleDateString(),
                 });
 
-                // 9. Show success message
-                setTimeout(() => {
-                    showModalMessage("Product added successfully!", true);
-                    form.reset();
-                }, 1500);
             } catch (error) {
                 console.error("[PRODUCT] Error adding product:", error);
                 showModalMessage(`Failed to add product: ${error.message}`, false);
@@ -450,6 +387,88 @@ function addProduct() {
         }
     });
 }
+function setFieldError(fieldId, message) {
+    const input = document.getElementById(fieldId);
+    input.classList.add("input-error");
+    let errorMsg = input.parentNode.querySelector(`.error-text[data-for="${fieldId}"]`);
+    if (!errorMsg) {
+        errorMsg = document.createElement("span");
+        errorMsg.className = "error-text";
+        errorMsg.dataset.for = fieldId;
+        input.insertAdjacentElement("afterend", errorMsg);
+    }
+    errorMsg.textContent = message;
+}
+function clearFieldErrors() {
+    document.querySelectorAll(".input-error").forEach((el) => el.classList.remove("input-error"));
+    document.querySelectorAll(".error-text").forEach((el) => el.remove());
+}
+function validateProductForm(formData) {
+    let hasError = false;
+    const errors = {};
+
+    const rawBarcode = formData.get("barcode");
+    const rawLabel = formData.get("label");
+    const rawCostPrice = formData.get("costPrice");
+    const rawProfit = formData.get("profit");
+    const rawCategory = formData.get("category");
+    const rawStock = formData.get("stock");
+    const imageFile = formData.get("img");
+
+    if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 10) {
+        errors.barcode = !rawBarcode
+            ? "BARCODE is required AND must be a 10 digit number!"
+            : isNaN(rawBarcode)
+                ? "Barcode must be a number!"
+                : "BARCODE must be at least 10 digits!";
+        hasError = true;
+    }
+
+    if (!rawLabel) {
+        errors.label = "PRODUCT LABEL is REQUIRED!";
+        hasError = true;
+    }
+
+    if (!imageFile || !imageFile.name || imageFile.size === 0) {
+        errors.img = !imageFile.name ? "IMAGE file is REQUIRED" : "Upload a valid image file!";
+        hasError = true;
+    }
+
+    if (!rawCostPrice || isNaN(rawCostPrice)) {
+        errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
+        hasError = true;
+    }
+
+    if (!rawProfit || isNaN(rawProfit)) {
+        errors.profit = !rawProfit ? "PRODUCT PROFIT is REQUIRED!" : "PRODUCT PROFIT must be a NUMBER!";
+        hasError = true;
+    }
+
+    if (!rawCategory) {
+        errors.category = "PRODUCT CATEGORY is REQUIRED";
+        hasError = true;
+    }
+
+    if (!rawStock || isNaN(rawStock)) {
+        errors.stock = !rawStock ? "PRODUCT STOCK is REQUIRED!" : "PRODUCT STOCK must be a NUMBER!";
+        hasError = true;
+    }
+
+    return {
+        hasError,
+        errors,
+        values: {
+            rawBarcode,
+            rawLabel,
+            rawCostPrice,
+            rawProfit,
+            rawCategory,
+            rawStock,
+            imageFile,
+        }
+    };
+}
+
 // #endregion }
 
 // #region 2️⃣ Add Customer Section {
