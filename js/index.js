@@ -3474,7 +3474,6 @@ function toggleTheme() {
         popImg.style.filter = "invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%)";
     }
 }
-// TODO: change how select element is displayed.
 async function initpdfLayout() {
 
     const userId = "demo-user";
@@ -3580,7 +3579,6 @@ async function initpdfLayout() {
             fillColor: "fillColorPicker",
             titleTextColor: "titleTextColor",
             titleFontSize: "titleFontSizeInput",
-            titleAlign: "titleAlign",
             headerColor: "headerColorPicker",
             headerTextColor: "headerTextColor",
             evenRowColor: "evenRowColorPicker",
@@ -3588,11 +3586,22 @@ async function initpdfLayout() {
             oddRowColor: "oddRowColorPicker",
             oddRowTextColor: "oddRowTextColor"
         };
+    
+        if (settingKey === "titleAlign") {
+            const buttons = document.querySelectorAll('.align-btn');
+            buttons.forEach(b => b.classList.remove('selected'));
+            const matchingButton = Array.from(buttons).find(b => b.dataset.value === value);
+            if (matchingButton) matchingButton.classList.add('selected');
+            return;
+        }
+    
         const elementId = map[settingKey];
         if (elementId) {
-            document.getElementById(elementId).value = value;
+            const el = document.getElementById(elementId);
+            if (el) el.value = value;
         }
     }
+    
     document.getElementById("reset-changes").addEventListener("click", () => {
         Object.entries(originalSettings).forEach(([key, value]) => {
             applyInputValue(key, value);
