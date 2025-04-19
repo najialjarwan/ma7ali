@@ -228,7 +228,7 @@ function showProductForm() {
             <label for="stock">Stock Quantity: </label>
             <input type="text" id="stock" name="stock" ><br>
 
-            <button type="submit">Add</button>
+            <button type="submit" class="action-btn">Add</button>
         </form>
     `;
     addProduct();
@@ -487,7 +487,7 @@ function showCustomerForm() {
                 <label for="phoneNumber">Phone Number: </label>
                 <input type="number" id="phoneNumber" name="phoneNumber" required><br>
 
-                <button type="submit">Add</button>
+                <button type="submit" class="action-btn">Add</button>
             </form>
         `;
 
@@ -558,8 +558,8 @@ function showCartForm() {
         <form id="cart-form" class="product-form">
             <label for="cartName">Cart Name: (required)</label>
             <input type="text" id="cartName" name="cartName" required><br>
-            <button type="submit" class="save-cart-btn" id="save-cart-btn">Create Cart</button>
-            <button type="button" class="cancel-cart-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
+            <button type="submit" class="action-btn" id="save-cart-btn">Create Cart</button>
+            <button type="button" class="action-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
         </form>
         <div class="search-container-main" >
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
@@ -1501,8 +1501,8 @@ function displayProductForm(product) {
             <label for="stock">Stock:</label>
             <input type="number" id="stock" name="stock" value="${product.stock}">
             
-            <button type="submit" id="update-button">Update</button>
-            <button type="button" id="remove-button">Remove Product</button>
+            <button type="submit" class="action-btn" id="update-button">Update</button>
+            <button type="button" class="action-btn" id="remove-button">Remove Product</button>
         </form>
     `;
 
@@ -1769,9 +1769,9 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             <label for="customer-phone">Phone Number:</label>
             <input type="text" id="customer-phone" value="${customerPhone}" required /><br />
 
-            <button type="button" id="edit-customer-btn">Edit Customer</button>
-            <button type="button" id="remove-customer-btn">Remove Customer</button>
-            <button type="button" id="cancel-customer-btn">Go Back</button>
+            <button type="button" class="action-btn" id="edit-customer-btn">Edit Customer</button>
+            <button type="button" class="action-btn" id="remove-customer-btn">Remove Customer</button>
+            <button type="button" class="action-btn" id="cancel-customer-btn">Go Back</button>
         </form>
 
         <div id="customer-table" class="customer-table">
@@ -1872,8 +1872,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <input type="text" id="debt-details" required /><br />
                 <label for="debt-balance">Balance:</label>
                 <input type="number" id="debt-balance" required /><br />
-                <button type="submit">Add</button>
-                <button type="button" id="cancel-debt-btn">Go Back</button>
+                <button type="submit" class="action-btn">Add</button>
+                <button type="button" class="func-btn" id="cancel-debt-btn">Go Back</button>
             </form>
         `;
 
@@ -3546,9 +3546,9 @@ async function initpdfLayout() {
     
             <hr>
     
-            <button type="submit" id="save-layout" class="func-btn">Save</button>
-            <button id="reset-changes" type="button" class="func-btn">Reset Changes</button>
-            <button id="reset-layout-default" type="button" class="func-btn" style="color: red;">Reset to Default</button>
+            <button type="submit" id="save-layout" class="action-btn">Save</button>
+            <button id="reset-changes" type="button" class="action-btn">Reset Changes</button>
+            <button id="reset-layout-default" type="button" class="action-btn" style="color: red;">Reset to Default</button>
 
         </form>
     </div>
@@ -4129,3 +4129,5 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
     showLoadingOverlay(1500);
 });
+
+// TODO: add confirmation and dont ask again to some actions.
