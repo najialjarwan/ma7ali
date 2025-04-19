@@ -224,6 +224,9 @@ input:checked+.sliderr::before {
 }
 
 #titleAlignOptions{
+  display: flex;
+  flex-grow: 1;
+  gap: 4px;
   margin-bottom: 10px;
   width: 100%;
 }
@@ -634,7 +637,7 @@ footer {
 
 .button-group {
   display: flex;
-  gap: 6px;
+  gap: 2px;
 }
 
 .filter-btn {
@@ -652,7 +655,6 @@ footer {
 .filter-btn.selected {
   background-color: var(--accent-color);
   color: var(--input-color);
-  border-color: var(--accent-color);
   font-weight: 900;
 }
 

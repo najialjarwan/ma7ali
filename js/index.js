@@ -1816,6 +1816,10 @@ async function fetchCustomers() {
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
+        <div class="header-container">
+            <h5 style="font-weight: bolder">Customer Info</h5>
+            <button type="button" id="cancel-customer-btn">Done</button>
+        </div>
         <form id="customer-form" class="product-form">
             <label for="customer-name">Name:</label>
             <input type="text" id="customer-name" value="${customerName}" required /><br />
@@ -1825,7 +1829,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
             <button type="button" class="action-btn" id="edit-customer-btn">Edit Customer</button>
             <button type="button" class="action-btn" id="remove-customer-btn">Remove Customer</button>
-            <button type="button" class="action-btn" id="cancel-customer-btn">Go Back</button>
         </form>
 
         <div id="customer-table" class="customer-table">
@@ -1927,7 +1930,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <label for="debt-balance">Balance:</label>
                 <input type="number" id="debt-balance" required /><br />
                 <button type="submit" class="action-btn">Add</button>
-                <button type="button" class="func-btn" id="cancel-debt-btn">Go Back</button>
+                <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
             </form>
         `;
 
