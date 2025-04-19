@@ -428,7 +428,7 @@ function validateProductForm(formData) {
         errors.label = "PRODUCT LABEL is REQUIRED!";
         hasError = true;
     }
-    
+
     if (!isUpdate) {
         if (!imageFile || !imageFile.name || imageFile.size === 0) {
             errors.img = "IMAGE is REQUIRED";
@@ -3523,12 +3523,12 @@ async function initpdfLayout() {
             <label>Title Font Size:</label>
             <input type="number" id="titleFontSizeInput" value="${originalSettings.titleFontSize}" min="8" max="30" />
             <label>Title Alignment:</label>
-            <select id="titleAlign">
-                <option value="left" ${originalSettings.titleAlign === 'left' ? 'selected' : ''}>Left</option>
-                <option value="center" ${originalSettings.titleAlign === 'center' ? 'selected' : ''}>Center</option>
-                <option value="right" ${originalSettings.titleAlign === 'right' ? 'selected' : ''}>Right</option>
-            </select>
-    
+            <div id="titleAlignOptions" class="flex gap-2">
+                <button type="button" class="align-btn" data-value="left">Left</button>
+                <button type="button" class="align-btn" data-value="center">Center</button>
+                <button type="button" class="align-btn" data-value="right">Right</button>
+            </div>
+
             <label>Header Row Color:</label>
             <input type="color" id="headerColorPicker" value="${originalSettings.headerColor}" />
             <label>Header Text Color:</label>
@@ -3546,13 +3546,28 @@ async function initpdfLayout() {
     
             <hr>
     
-            <button type="submit" id="save-layout">Save</button>
+            <button type="submit" id="save-layout" class="func-btn">Save</button>
             <button id="reset-changes" type="button" class="func-btn">Reset Changes</button>
             <button id="reset-layout-default" type="button" class="func-btn" style="color: red;">Reset to Default</button>
 
         </form>
     </div>
     `;
+
+    const buttons = document.querySelectorAll('.align-btn');
+    let selectedValue = originalSettings.titleAlign;
+    buttons.forEach(btn => {
+        if (btn.dataset.value === selectedValue) {
+            btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedValue = btn.dataset.value;
+        });
+    });
+
 
     const saveLayoutBtn = document.getElementById("save-layout");
     saveLayoutBtn.addEventListener("click", (e) => {
@@ -3604,7 +3619,8 @@ async function saveLayout() {
     // Title
     const titleTextColor = document.getElementById("titleTextColor").value;
     const titleFontSize = document.getElementById("titleFontSizeInput").value;
-    const titleAlign = document.getElementById("titleAlign").value;
+    const selectedAlignButton = document.querySelector(".align-btn.selected");
+    const titleAlign = selectedAlignButton ? selectedAlignButton.dataset.value : "left";
 
     // Header row
     const headerColor = document.getElementById("headerColorPicker").value;
@@ -3693,13 +3709,13 @@ function showModalMessage(message, isSuccess) {
     // Add OK button
     const okButton = document.createElement("button");
     okButton.textContent = "OK";
-    okButton.style.padding = "10px 20px";
+    okButton.style.padding = "10px 70px";
     okButton.style.backgroundColor = isSuccess ? "green" : "red";
     okButton.style.color = "#fff";
     okButton.style.border = "none";
     okButton.style.borderRadius = "5px";
     okButton.style.cursor = "pointer";
-    okButton.style.fontSize = "16px";
+    okButton.style.fontSize = "20px";
 
     okButton.addEventListener("click", () => {
         modalContainer.remove();

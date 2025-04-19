@@ -159,6 +159,7 @@ input:checked+.sliderr::before {
 #pdf-layout-controls {
   max-height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #pdf-layout-controls .header-container {
@@ -167,7 +168,7 @@ input:checked+.sliderr::before {
   font-size: 1.5rem;
 }
 
-#pdf-layout-controls button {
+#pdf-layout-controls #done-btn {
   top: 15px;
   right: 60px;
   width: 35%;
@@ -195,14 +196,27 @@ input:checked+.sliderr::before {
   padding: 0 20px 50px 20px;
 }
 
-#pdf-layout-controls select {
+#titleAlignOptions{
+  margin-bottom: 10px;
   width: 100%;
-  height: 50px;
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: var(--input-color);
-  color: var(--text-color);
-  font-size: 20px;
+}
+.align-btn {
+  padding: 16px 16px;
+  font-weight: bolder;
+  font-size: 1rem;
+  width: 32.6%;
+  border: 1px solid #ccc;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.align-btn.selected {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
 #pdf-layout-controls label {
@@ -215,24 +229,11 @@ input:checked+.sliderr::before {
   -webkit-appearance: none;
   appearance: none;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
   width: 100%;
   height: 50px;
   font-size: 20px;
-}
-
-#pdf-layout-form button {
-  background-color: var(--accent-color);
-  color: var(--input-color);
-  border: none;
-  border-radius: 5px;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  width: 100%;
-  height: 50px;
-  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 #pdf-layout-controls button:active {
