@@ -115,10 +115,15 @@ function initializeEventListeners() {
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
     const pdfLayoutLink = document.getElementById('pdf-layout');
+    const helpLink = document.getElementById('help');
 
     pdfLayoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("pdflayout");
+    });
+    helpLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadContent("help");
     });
 
     menuBtn.addEventListener('click', openSidebar);
@@ -132,9 +137,6 @@ function initializeEventListeners() {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
     }
-
-
-
 
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
         // e.preventDefault(); // optionally remove this so checkbox toggle works visually
@@ -192,10 +194,57 @@ async function loadContent(section) {
 
         if (section === "pdflayout")
             initpdfLayout();
+        if (section === "help")
+            initHelp();
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
     }
+}
+
+function initHelp() {
+    document.body.innerHTML = `
+        <div class="help-section">
+            <h1>Help Section for POS Application</h1>
+
+            <h2>1. Getting Started</h2>
+            <h3>Overview of the POS System</h3>
+            <p>This is a brief overview of the POS system, explaining its purpose and features.</p>
+            
+            <h3>Installation/Setup Guide</h3>
+            <ul>
+                <li>Step 1: Download and install the application.</li>
+                <li>Step 2: Open the app and create your first store.</li>
+                <li>Step 3: Set up initial product categories and products.</li>
+                <li>Step 4: Start processing sales and managing inventory.</li>
+            </ul>
+
+            <h2>2. Frequently Asked Questions (FAQs)</h2>
+            <h3>How do I add products to the POS?</h3>
+            <p>Instructions on adding products to the system.</p>
+
+            <h3>How do I view my sales reports?</h3>
+            <p>Instructions on how to access sales reports.</p>
+
+            <h3>What should I do if a product is out of stock?</h3>
+            <p>Steps to follow if a product is out of stock.</p>
+
+            <h2>3. User Manual</h2>
+            <h3>Dashboard Overview</h3>
+            <p>Description of the dashboard's key features and layout.</p>
+
+            <h3>Managing Products</h3>
+            <p>Instructions on how to manage products in the system.</p>
+
+            <h2>4. Troubleshooting</h2>
+            <h3>Common Issues</h3>
+            <p>Solutions to common problems users might face.</p>
+
+            <h2>5. Contact Support</h2>
+            <h3>Support Email</h3>
+            <p>For assistance, contact our support team at: support@company.com.</p>
+        </div>
+    `;
 }
 // #endregion }
 
@@ -474,8 +523,6 @@ function validateProductForm(formData) {
 // #endregion }
 
 // #region 2️⃣ Add Customer Section {
-// TODO: Enhance form validations.
-// TODO: Implement add debt form with add customer.
 function showCustomerForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
