@@ -1172,49 +1172,93 @@ function initProductPage() {
             </div>
             <div class="filter-group">
                 <label for="price-select">Filter Price:</label>
-                <select id="price-select">
-                    <option value="">All Prices</option>
-                    <option value="low-price">Low Price (0-10)</option>
-                    <option value="medium-price">Medium Price (11-50)</option>
-                    <option value="high-price">High Price (51+)</option>
+
+                <select id="price-select" style="display: none;">
+                  <option value="">All Prices</option>
+                  <option value="low-price">Low Price (0-10)</option>
+                  <option value="medium-price">Medium Price (11-50)</option>
+                  <option value="high-price">High Price (51+)</option>
                 </select>
+
+                <div id="price-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Prices</button>
+                  <button class="filter-btn" data-value="low-price">Low Price (0-10)</button>
+                  <button class="filter-btn" data-value="medium-price">Medium Price (11-50)</button>
+                  <button class="filter-btn" data-value="high-price">High Price (51+)</button>
+                </div>
             </div>
+
             <div class="filter-group">
                 <label for="stock-select">Filter Stock:</label>
-                <select id="stock-select">
-                        <option value="">All Stocks</option>
-                        <option value="low-stock">Low Stock (0-10)</option>
-                        <option value="medium-stock">Medium Stock (11-50)</option>
-                        <option value="high-stock">High Stock (51+)</option>
+
+                <select id="stock-select" style="display: none;">
+                  <option value="">All Stocks</option>
+                  <option value="low-stock">Low Stock (0-10)</option>
+                  <option value="medium-stock">Medium Stock (11-50)</option>
+                  <option value="high-stock">High Stock (51+)</option>
                 </select>
+
+                <div id="stock-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Stocks</button>
+                  <button class="filter-btn" data-value="low-stock">Low Stock (0-10)</button>
+                  <button class="filter-btn" data-value="medium-stock">Medium Stock (11-50)</button>
+                  <button class="filter-btn" data-value="high-stock">High Stock (51+)</button>
+                </div>
             </div>
+
             <div class="filter-group">
                 <label for="profit-select">Filter Profit:</label>
-                <select id="profit-select">
-                        <option value="">All Profits</option>
-                        <option value="low-profit">Low profit (0-10)</option>
-                        <option value="medium-profit">Medium Profit (11-20)</option>
-                        <option value="high-profit">High Profit (21+)</option>
+
+                <select id="profit-select" style="display: none;">
+                  <option value="">All Profits</option>
+                  <option value="low-profit">Low profit (0-10)</option>
+                  <option value="medium-profit">Medium Profit (11-20)</option>
+                  <option value="high-profit">High Profit (21+)</option>
                 </select>
+
+                <div id="profit-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Profits</button>
+                  <button class="filter-btn" data-value="low-profit">Low profit (0-10)</button>
+                  <button class="filter-btn" data-value="medium-profit">Medium Profit (11-20)</button>
+                  <button class="filter-btn" data-value="high-profit">High Profit (21+)</button>
+                </div>
             </div>
-            <div class="filter-group">
-                <label for="sort-by-price-stock-profit">Sort:</label>
-                <select id="sort-by-price-stock-profit">
-                    <option value="">No Sort</option>
-                    <optgroup label="Sort by Price">
-                        <option value="price-asc">Lowest to Highest</option>
-                        <option value="price-desc">Highest to Lowest</option>
-                    </optgroup>
-                    <optgroup label="Sort by Stock">
-                        <option value="stock-asc">Lowest to Highest</option>
-                        <option value="stock-desc">Highest to Lowest</option>
-                    </optgroup>
-                    <optgroup label="Sort by Profit">
-                        <option value="profit-asc">Lowest to Highest</option>
-                        <option value="profit-desc">Highest to Lowest</option>
-                    </optgroup>
-                </select>
-            </div>
+
+<div class="filter-group">
+  <label for="sort-by-price-stock-profit">Sort:</label>
+
+  <select id="sort-by-price-stock-profit" style="display: none;">
+    <option value="">No Sort</option>
+    <option value="price-asc">Price: Low → High</option>
+    <option value="price-desc">Price: High → Low</option>
+    <option value="stock-asc">Stock: Low → High</option>
+    <option value="stock-desc">Stock: High → Low</option>
+    <option value="profit-asc">Profit: Low → High</option>
+    <option value="profit-desc">Profit: High → Low</option>
+  </select>
+
+  <div id="sort-buttons" class="button-sort-groups">
+    <div class="sort-group">
+      <button class="filter-btn" data-value="">No Sort</button>
+    </div>
+    <div class="sort-group">
+      <span>Price:</span>
+      <button class="filter-btn" data-value="price-asc">⬆️</button>
+      <button class="filter-btn" data-value="price-desc">⬇️</button>
+    </div>
+    <div class="sort-group">
+      <span>Stock:</span>
+      <button class="filter-btn" data-value="stock-asc">⬆️</button>
+      <button class="filter-btn" data-value="stock-desc">⬇️</button>
+    </div>
+    <div class="sort-group">
+      <span>Profit:</span>
+      <button class="filter-btn" data-value="profit-asc">⬆️</button>
+      <button class="filter-btn" data-value="profit-desc">⬇️</button>
+    </div>
+  </div>
+</div>
+
 
             <div class="products-actions">
                 <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
@@ -1223,6 +1267,12 @@ function initProductPage() {
         </div>
         <div id="products-grid" class="products-grid"></div>
     `;
+
+    initButtonSelect("sort-by-price-stock-profit", "sort-buttons");
+    initButtonSelect("price-select", "price-buttons");
+    initButtonSelect("stock-select", "stock-buttons");
+    initButtonSelect("profit-select", "profit-buttons");
+
     fetchProducts();
 
     document.body.addEventListener("click", async (event) => {
@@ -1242,6 +1292,30 @@ function initProductPage() {
                 console.error("Error exporting products:", error);
             }
         }
+    });
+}
+function initButtonSelect(selectId, buttonContainerId) {
+    const select = document.getElementById(selectId);
+    const buttons = document.querySelectorAll(`#${buttonContainerId} .filter-btn`);
+
+    // Initial sync
+    buttons.forEach(btn => {
+        if (btn.dataset.value === select.value) {
+            btn.classList.add("selected");
+        }
+
+        btn.addEventListener("click", () => {
+            // Update UI
+            buttons.forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+
+            // Update select value
+            select.value = btn.dataset.value;
+
+            // Trigger any existing change listeners
+            const event = new Event("change", { bubbles: true });
+            select.dispatchEvent(event);
+        });
     });
 }
 async function fetchProducts() {
@@ -3586,7 +3660,7 @@ async function initpdfLayout() {
             oddRowColor: "oddRowColorPicker",
             oddRowTextColor: "oddRowTextColor"
         };
-    
+
         if (settingKey === "titleAlign") {
             const buttons = document.querySelectorAll('.align-btn');
             buttons.forEach(b => b.classList.remove('selected'));
@@ -3594,14 +3668,14 @@ async function initpdfLayout() {
             if (matchingButton) matchingButton.classList.add('selected');
             return;
         }
-    
+
         const elementId = map[settingKey];
         if (elementId) {
             const el = document.getElementById(elementId);
             if (el) el.value = value;
         }
     }
-    
+
     document.getElementById("reset-changes").addEventListener("click", () => {
         Object.entries(originalSettings).forEach(([key, value]) => {
             applyInputValue(key, value);

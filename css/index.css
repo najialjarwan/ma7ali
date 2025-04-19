@@ -632,6 +632,44 @@ footer {
   color: var(--text-color);
 }
 
+.button-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border: none;
+  background-color: var(--accent-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.filter-btn.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.button-sort-groups{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sort-group{
+  background-color: var(--accent-color);
+  color: var(--input-color);
+  border-radius: 7px;
+  width: 25%;
+  max-width: 25%;
+}
+
 .filter-group select {
   width: 100%;
   padding: 5px;
