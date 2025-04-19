@@ -41,7 +41,6 @@ window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 // #endregion
 
-
 // #region ▶️ EventListeners and LoadContent {
 function initializeEventListeners() {
 
@@ -475,6 +474,8 @@ function validateProductForm(formData) {
 // #endregion }
 
 // #region 2️⃣ Add Customer Section {
+// TODO: Enhance form validations.
+// TODO: Implement add debt form with add customer.
 function showCustomerForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
@@ -1469,8 +1470,8 @@ $(document).ready(function () {
 function displayProductForm(product) {
     const formHtml = `
         <div class = "header-container">
-            <h5>Update Product</h5>
-            <button type="button" id="cancel-button">Done</button>
+            <h5 style="font-weight: bolder">Update Product</h5>
+            <button type="button" id="done-btn">Done</button>
         </div>
         <form id="product-form" class="product-form">
 
@@ -1647,7 +1648,7 @@ function displayProductForm(product) {
         }
     });
 
-    $("#cancel-button").on("click", function () {
+    $("#done-btn").on("click", function () {
         displayProducts(allProducts);
     });
     $("#remove-button").on("click", function () {
@@ -3437,6 +3438,8 @@ async function fetchSalesDataAndRenderInsights() {
 
 
 // #region 🟦 Sidebar Region
+// TODO: Hehp section should contain all application documentation.
+// TODO: add settings to change store name, currency and initial section on application load.
 let initialBaseColor, initialTextColor, initialInputColor, initialAccentColor;
 function toggleTheme() {
     const root = document.documentElement;
@@ -3471,6 +3474,7 @@ function toggleTheme() {
         popImg.style.filter = "invert(34%) sepia(12%) saturate(193%) hue-rotate(172deg) brightness(91%) contrast(88%)";
     }
 }
+// TODO: change how select element is displayed.
 async function initpdfLayout() {
 
     const userId = "demo-user";
@@ -3506,7 +3510,10 @@ async function initpdfLayout() {
 
     document.body.innerHTML = `
     <div id="pdf-layout-controls">
-        <h2>Change PDF Exporting Layout</h2>
+        <div class = "header-container">
+            <h5>Change PDF Layout</h5>
+            <button type="button" id="done-btn">done</button>
+        </div>
         <form id="pdf-layout-form" class="produc-form">
             <label>Background Color:</label>
             <input type="color" id="fillColorPicker" value="${originalSettings.fillColor}" />
@@ -3542,7 +3549,6 @@ async function initpdfLayout() {
             <button type="submit" id="save-layout">Save</button>
             <button id="reset-changes" type="button" class="func-btn">Reset Changes</button>
             <button id="reset-layout-default" type="button" class="func-btn" style="color: red;">Reset to Default</button>
-            <button type="button" id="exit-btn">Exit</button>
 
         </form>
     </div>
@@ -3584,7 +3590,7 @@ async function initpdfLayout() {
         });
     });
 
-    const exitBtn = document.getElementById("exit-btn");
+    const exitBtn = document.getElementById("done-btn");
     exitBtn.addEventListener("click", () => {
         location.reload();
     });
@@ -3632,6 +3638,7 @@ async function saveLayout() {
         console.error("Error saving layout:", err);
     }
 }
+// TODO: add feedback collection with corresponding user and add a pic field for that.
 function openFeedbackModal() {
     document.getElementById("feedback-modal").style.display = "flex";
 }

@@ -1,0 +1,44 @@
+{
+  // ✅ Keyword highlights in editor,
+
+  // ✅ Tree view sidebar settings
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "check",
+      "type": "tag",
+      "foreground": "#007acc"
+    },
+    "FIXME": {
+      "icon": "flame",
+      "type": "tag",
+      "foreground": "#ff4081"
+    },
+    "BUG": {
+      "icon": "bug",
+      "type": "tag",
+      "foreground": "#e53935"
+    },
+    "NOTE": {
+      "icon": "comment",
+      "type": "tag",
+      "foreground": "#ffa000"
+    }
+  },
+
+  // ✅ Tags to be tracked in the tree
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "BUG",
+    "NOTE"
+  ],
+
+  // Optional: improves tag detection
+  "todo-tree.regex.regex": "(//|#|<!--|;|^)\\s*($TAGS)",
+
+  // Optional: ignore clutter folders
+  "todo-tree.filtering.excludeGlobs": [
+    "**/node_modules/**",
+    "**/dist/**"
+  ]
+}

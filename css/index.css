@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
-  --accent-color: #708090; 
+  --accent-color: #708090;
   --text-color: #000000;
   --input-color: #ffffff;
-  --btnText-color:rgb(0, 157, 255);
+  --btnText-color: rgb(0, 157, 255);
 }
 
 * {
@@ -52,13 +52,15 @@ body {
   display: flex;
   flex-direction: column;
 }
-#sidebar > div{
+
+#sidebar>div {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
 }
+
 .sidebar-link {
   margin: 5px;
   font-size: 1.5rem;
@@ -67,7 +69,8 @@ body {
   width: 100%;
   border-top: 1px solid var(--input-color);
 }
-.sidebar-link:first-child{
+
+.sidebar-link:first-child {
   border-top: none;
 }
 
@@ -144,18 +147,35 @@ body {
   transition: transform 0.4s;
 }
 
-input:checked + .sliderr {
+input:checked+.sliderr {
   background-color: var(--accent-color);
 }
 
-input:checked + .sliderr::before {
+input:checked+.sliderr::before {
   transform: translateX(28px);
 }
-#pdf-layout-controls{
+
+
+#pdf-layout-controls {
   max-height: 100vh;
   overflow-y: auto;
 }
-#pdf-layout-controls h2{
+
+#pdf-layout-controls .header-container {
+  padding: 20px;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+#pdf-layout-controls button {
+  top: 15px;
+  right: 60px;
+  width: 35%;
+  height: 40px;
+  font-size: large;
+}
+
+#pdf-layout-controls h2 {
   padding: 1rem;
   margin: 1rem;
   font-size: 1.3rem;
@@ -171,11 +191,11 @@ input:checked + .sliderr::before {
   background-color: var(--accent-color);
 }
 
-#pdf-layout-controls form{
+#pdf-layout-controls form {
   padding: 0 20px 50px 20px;
 }
 
-#pdf-layout-controls select{
+#pdf-layout-controls select {
   width: 100%;
   height: 50px;
   -webkit-appearance: none;
@@ -191,7 +211,7 @@ input:checked + .sliderr::before {
   justify-content: flex-start;
 }
 
-#pdf-layout-controls input{
+#pdf-layout-controls input {
   -webkit-appearance: none;
   appearance: none;
   border: none;
@@ -201,7 +221,7 @@ input:checked + .sliderr::before {
   font-size: 20px;
 }
 
-#pdf-layout-controls button{
+#pdf-layout-form button {
   background-color: var(--accent-color);
   color: var(--input-color);
   border: none;
@@ -214,12 +234,15 @@ input:checked + .sliderr::before {
   height: 50px;
   margin-top: 10px;
 }
-#pdf-layout-controls button:active{
+
+#pdf-layout-controls button:active {
   transform: scaleY(0.8);
 }
-#pdf-layout-controls #exit-btn{
+
+#pdf-layout-controls #exit-btn {
   background-color: transparent;
 }
+
 /* Top Nav */
 nav {
   height: 5rem;
@@ -321,6 +344,7 @@ main {
   width: 100vw;
   overflow: auto;
 }
+
 .main-content {
   display: flex;
   flex-direction: column;
@@ -343,6 +367,7 @@ footer {
   height: 5rem;
   z-index: 10;
 }
+
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -438,7 +463,7 @@ footer {
   backdrop-filter: blur(2px);
   border-top: 1px solid var(--text-color);
   border-bottom: 1px solid var(--text-color);
-  padding-left:  10px !important;
+  padding-left: 10px !important;
 }
 
 .slider button {
@@ -449,17 +474,17 @@ footer {
   left: 0;
   border-radius: 15px;
   transition: transform 1s ease-in-out;
-  display: flex;          
+  display: flex;
   justify-content: center;
-  align-items: center; 
-  width: 45px;        
+  align-items: center;
+  width: 45px;
   height: 45px;
   box-sizing: border-box;
 }
 
 .slider button img {
-  width: 25px;    
-  height: 25px;   
+  width: 25px;
+  height: 25px;
   object-fit: contain;
 }
 
@@ -528,7 +553,8 @@ footer {
   background-color: var(--accent-color);
   color: var(--input-color);
 }
-#feedback-text::placeholder{
+
+#feedback-text::placeholder {
   color: var(--input-color);
 }
 
@@ -542,7 +568,7 @@ footer {
 }
 
 .feedback-message {
-  color: Yellow; 
+  color: Yellow;
 }
 
 .actions {
@@ -622,7 +648,8 @@ footer {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
-.products-actions{
+
+.products-actions {
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -630,15 +657,18 @@ footer {
   align-items: center;
   gap: 5px;
 }
-.products-actions button{
+
+.products-actions button {
   width: 50%;
   font-size: 1.1rem;
   transition: transform 0.1 ease-in-out;
 }
-.products-actions button:active{
+
+.products-actions button:active {
   transform: scaleY(0.8);
 }
-.products-actions .export-btn{
+
+.products-actions .export-btn {
   padding: 7px;
 }
 
@@ -748,7 +778,8 @@ footer {
   gap: 1px;
   transition: transform 0.1 ease-in-out;
 }
-.customers-card:active{
+
+.customers-card:active {
   transform: scaleY(0.8);
 }
 
@@ -765,7 +796,7 @@ footer {
 
 .customer-table {
   width: 100%;
-  max-width: 100%; 
+  max-width: 100%;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
 }
 
@@ -775,7 +806,7 @@ footer {
   border-collapse: collapse;
 }
 
-.customer-table p{
+.customer-table p {
   border: 1px solid black;
   background-color: var(--accent-color);
   color: var(--input-color);
@@ -791,9 +822,10 @@ footer {
   padding: 5px;
 }
 
-#debt-details-table tr:nth-child(odd){
+#debt-details-table tr:nth-child(odd) {
   background-color: var(--input-color);
 }
+
 #debt-details-table tr:nth-child(even) {
   background-color: rgb(230, 230, 210);
 }
@@ -812,7 +844,7 @@ footer {
   box-sizing: border-box;
 }
 
-#debt-details-table tr td:last-child{
+#debt-details-table tr td:last-child {
   background-color: lightgray;
   padding: 0;
   height: 40px;
@@ -831,7 +863,7 @@ footer {
   transform: scaleY(0.8);
 }
 
-.customer-table .debt-actions{
+.customer-table .debt-actions {
   background-color: var(--accent-color);
   width: 100%;
   height: 100%;
@@ -841,7 +873,7 @@ footer {
   align-items: center;
 }
 
-.customer-table .debt-actions button{
+.customer-table .debt-actions button {
   width: 90%;
   border: 1px solid var(--text-color);
   background-color: var(--accent-color);
@@ -850,18 +882,19 @@ footer {
   font-size: 20px;
 }
 
-.add-debt:active, .export:active{
+.add-debt:active,
+.export:active {
   transform: scaleY(0.8);
 }
 
 /* CartsAndSales Section */
 /* Sales Section */
-.sales-container{
+.sales-container {
   width: 100%;
   max-width: 100%;
 }
 
-.sales-table-container{
+.sales-table-container {
   width: 100%;
 }
 
@@ -871,7 +904,7 @@ footer {
   border-collapse: collapse;
 }
 
-.sales-table th{
+.sales-table th {
   border: 1px solid var(--text-color);
   background-color: var(--accent-color);
   color: var(--input-color);
@@ -887,18 +920,21 @@ footer {
   background-color: rgb(230, 230, 210);
 }
 
-.sales-table tr, .sales-table td {
+.sales-table tr,
+.sales-table td {
   border: 1px solid var(--text-color);
   font-size: 0.8em;
   word-break: break-all;
   padding: 3px;
 }
-.sales-table tfoot tr{
+
+.sales-table tfoot tr {
   background-color: var(--accent-color);
   color: var(--input-color);
   font-size: 0.8em;
 }
-.table-actions{
+
+.table-actions {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -907,7 +943,8 @@ footer {
   border: 1px solid var(--text-color);
   padding: 5px;
 }
-.export-sales{
+
+.export-sales {
   background: linear-gradient(to right, white, rgb(255, 243, 177));
   border: 1px solid var(--text-color);
   color: var(--btnText-color);
@@ -915,7 +952,8 @@ footer {
   width: 50%;
   transition: transform 0.1s ease-in-out;
 }
-.export-sales:active{
+
+.export-sales:active {
   transform: scaleY(0.8);
 }
 
@@ -1007,21 +1045,29 @@ footer {
   border-radius: 10px;
   text-align: left;
 }
-.header-container{
+
+.header-container {
   display: flex;
   justify-content: flex-start;
   position: relative;
   width: 100%;
   border-bottom: 1px solid var(--text-color);
   padding-bottom: 20px;
+  font-weight: bolder;
 }
-.header-container button{
-  position:absolute;
+
+.header-container button {
+  position: absolute;
   top: 0;
   right: 0;
   width: 50%;
-  border-radius: 6px;
+  border-radius: 10px;
+  border: 4px groove var(--input-color);
+  color: var(--text-color);
+  background-color: transparent;
+  font-weight: bolder;
 }
+
 .product-form label {
   display: block;
   font-weight: bold;
@@ -1056,7 +1102,8 @@ footer {
   width: 100%;
   margin-bottom: 20px;
 }
-#customerFileButton:active{
+
+#customerFileButton:active {
   transform: scale(0.8);
 }
 
@@ -1125,6 +1172,7 @@ footer {
 .input-error {
   border: 2px solid #e74c3c !important;
 }
+
 .error-text {
   color: #e74c3c;
   font-size: 12px;
@@ -1133,7 +1181,7 @@ footer {
 
 /* Adder Section */
 /* addCart - addSales*/
-#cartName:disabled{
+#cartName:disabled {
   background-color: lightgoldenrodyellow;
   color: var(--text-color);
 }
@@ -1147,7 +1195,8 @@ footer {
   position: relative;
   filter: invert(86%) sepia(10%) saturate(300%) hue-rotate(210deg);
 }
-#cart-icon img{
+
+#cart-icon img {
   filter: brightness(100) invert(1);
 }
 
@@ -1170,7 +1219,7 @@ footer {
   transition: all 0.7s ease-in-out;
   pointer-events: none;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #cart-icon.pulse {
@@ -1179,20 +1228,22 @@ footer {
 
 @keyframes pulse {
   0% {
-      transform: scale(1);
-      opacity: 1;
+    transform: scale(1);
+    opacity: 1;
   }
+
   50% {
-      transform: scale(1.3);
-      opacity: 0.5;
+    transform: scale(1.3);
+    opacity: 0.5;
   }
+
   100% {
-      transform: scale(1);
-      opacity: 1;
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
-.cart-products-container{
+.cart-products-container {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1239,25 +1290,25 @@ footer {
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
   margin-top: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.9);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
 }
 
-.add-to-cart-btn{
+.add-to-cart-btn {
   width: 100%;
-  height:100%;
+  height: 100%;
   border: none;
   background-color: lightgreen;
 
 }
 
-.cancel-sale-btn{
+.cancel-sale-btn {
   border: none;
   height: 50%;
   width: 100%;
   background-color: rgb(252, 47, 47);
 }
 
-.cart-display-container{
+.cart-display-container {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1269,11 +1320,11 @@ footer {
   gap: 5px;
 }
 
-.cart-display-container p{
+.cart-display-container p {
   margin: 0;
 }
 
-.cart-details{
+.cart-details {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1281,10 +1332,12 @@ footer {
   align-items: center;
   border-bottom: 3px solid var(--accent-color);
 }
-.cart-products-list-container{
+
+.cart-products-list-container {
   width: 100%;
 }
-.cart-products-list{
+
+.cart-products-list {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1294,7 +1347,7 @@ footer {
   border-radius: 5px;
 }
 
-#export-cart{
+#export-cart {
   width: 96%;
   padding: 10px 0 !important;
   margin: 10px 0;
@@ -1356,16 +1409,17 @@ footer {
 
 
 
-.inventory-analytics{
+.inventory-analytics {
   width: 100%;
 }
-.inventory-analytics hr{
+
+.inventory-analytics hr {
   width: 100%;
   opacity: 1;
   margin: 30px 0;
 }
 
-.inventory-analytics h2{
+.inventory-analytics h2 {
   color: var(--text-color);
   width: 100%;
   padding: 1rem;
@@ -1380,32 +1434,38 @@ canvas {
   height: auto !important;
 }
 
-#categoryChart{
-  height: 100% !important; width: 100% !important;
+#categoryChart {
+  height: 100% !important;
+  width: 100% !important;
 }
-#sales-trend{
+
+#sales-trend {
   width: 100%;
 }
 
-#sales-trend{
+#sales-trend {
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
+
 #sales-trend p {
   margin: 0;
 }
-.profit-growth{
+
+.profit-growth {
   color: rgb(0, 255, 34);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
 }
-.products-sold-growth{
+
+.products-sold-growth {
   color: rgba(255, 159, 64, 1);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
-.filter-container{
+
+.filter-container {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1413,25 +1473,28 @@ canvas {
   align-items: flex-start;
   gap: 10px;
 }
-.filter-container label{
+
+.filter-container label {
   font-weight: bolder;
   padding: 0;
 }
 
-.profitability-analysis p{
+.profitability-analysis p {
   margin: 0;
 }
 
-.profitability-analysis p strong{
+.profitability-analysis p strong {
   color: rgb(75, 192, 192);
 }
 
-.product-lifecycle-analysis{
+.product-lifecycle-analysis {
   width: 100%;
 }
-.product-lifecycle-analysis p strong{
+
+.product-lifecycle-analysis p strong {
   color: rgba(54, 162, 235, 1);
 }
+
 #profit-margin-chart-container {
   width: 100%;
   overflow-x: auto;
@@ -1440,7 +1503,8 @@ canvas {
 #profitMarginChart {
   width: max-content;
 }
-.export-btn{
+
+.export-btn {
   color: var(--btnText-color);
   background: linear-gradient(to right, white, rgb(255, 243, 177));
   padding: 10px;
@@ -1449,7 +1513,8 @@ canvas {
   font-weight: bolder;
   transition: transform 0.1s ease-in-out;
 }
-.export-btn:active{
+
+.export-btn:active {
   transform: scaleY(0.8);
 }
 
@@ -1460,7 +1525,8 @@ canvas {
 }
 
 .metric-box {
-  flex: 1 1 calc(50% - 1rem); /* Two columns */
+  flex: 1 1 calc(50% - 1rem);
+  /* Two columns */
   background-color: var(--accent-color);
   padding: 1rem;
   border-radius: 10px;
@@ -1473,13 +1539,14 @@ canvas {
   border-collapse: collapse;
 }
 
-.low-stock-table th{
+.low-stock-table th {
   color: var(--input-color);
   background-color: var(--accent-color);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-.low-stock-table th, .low-stock-table td {
+.low-stock-table th,
+.low-stock-table td {
   padding: 2px;
   text-align: left;
   border: 1px solid var(--text-color);
@@ -1496,25 +1563,29 @@ canvas {
   color: var(--text-color);
 }
 
-.low-stock-list-table{
+.low-stock-list-table {
   width: 100%;
   border-collapse: collapse;
 }
-.low-stock-list-table th{
+
+.low-stock-list-table th {
   background-color: var(--accent-color);
   border: 1px solid var(--text-color);
   color: var(--input-color);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
-.low-stock-list-table td{
+
+.low-stock-list-table td {
   text-align: left;
   border: 1px solid var(--text-color);
   padding: 5px;
   width: 50%;
 }
-.low-stock-list-table tr:nth-child(odd){
+
+.low-stock-list-table tr:nth-child(odd) {
   background-color: var(--input-color);
 }
-.low-stock-list-table tr:nth-child(even){
+
+.low-stock-list-table tr:nth-child(even) {
   background-color: rgb(230, 230, 210);
 }
