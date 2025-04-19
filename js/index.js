@@ -1170,9 +1170,28 @@ function initProductPage() {
                     <option value="">All Categories</option>
                 </select>
             </div>
+
+            <div class="filter-group">
+                <label for="sort-by-price-stock-profit">Sort:</label>
+                <select id="sort-by-price-stock-profit">
+                    <option value="">No Sort</option>
+                    <optgroup label="Sort by Price">
+                        <option value="price-asc">Lowest to Highest</option>
+                        <option value="price-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Stock">
+                        <option value="stock-asc">Lowest to Highest</option>
+                        <option value="stock-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Profit">
+                        <option value="profit-asc">Lowest to Highest</option>
+                        <option value="profit-desc">Highest to Lowest</option>
+                    </optgroup>
+                </select>
+            </div>
+
             <div class="filter-group">
                 <label for="price-select">Filter Price:</label>
-
                 <select id="price-select" style="display: none;">
                   <option value="">All Prices</option>
                   <option value="low-price">Low Price (0-10)</option>
@@ -1190,7 +1209,6 @@ function initProductPage() {
 
             <div class="filter-group">
                 <label for="stock-select">Filter Stock:</label>
-
                 <select id="stock-select" style="display: none;">
                   <option value="">All Stocks</option>
                   <option value="low-stock">Low Stock (0-10)</option>
@@ -1208,7 +1226,6 @@ function initProductPage() {
 
             <div class="filter-group">
                 <label for="profit-select">Filter Profit:</label>
-
                 <select id="profit-select" style="display: none;">
                   <option value="">All Profits</option>
                   <option value="low-profit">Low profit (0-10)</option>
@@ -1224,42 +1241,6 @@ function initProductPage() {
                 </div>
             </div>
 
-<div class="filter-group">
-  <label for="sort-by-price-stock-profit">Sort:</label>
-
-  <select id="sort-by-price-stock-profit" style="display: none;">
-    <option value="">No Sort</option>
-    <option value="price-asc">Price: Low → High</option>
-    <option value="price-desc">Price: High → Low</option>
-    <option value="stock-asc">Stock: Low → High</option>
-    <option value="stock-desc">Stock: High → Low</option>
-    <option value="profit-asc">Profit: Low → High</option>
-    <option value="profit-desc">Profit: High → Low</option>
-  </select>
-
-  <div id="sort-buttons" class="button-sort-groups">
-    <div class="sort-group">
-      <button class="filter-btn" data-value="">No Sort</button>
-    </div>
-    <div class="sort-group">
-      <span>Price:</span>
-      <button class="filter-btn" data-value="price-asc">⬆️</button>
-      <button class="filter-btn" data-value="price-desc">⬇️</button>
-    </div>
-    <div class="sort-group">
-      <span>Stock:</span>
-      <button class="filter-btn" data-value="stock-asc">⬆️</button>
-      <button class="filter-btn" data-value="stock-desc">⬇️</button>
-    </div>
-    <div class="sort-group">
-      <span>Profit:</span>
-      <button class="filter-btn" data-value="profit-asc">⬆️</button>
-      <button class="filter-btn" data-value="profit-desc">⬇️</button>
-    </div>
-  </div>
-</div>
-
-
             <div class="products-actions">
                 <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
                 <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT</button>
@@ -1268,7 +1249,6 @@ function initProductPage() {
         <div id="products-grid" class="products-grid"></div>
     `;
 
-    initButtonSelect("sort-by-price-stock-profit", "sort-buttons");
     initButtonSelect("price-select", "price-buttons");
     initButtonSelect("stock-select", "stock-buttons");
     initButtonSelect("profit-select", "profit-buttons");
