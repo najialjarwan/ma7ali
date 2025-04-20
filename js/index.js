@@ -227,10 +227,10 @@ function showProductForm() {
             <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
             <button type="button" id="customFileButton">Choose File</button>
 
-            <label for="costPrice">Cost Price($): </label>
+            <label for="costPrice">Cost Price (${storeCurrency}): </label>
             <input type="text" id="costPrice" name="costPrice"><br>
 
-            <label for="profit">Profit($): </label>
+            <label for="profit">Profit (${storeCurrency}): </label>
             <input type="text" id="profit" name="profit" ><br>
 
             <label for="category">Category: </label>
@@ -1428,8 +1428,8 @@ async function fetchProducts() {
                     <div class="product-details">
                         <p><strong>Label:</strong> ${product.label}</p>
                         <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Cost Price:</strong> $${product.costPrice}</p>
-                        <p><strong>Profit</strong> $${product.profit}</p>
+                        <p><strong>Cost Price:</strong> ${convertCurrency(product.costPrice)} ${storeCurrency}</p>
+                        <p><strong>Profit:</strong> ${formatCompactNumber(product.profit)} ${storeCurrency}</p>
                         <p><strong>Category:</strong> ${product.category}</p>
                         <p><strong>Stock:</strong> ${product.stock}</p>
                         <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1497,7 +1497,7 @@ function displayProducts(filteredProducts) {
                 <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
                 <p><strong>Cost Price:</strong> $${product.costPrice}</p>
-                <p><strong>Profit:</strong> $${product.profit}</p>
+                <p><strong>Profit:</strong> ${storeCurrency}${product.profit}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
                 <p><strong>Stock:</strong> ${product.stock}</p>
                 <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -1558,7 +1558,7 @@ function displayProductForm(product) {
             <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
             <label for="profit">Profit: </label>
-            <input type="number" id="profit" name="profit" value="${product.profit}">
+            <input type="number" id="profit" name="profit" value="${storeCurrency}${product.profit}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -4428,6 +4428,26 @@ async function exportSalesTableToPDF(event) {
 
 
 // #endregion
+
+const EXCHANGE_RATE = 90000; // 1 USD = 90,000 LBP
+
+function convertCurrency(amount, from = "LBP", to = "USD") {
+    let result = 0;
+    if (from === "LBP" && to === "USD") {
+        result = amount / EXCHANGE_RATE;
+        return result.toFixed(2);
+    } else if (from === "USD" && to === "LBP") {
+        return amount * EXCHANGE_RATE;
+    }
+    return amount; // No conversion needed
+}
+function formatCompactNumber(num) {
+    return new Intl.NumberFormat('en', {
+        notation: "compact",
+        compactDisplay: "short",
+        maximumFractionDigits: 1
+    }).format(num);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeEventListeners();
