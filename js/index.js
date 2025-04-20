@@ -116,7 +116,12 @@ function initializeEventListeners() {
     const closeBtn = document.getElementById('close-btn');
     const pdfLayoutLink = document.getElementById('pdf-layout');
     const helpLink = document.getElementById('help');
+    const profileLink = document.getElementById('profile');
 
+    profileLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadContent("profile");
+    });
     pdfLayoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("pdflayout");
@@ -192,6 +197,8 @@ async function loadContent(section) {
             showSalesForm();
         //
 
+        if (section === "profile")
+            initProfile();
         if (section === "pdflayout")
             initpdfLayout();
         if (section === "help")
@@ -200,51 +207,6 @@ async function loadContent(section) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
     }
-}
-
-function initHelp() {
-    document.body.innerHTML = `
-        <div class="help-section">
-            <h1>Help Section for POS Application</h1>
-
-            <h2>1. Getting Started</h2>
-            <h3>Overview of the POS System</h3>
-            <p>This is a brief overview of the POS system, explaining its purpose and features.</p>
-            
-            <h3>Installation/Setup Guide</h3>
-            <ul>
-                <li>Step 1: Download and install the application.</li>
-                <li>Step 2: Open the app and create your first store.</li>
-                <li>Step 3: Set up initial product categories and products.</li>
-                <li>Step 4: Start processing sales and managing inventory.</li>
-            </ul>
-
-            <h2>2. Frequently Asked Questions (FAQs)</h2>
-            <h3>How do I add products to the POS?</h3>
-            <p>Instructions on adding products to the system.</p>
-
-            <h3>How do I view my sales reports?</h3>
-            <p>Instructions on how to access sales reports.</p>
-
-            <h3>What should I do if a product is out of stock?</h3>
-            <p>Steps to follow if a product is out of stock.</p>
-
-            <h2>3. User Manual</h2>
-            <h3>Dashboard Overview</h3>
-            <p>Description of the dashboard's key features and layout.</p>
-
-            <h3>Managing Products</h3>
-            <p>Instructions on how to manage products in the system.</p>
-
-            <h2>4. Troubleshooting</h2>
-            <h3>Common Issues</h3>
-            <p>Solutions to common problems users might face.</p>
-
-            <h2>5. Contact Support</h2>
-            <h3>Support Email</h3>
-            <p>For assistance, contact our support team at: support@company.com.</p>
-        </div>
-    `;
 }
 // #endregion }
 
@@ -3542,8 +3504,136 @@ async function fetchSalesDataAndRenderInsights() {
 
 
 // #region 🟦 Sidebar Region
-// TODO: Hehp section should contain all application documentation.
 // TODO: add settings to change store name, currency and initial section on application load.
+const DEMO_USER_ID = "demoUser"; // Change this once auth is set
+function initProfile() {
+    document.body.innerHTML = `
+        <div class="container">
+            <div class = "header-container">
+                <h5>Settings</h5>
+                <button type="button" id="done-btn">done</button>
+            </div>
+            <form class="product-form">
+
+                <label>Store Name</label>
+                <input type="text" id="storeName" placeholder="Enter your store name" />
+
+                <label>Currency</label>
+                <div id="currencyOptions" class="button-selector">
+                    <button type="button" class="currency-btn" data-value="$">$</button>
+                    <button type="button" class="currency-btn" data-value="LBP">LBP</button>
+                </div>
+
+                <label>Themes Combos</label>
+                <div class="themes-combos">
+                    <strong>Combo 1:</strong>
+                    <div class="combo" id="combo1">
+                        <div style="background-color: #808090;"></div>
+                        <div style="background-color: #909090;"></div>
+                    </div>
+                    <strong>Combo 2:</strong>
+                    <div class="combo" id="combo2">
+                        <div style="background-color: #102030;"></div>
+                        <div style="background-color: #405060;"></div>
+                    </div>
+                    <strong>Combo 3:</strong>
+                    <div class="combo" id="combo3">
+                        <div style="background-color: #302010;"></div>
+                        <div style="background-color: #605040;"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="action-btn">Save Settings</button>
+            </form>
+        </div>
+    `;
+
+    const exitBtn = document.getElementById("done-btn");
+    exitBtn.addEventListener("click", () => {
+        location.reload();
+    });
+
+    loadUserProfile();
+    setupCurrencySelector();
+    setupProfileFormSubmit();
+}
+function getCurrentUserId() {
+    return DEMO_USER_ID;
+}
+async function loadUserProfile() {
+    const userId = getCurrentUserId();
+    const profileRef = db.collection('profile').doc(userId);
+
+    try {
+        const doc = await profileRef.get();
+        if (doc.exists) {
+            const data = doc.data();
+            console.log("Loaded user profile:", data);
+
+            document.getElementById('storeName').value = data.storeName || '';
+            const buttons = document.querySelectorAll('.currency-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.value === data.currency) {
+                    btn.classList.add('selected');
+                }
+            });
+        } else {
+            console.log("No profile settings found. User can create new settings.");
+        }
+    } catch (error) {
+        console.error("Error loading profile:", error);
+    }
+}
+function setupCurrencySelector() {
+    const buttons = document.querySelectorAll('.currency-btn');
+    let selectedValue = null;
+
+    buttons.forEach(btn => {
+        if (btn.classList.contains('selected')) {
+            selectedValue = btn.dataset.value;
+        }
+
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedValue = btn.dataset.value;
+        });
+    });
+}
+function setupProfileFormSubmit() {
+    const form = document.querySelector('.product-form');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const userId = getCurrentUserId();
+        const storeName = document.getElementById('storeName').value.trim();
+        const currency = getSelectedCurrency();
+
+        function getSelectedCurrency() {
+            const selectedBtn = document.querySelector('.currency-btn.selected');
+            return selectedBtn ? selectedBtn.dataset.value : null;
+        }
+
+        if (!storeName || !currency) {
+            console.log("Store name or currency not set.");
+            return;
+        }
+
+        const profileData = {
+            storeName,
+            currency,
+            updatedAt: new Date()
+        };
+
+        try {
+            await db.collection('profile').doc(userId).set(profileData);
+            console.log("Profile settings saved successfully:", profileData);
+        } catch (error) {
+            console.error("Failed to save profile settings:", error);
+        }
+    });
+}
 let initialBaseColor, initialTextColor, initialInputColor, initialAccentColor;
 function toggleTheme() {
     const root = document.documentElement;
@@ -3612,7 +3702,7 @@ async function initpdfLayout() {
     };
 
     document.body.innerHTML = `
-    <div id="pdf-layout-controls">
+    <div id="pdf-layout-controls" class="container">
         <div class = "header-container">
             <h5>Change PDF Layout</h5>
             <button type="button" id="done-btn">done</button>
@@ -3626,7 +3716,7 @@ async function initpdfLayout() {
             <label>Title Font Size:</label>
             <input type="number" id="titleFontSizeInput" value="${originalSettings.titleFontSize}" min="8" max="30" />
             <label>Title Alignment:</label>
-            <div id="titleAlignOptions" class="flex gap-2">
+            <div id="titleAlignOptions" class="button-selector">
                 <button type="button" class="align-btn" data-value="left">Left</button>
                 <button type="button" class="align-btn" data-value="center">Center</button>
                 <button type="button" class="align-btn" data-value="right">Right</button>
@@ -3787,6 +3877,50 @@ function submitFeedback() {
         feedbackMessage.textContent = "Please enter your feedback!";
         feedbackMessage.style.color = "red";
     }
+}
+function initHelp() {
+    document.body.innerHTML = `
+        <div class="help-section">
+            <h1>Help Section for POS Application</h1>
+
+            <h2>1. Getting Started</h2>
+            <h3>Overview of the POS System</h3>
+            <p>This is a brief overview of the POS system, explaining its purpose and features.</p>
+            
+            <h3>Installation/Setup Guide</h3>
+            <ul>
+                <li>Step 1: Download and install the application.</li>
+                <li>Step 2: Open the app and create your first store.</li>
+                <li>Step 3: Set up initial product categories and products.</li>
+                <li>Step 4: Start processing sales and managing inventory.</li>
+            </ul>
+
+            <h2>2. Frequently Asked Questions (FAQs)</h2>
+            <h3>How do I add products to the POS?</h3>
+            <p>Instructions on adding products to the system.</p>
+
+            <h3>How do I view my sales reports?</h3>
+            <p>Instructions on how to access sales reports.</p>
+
+            <h3>What should I do if a product is out of stock?</h3>
+            <p>Steps to follow if a product is out of stock.</p>
+
+            <h2>3. User Manual</h2>
+            <h3>Dashboard Overview</h3>
+            <p>Description of the dashboard's key features and layout.</p>
+
+            <h3>Managing Products</h3>
+            <p>Instructions on how to manage products in the system.</p>
+
+            <h2>4. Troubleshooting</h2>
+            <h3>Common Issues</h3>
+            <p>Solutions to common problems users might face.</p>
+
+            <h2>5. Contact Support</h2>
+            <h3>Support Email</h3>
+            <p>For assistance, contact our support team at: support@company.com.</p>
+        </div>
+    `;
 }
 function showModalMessage(message, isSuccess) {
     // Create modal container
