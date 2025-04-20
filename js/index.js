@@ -3510,7 +3510,7 @@ function initProfile() {
     document.body.innerHTML = `
         <div class="container">
             <div class = "header-container">
-                <h5>Settings</h5>
+                <h5>Profile Settings</h5>
                 <button type="button" id="done-btn">done</button>
             </div>
             <form class="product-form">
@@ -3526,6 +3526,11 @@ function initProfile() {
 
                 <label>Themes Combos</label>
                 <div class="themes-combos">
+                    <strong>Default:</strong>
+                    <div class="combo" id="combo1">
+                        <div style="background-color: #708090;"></div>
+                        <div style="background-color: #97B8D8;"></div>
+                    </div>
                     <strong>Combo 1:</strong>
                     <div class="combo" id="combo1">
                         <div style="background-color: #808090;"></div>
