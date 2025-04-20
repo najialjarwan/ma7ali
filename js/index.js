@@ -1169,7 +1169,9 @@ function showLoadingOverlay(duration = 400) {
 
 
 // #region 1️⃣ Products Section {
+let storeCurrency = "LBP";
 function initProductPage() {
+    console.log(storeCurrency);
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div id="filter-options" class="filter-options">
@@ -2010,7 +2012,7 @@ function initCartsAndSalesSection() {
         });
     });
 }
-// #region Carts Section
+// #region Carts Section {
 async function fetchCartsData() {
 
     try {
@@ -2134,7 +2136,7 @@ function setupCartClickListeners() {
 
 
 }
-// #endregion
+// #endregion }
 
 // #region Sales Section
 async function loadSalesData() {
@@ -3503,17 +3505,35 @@ async function fetchSalesDataAndRenderInsights() {
 // #endregion }
 
 
-// #region 🟦 Sidebar Region
-const DEMO_USER_ID = "demoUser"; // Change this once auth is set
+// #region 🟦 Sidebar Region [
+
+// #region Profile Settings {
+const DEMO_USER_ID = "demo-user";
+function getCurrentUserId() {
+    return DEMO_USER_ID;
+}
+let initialBaseColor;
+let currentComboColors = [];
+let currentThemeIndex = 0;
+const themeCombos = {
+    default: ["#708090", "#97B8D8"],
+    combo1: ["#808090", "#909090"],
+    combo2: ["#102030", "#405060"],
+    combo3: ["#302010", "#605040"]
+};
 function initProfile() {
+    renderProfileForm();
+    addEventListeners();
+    loadUserProfile();
+}
+function renderProfileForm() {
     document.body.innerHTML = `
         <div class="container">
-            <div class = "header-container">
+            <div class="header-container">
                 <h5>Profile Settings</h5>
-                <button type="button" id="done-btn">done</button>
+                <button type="button" id="done-btn">Done</button>
             </div>
             <form class="product-form">
-
                 <label>Store Name</label>
                 <input type="text" id="storeName" placeholder="Enter your store name" />
 
@@ -3547,107 +3567,75 @@ function initProfile() {
                     </div>
                 </div>
 
-
                 <button type="submit" class="action-btn">Save Settings</button>
             </form>
         </div>
     `;
-
-    const exitBtn = document.getElementById("done-btn");
-    exitBtn.addEventListener("click", () => {
+}
+function addEventListeners() {
+    document.getElementById("done-btn").addEventListener("click", () => {
         location.reload();
     });
-
-    loadUserProfile();
-    setupComboSelector();
     setupCurrencySelector();
+    setupComboSelector();
     setupProfileFormSubmit();
-}
-function getCurrentUserId() {
-    return DEMO_USER_ID;
-}
-function setupCurrencySelector() {
-    const buttons = document.querySelectorAll('.currency-btn');
-    let selectedValue = null;
 
-    buttons.forEach(btn => {
-        if (btn.classList.contains('selected')) {
-            selectedValue = btn.dataset.value;
-        }
-
-        btn.addEventListener('click', () => {
-            buttons.forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            selectedValue = btn.dataset.value;
+    function setupCurrencySelector() {
+        const buttons = document.querySelectorAll('.currency-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                updateCurrencySelection(btn.dataset.value);
+            });
         });
-    });
-}
-function setupComboSelector() {
-    const combos = document.querySelectorAll('.combo-btn');
-    let selectedCombo = null;
-
-    combos.forEach(btn => {
-        if (btn.classList.contains('selected')) {
-            selectedCombo = btn.dataset.value;
-        }
-
-        btn.addEventListener('click', () => {
-            combos.forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            selectedCombo = btn.dataset.value;
+    }
+    function setupComboSelector() {
+        const combos = document.querySelectorAll('.combo-btn');
+        combos.forEach(btn => {
+            btn.addEventListener('click', () => {
+                combos.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
         });
-    });
-}
-function setupProfileFormSubmit() {
-    const form = document.querySelector('.product-form');
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const userId = getCurrentUserId();
-        const storeName = document.getElementById('storeName').value.trim();
-        const currency = getSelectedCurrency();
-
+    }
+    function setupProfileFormSubmit() {
+    
+        const form = document.querySelector('.product-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+    
+            const storeName = document.getElementById('storeName').value.trim();
+            const currency = getSelectedCurrency();
+            const combo = getSelectedCombo();
+    
+            if (!storeName || !currency || !combo) return;
+    
+            const profileData = { storeName, currency, combo, updatedAt: new Date() };
+            await saveUserProfile(profileData);
+        });
+    
         function getSelectedCurrency() {
             const selectedBtn = document.querySelector('.currency-btn.selected');
             return selectedBtn ? selectedBtn.dataset.value : null;
         }
-
-        if (!storeName || !currency) {
-            console.log("Store name, currency, or combo not set.");
-            return;
-        }
-
-        const combo = (() => {
+        
+        function getSelectedCombo() {
             const selected = document.querySelector('.combo-btn.selected');
             return selected ? selected.dataset.value : null;
-        })();
-
-        const profileData = {
-            storeName,
-            currency,
-            combo,
-            updatedAt: new Date()
-        };
-
-        try {
-            await db.collection('profile').doc(userId).set(profileData);
-            console.log("Profile settings saved successfully:", profileData);
-        } catch (error) {
-            console.error("Failed to save profile settings:", error);
         }
-        if (combo && themeCombos[combo]) {
-            const [color1, color2] = themeCombos[combo];
-            const root = document.documentElement;
+    
+        async function saveUserProfile(profileData) {
+            const userId = getCurrentUserId();
+            try {
+                await db.collection('profile').doc(userId).set(profileData);
+            } catch (error) {
+                console.error("Failed to save profile settings:", error);
+            }
         
-            currentComboColors = [color1, color2];
-            currentThemeIndex = 0;
-            initialBaseColor = color1;
-        
-            root.style.setProperty("--accent-color", color1);
-            console.log("Accent color set to:", color1);
+            updateAccentColor(profileData.combo);
         }
-    });
+    }
 }
 async function loadUserProfile() {
     const userId = getCurrentUserId();
@@ -3657,67 +3645,62 @@ async function loadUserProfile() {
         const doc = await profileRef.get();
         if (doc.exists) {
             const data = doc.data();
-            console.log("Loaded user profile:", data);
-
-            const storeNameInput = document.getElementById('storeName');
-            if (storeNameInput) {
-                storeNameInput.value = data.storeName || '';
-            }
-
-            const buttons = document.querySelectorAll('.currency-btn');
-            buttons.forEach(btn => {
-                if (btn.dataset.value === data.currency) {
-                    btn.classList.add('selected');
-                }
-            });
-
-            const comboBtns = document.querySelectorAll('.combo-btn');
-            comboBtns.forEach(btn => {
-                if (btn.dataset.value === data.combo) {
-                    btn.classList.add('selected');
-                }
-            });
-
-            // 🌈 Set accent color from combo
-            const selectedCombo = data.combo || "default";
-            currentComboColors = themeCombos[selectedCombo] || themeCombos.default;
-            initialBaseColor = currentComboColors[0];
-            currentThemeIndex = 0;
-
-            const root = document.documentElement;
-            root.style.setProperty("--accent-color", currentComboColors[0]);
-            console.log("Accent color set on load:", currentComboColors[0]);
-
-        } else {
-            console.log("No profile settings found. User can create new settings.");
+            applyUserProfileSettings(data);
         }
     } catch (error) {
         console.error("Error loading profile:", error);
     }
+
+    function applyUserProfileSettings(data) {
+        const storeNameInput = document.getElementById('storeName');
+        if (storeNameInput) storeNameInput.value = data.storeName || '';
+    
+        if (data.currency) {
+            updateCurrencySelection(data.currency);
+        } else {
+            updateCurrencySelection("LBP");
+        }
+        updateComboSelection(data.combo);
+        updateAccentColor(data.combo);
+    }
+}
+function updateCurrencySelection(currency) {
+    const buttons = document.querySelectorAll('.currency-btn');
+    buttons.forEach(btn => {
+        if (btn.dataset.value === currency) {
+            btn.classList.add('selected');
+        }
+    });
+    storeCurrency = currency; 
+    console.log(storeCurrency);
+}
+function updateComboSelection(combo) {
+    const comboBtns = document.querySelectorAll('.combo-btn');
+    comboBtns.forEach(btn => {
+        if (btn.dataset.value === combo) {
+            btn.classList.add('selected');
+        }
+    });
+}
+function updateAccentColor(combo) {
+    currentComboColors = themeCombos[combo] || themeCombos.default;
+    initialBaseColor = currentComboColors[0];
+    currentThemeIndex = 0;
+
+    const root = document.documentElement;
+    root.style.setProperty("--accent-color", currentComboColors[0]);
 }
 
-let initialBaseColor;
-let currentComboColors = [];
-let currentThemeIndex = 0;
-const themeCombos = {
-    default: ["#708090", "#97B8D8"],
-    combo1: ["#808090", "#909090"],
-    combo2: ["#102030", "#405060"],
-    combo3: ["#302010", "#605040"]
-};
 async function toggleTheme() {
     const root = document.documentElement;
 
-    // If combo colors not yet loaded, fetch them
-    if (currentComboColors.length === 0) {
+    if (!currentComboColors.length) {
         const profileRef = db.collection('profile').doc(DEMO_USER_ID);
         const doc = await profileRef.get();
         if (!doc.exists) return;
 
         const data = doc.data();
-        const selectedCombo = data.combo || "default";
-
-        currentComboColors = themeCombos[selectedCombo] || themeCombos.default;
+        currentComboColors = themeCombos[data.combo] || themeCombos.default;
         initialBaseColor = currentComboColors[0];
         currentThemeIndex = 0;
 
@@ -3725,18 +3708,15 @@ async function toggleTheme() {
         return;
     }
 
-    // Toggle between the two colors
     currentThemeIndex = currentThemeIndex === 0 ? 1 : 0;
-    const newColor = currentComboColors[currentThemeIndex];
-
-    root.style.setProperty("--accent-color", newColor);
-
-    console.log("Theme toggled to:", newColor);
+    root.style.setProperty("--accent-color", currentComboColors[currentThemeIndex]);
 }
+// #endregion }
 
+// #region PDF Layout {
 async function initpdfLayout() {
 
-    const userId = "demo-user";
+    const userId = getCurrentUserId();
 
     const doc = await db.collection("pdfLayout").doc(userId).get();
     const settings = doc.exists ? doc.data() : {};
@@ -3923,6 +3903,9 @@ async function saveLayout() {
         console.error("Error saving layout:", err);
     }
 }
+// #endregion }
+
+// #region Feedback {
 // TODO: add feedback collection with corresponding user and add a pic field for that.
 function openFeedbackModal() {
     document.getElementById("feedback-modal").style.display = "flex";
@@ -3944,6 +3927,9 @@ function submitFeedback() {
         feedbackMessage.style.color = "red";
     }
 }
+// #endregion }
+
+// #region Help {
 function initHelp() {
     document.body.innerHTML = `
         <div class="help-section">
@@ -3988,6 +3974,9 @@ function initHelp() {
         </div>
     `;
 }
+// #endregion }
+
+// #region Modal {
 function showModalMessage(message, isSuccess) {
     // Create modal container
     const modalContainer = document.createElement("div");
@@ -4042,7 +4031,9 @@ function showModalMessage(message, isSuccess) {
     // Append modal to the body
     document.body.appendChild(modalContainer);
 }
-// #endregion
+// #endregion }
+
+// #endregion ]
 
 
 // #region 🟨 Exporting Region
