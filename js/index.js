@@ -1289,7 +1289,6 @@ function initButtonSelect(selectId, buttonContainerId) {
     const select = document.getElementById(selectId);
     const buttons = document.querySelectorAll(`#${buttonContainerId} .filter-btn`);
 
-    // Initial sync
     buttons.forEach(btn => {
         if (btn.dataset.value === select.value) {
             btn.classList.add("selected");
@@ -1428,8 +1427,8 @@ async function fetchProducts() {
                     <div class="product-details">
                         <p><strong>Label:</strong> ${product.label}</p>
                         <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Cost Price:</strong> ${convertCurrency(product.costPrice)} ${storeCurrency}</p>
-                        <p><strong>Profit:</strong> ${formatCompactNumber(product.profit)} ${storeCurrency}</p>
+                        <p><strong>Cost Price:</strong> ${displayCurrency(product.costPrice)}</p>
+                        <p><strong>Profit:</strong> ${displayCurrency(product.profit)}</p>
                         <p><strong>Category:</strong> ${product.category}</p>
                         <p><strong>Stock:</strong> ${product.stock}</p>
                         <p><strong>Created At:</strong> ${product.createdAt}</p>
@@ -4036,7 +4035,7 @@ function showModalMessage(message, isSuccess) {
 // #endregion ]
 
 
-// #region 🟨 Exporting Region
+// #region 🟨 Exporting Region [
 async function createStyledPDF(titleText) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
@@ -4425,21 +4424,25 @@ async function exportSalesTableToPDF(event) {
         console.error("Error exporting sales table:", error);
     }
 }
+// #endregion ]
 
-
-// #endregion
-
-const EXCHANGE_RATE = 90000; // 1 USD = 90,000 LBP
-
-function convertCurrency(amount, from = "LBP", to = "USD") {
+const EXCHANGE_RATE = 90000;
+function displayCurrency(amount) {
+    if (storeCurrency === "$") {
+        return `${convertCurrency(amount, "LBP", "$")} $`;
+    } else {
+        return `${formatCompactNumber(amount)} LBP`;
+    }
+}
+function convertCurrency(amount, from = "LBP", to = "$") {
     let result = 0;
-    if (from === "LBP" && to === "USD") {
+    if (from === "LBP" && to === "$") {
         result = amount / EXCHANGE_RATE;
         return result.toFixed(2);
-    } else if (from === "USD" && to === "LBP") {
+    } else if (from === "$" && to === "LBP") {
         return amount * EXCHANGE_RATE;
     }
-    return amount; // No conversion needed
+    return amount;
 }
 function formatCompactNumber(num) {
     return new Intl.NumberFormat('en', {
