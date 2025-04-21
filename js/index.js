@@ -280,12 +280,13 @@ function addProduct() {
         } = values;
 
         const rawCostPriceToUSD = storeCurrency === "LBP" ? convertCurrency(rawCostPrice, "LBP", "$") : rawCostPrice;
+        const rawProfitToUSD = storeCurrency === "LBP" ? convertCurrency(rawProfit, "LBP", "$") : rawProfit;
         const productData = {
             barcode: parseInt(rawBarcode),
             label: rawLabel.toLowerCase(),
             img: "",
-            costPrice: parseInt(rawCostPriceToUSD),
-            profit: parseInt(rawProfit),
+            costPrice: parseFloat(rawCostPriceToUSD),
+            profit: parseFloat(rawProfitToUSD),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
         };
@@ -427,17 +428,19 @@ function validateProductForm(formData) {
     const imageFile = formData.get("img");
     const isUpdate = formData.get("formType") === "update";
 
-    if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 10) {
+    if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 8 || rawBarcode.length > 10) {
         errors.barcode = !rawBarcode
-            ? "BARCODE is required AND must be a 10 digit number!"
+            ? "BARCODE is required AND must be a 8-10 digit number!"
             : isNaN(rawBarcode)
                 ? "Barcode must be a number!"
-                : "BARCODE must be at least 10 digits!";
+                : rawBarcode.length < 8
+                    ? "BARCODE must be at least 8 digits!"
+                    : "BARCODE must be less then 10 digits!";
         hasError = true;
     }
 
-    if (!rawLabel) {
-        errors.label = "PRODUCT LABEL is REQUIRED!";
+    if (!rawLabel || rawLabel.length > 15) {
+        errors.label = !rawLabel ? "PRODUCT LABEL is REQUIRED!" : "PRODUCT LABEL is too long!";
         hasError = true;
     }
 
@@ -448,19 +451,21 @@ function validateProductForm(formData) {
         }
     }
 
-    //TODO: continue here first.
-    console.log(storeCurrency);
     if (!rawCostPrice || isNaN(rawCostPrice)) {
         errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
         hasError = true;
     }
-    else if ((storeCurrency === "$" && rawCostPrice > 200) || (storeCurrency === "LBP" && rawCostPrice < 1000)){
-        errors.costPrice = (storeCurrency === "$" && rawCostPrice > 200) ? "COST PRICE amount is too large!" : "COST PRICE amount is too small!";
+    else if ((storeCurrency === "$" && rawCostPrice > 500) || (storeCurrency === "LBP" && rawCostPrice < 5000)){
+        errors.costPrice = (storeCurrency === "$" && rawCostPrice > 500) ? "COST PRICE amount is too large!" : "COST PRICE amount is too small!";
         hasError = true;
     }
 
     if (!rawProfit || isNaN(rawProfit)) {
         errors.profit = !rawProfit ? "PRODUCT PROFIT is REQUIRED!" : "PRODUCT PROFIT must be a NUMBER!";
+        hasError = true;
+    }
+    else if ((storeCurrency === "$" && rawProfit > 100) || (storeCurrency === "LBP" && rawProfit < 1000)){
+        errors.profit = (storeCurrency === "$" && rawProfit > 100) ? "PROFIT amount is too large!" : "PROFIT amount is too small!";
         hasError = true;
     }
 
@@ -1520,6 +1525,7 @@ function displayProducts(filteredProducts) {
 }
 
 function refreshProductList() {
+    console.log("refresh");
     fetchProductsForDoc().then((products) => {
         allProducts = products;
     });
@@ -1540,7 +1546,9 @@ $(document).ready(function () {
 });
 //TODO: ehance forms valitdation after adding currency.
 //NOTE: add validation when currency is in LBP or $.
+let isProductForm = false;
 function displayProductForm(product) {
+    isProductForm = true;
     const formHtml = `
         <div class = "header-container">
             <h5 style="font-weight: bolder">Update Product</h5>
@@ -1563,16 +1571,16 @@ function displayProductForm(product) {
             </div>
             
             <label for="costPrice">Cost Price (${storeCurrency}):</label>
-            <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
+            <input type="text" id="costPrice" name="costPrice" value="${storeCurrency === "$" ? product.costPrice : convertCurrency(product.costPrice, "$", "LBP")}">
 
             <label for="profit">Profit (${storeCurrency}):</label>
-            <input type="number" id="profit" name="profit" value="${product.profit}">
+            <input type="text" id="profit" name="profit" value="${product.profit}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
             
             <label for="stock">Stock:</label>
-            <input type="number" id="stock" name="stock" value="${product.stock}">
+            <input type="text" id="stock" name="stock" value="${product.stock}">
             
             <button type="submit" class="action-btn" id="update-button">Update</button>
             <button type="button" class="action-btn" id="remove-button">Remove Product</button>
@@ -1630,8 +1638,8 @@ function displayProductForm(product) {
         const updatedProduct = {
             label: rawLabel,
             barcode: parseInt(rawBarcode),
-            costPrice: parseInt(rawCostPriceToUSD),
-            profit: parseInt(rawProfitToUSD),
+            costPrice: parseFloat(rawCostPriceToUSD),
+            profit: parseFloat(rawProfitToUSD),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
             img: imageFile?.name || product.img // Keep old image if not updated
@@ -1714,7 +1722,9 @@ function displayProductForm(product) {
                 .then(() => {
 
                     showModalMessage("Product Updated Successfully!", true);
+                    fetchProductsForDoc();
                     refreshProductList();
+                    console.log("all products: ", allProducts);
                     displayProducts(allProducts);
                 })
                 .catch(error => {
@@ -3706,10 +3716,7 @@ function updateCurrencySelection(currency) {
             btn.textContent = storeCurrency === "$" ? "$" : "LBP";
         }
         function updateCurrencyView() {
-            if (isDOC)
-                displayProducts(allProducts);
-            else if (isProducts)
-                initProductPage();
+            location.reload();
         }
     }
 }
