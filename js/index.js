@@ -218,26 +218,26 @@ function showProductForm() {
         <h2>Add a New Product</h2>
         <form id="product-form" class="product-form">
             <label for="barcode">Barcode: </label>
-            <input type="text" id="barcode" name="barcode" ><br>
+            <input type="text" id="barcode" name="barcode" >
 
             <label for="label">Product Label: </label>
-            <input type="text" id="label" name="label" ><br>
+            <input type="text" id="label" name="label" >
 
             <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
             <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
             <button type="button" id="customFileButton">Choose File</button>
 
             <label for="costPrice">Cost Price (${storeCurrency}): </label>
-            <input type="text" id="costPrice" name="costPrice"><br>
+            <input type="text" id="costPrice" name="costPrice">
 
             <label for="profit">Profit (${storeCurrency}): </label>
-            <input type="text" id="profit" name="profit" ><br>
+            <input type="text" id="profit" name="profit" >
 
             <label for="category">Category: </label>
-            <input type="text" id="category" name="category"><br>
+            <input type="text" id="category" name="category">
 
             <label for="stock">Stock Quantity: </label>
-            <input type="text" id="stock" name="stock" ><br>
+            <input type="text" id="stock" name="stock">
 
             <button type="submit" class="action-btn">Add</button>
         </form>
@@ -279,12 +279,13 @@ function addProduct() {
             imageFile
         } = values;
 
+        const rawCostPriceToUSD = storeCurrency === "LBP" ? convertCurrency(rawCostPrice, "LBP", "$") : rawCostPrice;
         const productData = {
             barcode: parseInt(rawBarcode),
             label: rawLabel.toLowerCase(),
             img: "",
-            costPrice: parseInt(rawCostPrice),
-            profit: parseInt(rawProfit),
+            costPrice: parseFloat(rawCostPriceToUSD),
+            profit: parseFLoat(rawProfit),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
         };
@@ -491,10 +492,10 @@ function showCustomerForm() {
             <h1>Add Customer</h1>
             <form id="customer-form" class="product-form">
                 <label for="name">Name: </label>
-                <input type="text" id="name" name="name" required><br>
+                <input type="text" id="name" name="name" required>
 
                 <label for="phoneNumber">Phone Number: </label>
-                <input type="number" id="phoneNumber" name="phoneNumber" required><br>
+                <input type="number" id="phoneNumber" name="phoneNumber" required>
 
                 <button type="submit" class="action-btn">Add</button>
             </form>
@@ -1170,8 +1171,10 @@ function showLoadingOverlay(duration = 400) {
 
 // #region 1️⃣ Products Section {
 let storeCurrency = "LBP";
+let allProducts = [];
+let isDOC = false;
+let isProducts = false;
 function initProductPage() {
-    console.log(storeCurrency);
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div id="filter-options" class="filter-options">
@@ -1202,19 +1205,36 @@ function initProductPage() {
             </div>
 
             <div class="filter-group">
-                <label for="price-select">Filter Price:</label>
+                <label for="price-select">Filter Price (${storeCurrency}):</label>
                 <select id="price-select" style="display: none;">
                   <option value="">All Prices</option>
-                  <option value="low-price">Low Price (0-10)</option>
-                  <option value="medium-price">Medium Price (11-50)</option>
+                  <option value="low-price">Low Price </option>
+                  <option value="medium-price">Medium Price </option>
                   <option value="high-price">High Price (51+)</option>
                 </select>
 
                 <div id="price-buttons" class="button-group">
                   <button class="filter-btn" data-value="">All Prices</button>
-                  <button class="filter-btn" data-value="low-price">Low Price (0-10)</button>
-                  <button class="filter-btn" data-value="medium-price">Medium Price (11-50)</button>
-                  <button class="filter-btn" data-value="high-price">High Price (51+)</button>
+                  <button class="filter-btn" data-value="low-price">Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-100k)'}</button>
+                  <button class="filter-btn" data-value="medium-price">Medium Price ${storeCurrency === "$" ? '(1-5)' : '(100k-500k)'}</button>
+                  <button class="filter-btn" data-value="high-price">High Price ${storeCurrency === "$" ? '(5+)' : '(500k+)'}</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="profit-select">Filter Profit (${storeCurrency}):</label>
+                <select id="profit-select" style="display: none;">
+                  <option value="">All Profits</option>
+                  <option value="low-profit">Low profit (0-10)</option>
+                  <option value="medium-profit">Medium Profit (11-20)</option>
+                  <option value="high-profit">High Profit (21+)</option>
+                </select>
+
+                <div id="profit-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Profits</button>
+                  <button class="filter-btn" data-value="low-profit">Low profit (0-10)</button>
+                  <button class="filter-btn" data-value="medium-profit">Medium Profit (11-20)</button>
+                  <button class="filter-btn" data-value="high-profit">High Profit (21+)</button>
                 </div>
             </div>
 
@@ -1232,23 +1252,6 @@ function initProductPage() {
                   <button class="filter-btn" data-value="low-stock">Low Stock (0-10)</button>
                   <button class="filter-btn" data-value="medium-stock">Medium Stock (11-50)</button>
                   <button class="filter-btn" data-value="high-stock">High Stock (51+)</button>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <label for="profit-select">Filter Profit:</label>
-                <select id="profit-select" style="display: none;">
-                  <option value="">All Profits</option>
-                  <option value="low-profit">Low profit (0-10)</option>
-                  <option value="medium-profit">Medium Profit (11-20)</option>
-                  <option value="high-profit">High Profit (21+)</option>
-                </select>
-
-                <div id="profit-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Profits</button>
-                  <button class="filter-btn" data-value="low-profit">Low profit (0-10)</button>
-                  <button class="filter-btn" data-value="medium-profit">Medium Profit (11-20)</button>
-                  <button class="filter-btn" data-value="high-profit">High Profit (21+)</button>
                 </div>
             </div>
 
@@ -1309,6 +1312,8 @@ function initButtonSelect(selectId, buttonContainerId) {
     });
 }
 async function fetchProducts() {
+    isProducts = true;
+    isDOC = false;
     const productsGrid = document.getElementById("products-grid");
     const categorySelect = document.getElementById("category-select");
     const priceSelect = document.getElementById("price-select");
@@ -1417,25 +1422,7 @@ async function fetchProducts() {
             productsGrid.innerHTML = "";
 
             filteredProducts.forEach(product => {
-                const productCard = document.createElement("div");
-                productCard.className = "product-card";
-
-                productCard.innerHTML = `
-                    <div class="product-image">
-                        <img src="${product.img}" alt="${product.label}">
-                    </div>
-                    <div class="product-details">
-                        <p><strong>Label:</strong> ${product.label}</p>
-                        <p><strong>Barcode:</strong> ${product.barcode}</p>
-                        <p><strong>Cost Price:</strong> ${displayCurrency(product.costPrice)}</p>
-                        <p><strong>Profit:</strong> ${displayCurrency(product.profit)}</p>
-                        <p><strong>Category:</strong> ${product.category}</p>
-                        <p><strong>Stock:</strong> ${product.stock}</p>
-                        <p><strong>Created At:</strong> ${product.createdAt}</p>
-                    </div>
-                        `;
-
-                productsGrid.appendChild(productCard);
+                productsGrid.innerHTML += productCard(product);
             });
         };
 
@@ -1462,8 +1449,27 @@ async function fetchProducts() {
         console.error("Error fetching products:", error);
     }
 }
-let allProducts = [];
+function productCard(product) {
+    return `
+        <div class="product-card" data-id="${product.id}">
+            <div class="product-image">
+                <img src="${product.img}" alt="${product.label}">
+            </div>
+            <div class="product-details">
+                <p><strong>Label:</strong> ${product.label}</p>
+                <p><strong>Barcode:</strong> ${product.barcode}</p>
+                <p><strong>Cost Price:</strong> ${displayCurrency(product.costPrice)}</p>
+                <p><strong>Profit:</strong> ${displayCurrency(product.profit)}</p>
+                <p><strong>Category:</strong> ${product.category}</p>
+                <p><strong>Stock:</strong> ${product.stock}</p>
+                <p><strong>Created At:</strong> ${product.createdAt}</p>
+            </div>
+        </div>
+    `;
+}
 function fetchProductsForDoc() {
+    isDOC = true;
+    isProducts = false;
     return db.collection("products").get().then((querySnapshot) => {
         let products = [];
         querySnapshot.forEach((doc) => {
@@ -1487,32 +1493,26 @@ function fetchProductsForDoc() {
     });
 }
 function displayProducts(filteredProducts) {
-    let productCards = filteredProducts.map(product => `
-        <div class="product-card" data-id="${product.id}">
-            <div class="product-image">
-                <img src="${product.img}" alt="${product.label}">
-            </div>
-            <div class="product-details">
-                <p><strong>Label:</strong> ${product.label}</p>
-                <p><strong>Barcode:</strong> ${product.barcode}</p>
-                <p><strong>Cost Price:</strong> $${product.costPrice}</p>
-                <p><strong>Profit:</strong> ${storeCurrency}${product.profit}</p>
-                <p><strong>Category:</strong> ${product.category}</p>
-                <p><strong>Stock:</strong> ${product.stock}</p>
-                <p><strong>Created At:</strong> ${product.createdAt}</p>
-            </div>
+    const productCardsHTML = filteredProducts.map(product => productCard(product)).join("");
+
+    const productsGridHTML = `
+        <div id="products-grid" class="products-grid">
+            ${productCardsHTML}
         </div>
-    `).join("");
+    `;
 
-    let productsGrid = `<div id="products-grid" class="products-grid">${productCards}</div>`;
-    $(".main-content").html(productCards ? productsGrid : "<p>No products found.</p>");
+    $(".main-content").html(productCardsHTML ? productsGridHTML : "<p>No products found.</p>");
 
-    $(".product-card").on("click", function () {
-        const productId = $(this).data("id");
-        const product = allProducts.find(p => p.id === productId);
-        displayProductForm(product);
-    });
+    // Attach click handler only if there are products
+    if (productCardsHTML) {
+        $(".product-card").on("click", function () {
+            const productId = $(this).data("id");
+            const product = allProducts.find(p => p.id === productId);
+            displayProductForm(product);
+        });
+    }
 }
+
 function refreshProductList() {
     fetchProductsForDoc().then((products) => {
         allProducts = products;
@@ -1524,6 +1524,7 @@ $(document).ready(function () {
         displayProducts(products);
     });
     $(".search-bar").on("input", function () {
+        isDOC = true;
         let searchText = $(this).val().toLowerCase().trim();
         let filtered = allProducts.filter(product =>
             product.label.toLowerCase().startsWith(searchText)
@@ -1531,6 +1532,8 @@ $(document).ready(function () {
         displayProducts(filtered);
     });
 });
+//TODO: ehance forms valitdation after adding currency.
+//NOTE: add validation when currency is in LBP or $.
 function displayProductForm(product) {
     const formHtml = `
         <div class = "header-container">
@@ -1553,11 +1556,11 @@ function displayProductForm(product) {
                 <button type="button" id="customFileButton">Update Image:</button>
             </div>
             
-            <label for="costPrice">Cost Price:</label>
+            <label for="costPrice">Cost Price (${storeCurrency}):</label>
             <input type="number" id="costPrice" name="costPrice" value="${product.costPrice}">
 
-            <label for="profit">Profit: </label>
-            <input type="number" id="profit" name="profit" value="${storeCurrency}${product.profit}">
+            <label for="profit">Profit (${storeCurrency}):</label>
+            <input type="number" id="profit" name="profit" value="${product.profit}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -1616,11 +1619,13 @@ function displayProductForm(product) {
             imageFile
         } = values;
 
+        const rawCostPriceToUSD = storeCurrency === "LBP" ? convertCurrency(rawCostPrice, "LBP", "$") : rawCostPrice;
+        const rawProfitToUSD = storeCurrency === "LBP" ? convertCurrency(rawProfit, "LBP", "$") : rawProfit;
         const updatedProduct = {
             label: rawLabel,
             barcode: parseInt(rawBarcode),
-            costPrice: parseInt(rawCostPrice),
-            profit: parseInt(rawProfit),
+            costPrice: parseInt(rawCostPriceToUSD),
+            profit: parseInt(rawProfitToUSD),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
             img: imageFile?.name || product.img // Keep old image if not updated
@@ -1832,10 +1837,10 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         </div>
         <form id="customer-form" class="product-form">
             <label for="customer-name">Name:</label>
-            <input type="text" id="customer-name" value="${customerName}" required /><br />
+            <input type="text" id="customer-name" value="${customerName}" required />
 
             <label for="customer-phone">Phone Number:</label>
-            <input type="text" id="customer-phone" value="${customerPhone}" required /><br />
+            <input type="text" id="customer-phone" value="${customerPhone}" required />
 
             <button type="button" class="action-btn" id="edit-customer-btn">Edit Customer</button>
             <button type="button" class="action-btn" id="remove-customer-btn">Remove Customer</button>
@@ -1847,7 +1852,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <thead>
                     <tr>
                         <th>Details</th>
-                        <th>Balance</th>
+                        <th>Balance (${storeCurrency})</th>
                         <th>Created At</th>
                         <th>Remove</th>
                     </tr>
@@ -1894,7 +1899,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             debtDetailsTable.appendChild(debtRow);
             totalBalance += debt.balance;
         });
-        totalBalanceElement.textContent = totalBalance;
+        totalBalanceElement.textContent = totalBalance + ' ' + storeCurrency;
 
         document.querySelectorAll(".remove-debt-btn").forEach((button) => {
             button.addEventListener("click", async (event) => {
@@ -1936,9 +1941,9 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         mainContent.innerHTML = `
             <form id="customer-debt" class="product-form">
                 <label for="debt-details">Details:</label>
-                <input type="text" id="debt-details" required /><br />
-                <label for="debt-balance">Balance:</label>
-                <input type="number" id="debt-balance" required /><br />
+                <input type="text" id="debt-details" required />
+                <label for="debt-balance">Balance (${storeCurrency}):</label>
+                <input type="number" id="debt-balance" required />
                 <button type="submit" class="action-btn">Add</button>
                 <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
             </form>
@@ -3507,6 +3512,7 @@ async function fetchSalesDataAndRenderInsights() {
 // #region 🟦 Sidebar Region [
 
 // #region Profile Settings {
+// TODO: enhance form validation and feedback.
 const DEMO_USER_ID = "demo-user";
 function getCurrentUserId() {
     return DEMO_USER_ID;
@@ -3529,12 +3535,15 @@ function renderProfileForm() {
     document.body.innerHTML = `
         <div class="container">
             <div class="header-container">
-                <h5>Profile Settings</h5>
+                <h5>Store Settings</h5>
                 <button type="button" id="done-btn">Done</button>
             </div>
             <form class="product-form">
                 <label>Store Name</label>
                 <input type="text" id="storeName" placeholder="Enter your store name" />
+                               
+                <label>Exchange Rate (1$ = LBP)</label>
+                <input type="text" id="exchangeRate" placeholder="LBP amount" />
 
                 <label>Currency</label>
                 <div id="currencyOptions" class="button-selector">
@@ -3599,31 +3608,32 @@ function addEventListeners() {
         });
     }
     function setupProfileFormSubmit() {
-    
+
         const form = document.querySelector('.product-form');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-    
+
             const storeName = document.getElementById('storeName').value.trim();
+            const exchangeRate = document.getElementById('exchangeRate').value.trim();
             const currency = getSelectedCurrency();
             const combo = getSelectedCombo();
-    
+
             if (!storeName || !currency || !combo) return;
-    
-            const profileData = { storeName, currency, combo, updatedAt: new Date() };
+
+            const profileData = { storeName, exchangeRate, currency, combo, updatedAt: new Date() };
             await saveUserProfile(profileData);
         });
-    
+
         function getSelectedCurrency() {
             const selectedBtn = document.querySelector('.currency-btn.selected');
             return selectedBtn ? selectedBtn.dataset.value : null;
         }
-        
+
         function getSelectedCombo() {
             const selected = document.querySelector('.combo-btn.selected');
             return selected ? selected.dataset.value : null;
         }
-    
+
         async function saveUserProfile(profileData) {
             const userId = getCurrentUserId();
             try {
@@ -3631,7 +3641,7 @@ function addEventListeners() {
             } catch (error) {
                 console.error("Failed to save profile settings:", error);
             }
-        
+
             updateAccentColor(profileData.combo);
         }
     }
@@ -3653,7 +3663,13 @@ async function loadUserProfile() {
     function applyUserProfileSettings(data) {
         const storeNameInput = document.getElementById('storeName');
         if (storeNameInput) storeNameInput.value = data.storeName || '';
-    
+
+        const exchangeRateInput = document.getElementById('exchangeRate');
+        if (exchangeRateInput) exchangeRateInput.value = data.exchangeRate || '';
+
+        if (data.exchangeRate) {
+            EXCHANGE_RATE = data.exchangeRate;
+        }
         if (data.currency) {
             updateCurrencySelection(data.currency);
         } else {
@@ -3670,8 +3686,26 @@ function updateCurrencySelection(currency) {
             btn.classList.add('selected');
         }
     });
-    storeCurrency = currency; 
-    console.log(storeCurrency);
+    storeCurrency = currency;
+    const btn = document.getElementById("toggleCurrencyBtn");
+    if (btn) {
+        btn.textContent = storeCurrency === "$" ? "$" : "LBP";
+        btn.addEventListener("click", () => {
+            storeCurrency = storeCurrency === "$" ? "LBP" : "$";
+            updateCurrencyView();
+            updateToggleButtonText();
+        });
+
+        function updateToggleButtonText() {
+            btn.textContent = storeCurrency === "$" ? "$" : "LBP";
+        }
+        function updateCurrencyView() {
+            if (isDOC)
+                displayProducts(allProducts);
+            else if (isProducts)
+                initProductPage();
+        }
+    }
 }
 function updateComboSelection(combo) {
     const comboBtns = document.querySelectorAll('.combo-btn');
@@ -4426,12 +4460,15 @@ async function exportSalesTableToPDF(event) {
 }
 // #endregion ]
 
-const EXCHANGE_RATE = 90000;
+
+// #region 👀 Other [
+let EXCHANGE_RATE = 90000;
 function displayCurrency(amount) {
     if (storeCurrency === "$") {
-        return `${convertCurrency(amount, "LBP", "$")} $`;
-    } else {
-        return `${formatCompactNumber(amount)} LBP`;
+        return amount + '$';
+    } else if (storeCurrency === "LBP"){
+        const convertAmount = convertCurrency(amount, "$", "LBP");
+        return `${formatCompactNumber(convertAmount)} LBP`;
     }
 }
 function convertCurrency(amount, from = "LBP", to = "$") {
@@ -4451,10 +4488,11 @@ function formatCompactNumber(num) {
         maximumFractionDigits: 1
     }).format(num);
 }
+// #endregion ]
 
 document.addEventListener("DOMContentLoaded", () => {
-    initializeEventListeners();
     loadUserProfile();
+    initializeEventListeners();
     showLoadingOverlay(1500);
 });
 
