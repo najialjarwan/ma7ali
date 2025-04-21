@@ -284,8 +284,8 @@ function addProduct() {
             barcode: parseInt(rawBarcode),
             label: rawLabel.toLowerCase(),
             img: "",
-            costPrice: parseFloat(rawCostPriceToUSD),
-            profit: parseFLoat(rawProfit),
+            costPrice: parseInt(rawCostPriceToUSD),
+            profit: parseInt(rawProfit),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
         };
@@ -448,8 +448,14 @@ function validateProductForm(formData) {
         }
     }
 
+    //TODO: continue here first.
+    console.log(storeCurrency);
     if (!rawCostPrice || isNaN(rawCostPrice)) {
         errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
+        hasError = true;
+    }
+    else if ((storeCurrency === "$" && rawCostPrice > 200) || (storeCurrency === "LBP" && rawCostPrice < 1000)){
+        errors.costPrice = (storeCurrency === "$" && rawCostPrice > 200) ? "COST PRICE amount is too large!" : "COST PRICE amount is too small!";
         hasError = true;
     }
 
