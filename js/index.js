@@ -4222,31 +4222,31 @@ async function fetchProductsforExporting() {
 
         if (priceSelect) {
             if (priceSelect === "low-price") {
-                query = query.where("costPrice", "<=", 10);
+                query = query.where("costPrice", "<=", 1);
             } else if (priceSelect === "medium-price") {
-                query = query.where("costPrice", ">=", 11).where("costPrice", "<=", 50);
+                query = query.where("costPrice", ">", 1).where("costPrice", "<=", 5);
             } else if (priceSelect === "high-price") {
-                query = query.where("costPrice", ">=", 51);
+                query = query.where("costPrice", ">", 5);
             }
         }
 
         if (stockSelect) {
             if (stockSelect === "low-stock") {
-                query = query.where("stock", "<=", 10);
+                query = query.where("stock", "<=", 5);
             } else if (stockSelect === "medium-stock") {
-                query = query.where("stock", ">=", 11).where("stock", "<=", 50);
+                query = query.where("stock", ">", 5).where("stock", "<=", 30);
             } else if (stockSelect === "high-stock") {
-                query = query.where("stock", ">=", 51);
+                query = query.where("stock", ">", 30);
             }
         }
 
         if (profitSelect) {
             if (profitSelect === "low-profit") {
-                query = query.where("profit", "<=", 10);
+                query = query.where("profit", "<=", 0.1);
             } else if (profitSelect === "medium-profit") {
-                query = query.where("profit", ">=", 11).where("profit", "<=", 20);
+                query = query.where("profit", ">", 0.1).where("profit", "<=", 1);
             } else if (profitSelect === "high-profit") {
-                query = query.where("profit", ">=", 21);
+                query = query.where("profit", ">", 1);
             }
         }
 
@@ -4270,8 +4270,8 @@ async function fetchProductsforExporting() {
             return {
                 label: data.label,
                 barcode: data.barcode,
-                costPrice: data.costPrice,
-                profit: data.profit,
+                costPrice: displayCurrency(data.costPrice),
+                profit: displayCurrency(data.profit),
                 category: data.category,
                 stock: data.stock,
                 createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
