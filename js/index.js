@@ -455,7 +455,7 @@ function validateProductForm(formData) {
         errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
         hasError = true;
     }
-    else if ((storeCurrency === "$" && rawCostPrice > 500) || (storeCurrency === "LBP" && rawCostPrice < 5000)){
+    else if ((storeCurrency === "$" && rawCostPrice > 500) || (storeCurrency === "LBP" && rawCostPrice < 5000)) {
         errors.costPrice = (storeCurrency === "$" && rawCostPrice > 500) ? "COST PRICE amount is too large!" : "COST PRICE amount is too small!";
         hasError = true;
     }
@@ -464,7 +464,7 @@ function validateProductForm(formData) {
         errors.profit = !rawProfit ? "PRODUCT PROFIT is REQUIRED!" : "PRODUCT PROFIT must be a NUMBER!";
         hasError = true;
     }
-    else if ((storeCurrency === "$" && rawProfit > 100) || (storeCurrency === "LBP" && rawProfit < 1000)){
+    else if ((storeCurrency === "$" && rawProfit > 100) || (storeCurrency === "LBP" && rawProfit < 1000)) {
         errors.profit = (storeCurrency === "$" && rawProfit > 100) ? "PROFIT amount is too large!" : "PROFIT amount is too small!";
         hasError = true;
     }
@@ -1187,6 +1187,12 @@ let isDOC = false;
 let isProducts = false;
 function initProductPage() {
     const mainContent = document.querySelector(".main-content");
+    const oneCostPrice = convertCurrency(1, "$", "LBP");
+    const oneCostPriceFormatted = formatCompactNumber(oneCostPrice);
+    const fiveCostPrice = convertCurrency(5, "$", "LBP");
+    const fiveCostPriceFormatted = formatCompactNumber(fiveCostPrice);
+    const centProfit = convertCurrency(0.1, "$", "LBP");
+    const centProfitFormatted = formatCompactNumber(centProfit);
     mainContent.innerHTML = `
         <div id="filter-options" class="filter-options">
             <div class="filter-group">
@@ -1221,14 +1227,17 @@ function initProductPage() {
                   <option value="">All Prices</option>
                   <option value="low-price">Low Price </option>
                   <option value="medium-price">Medium Price </option>
-                  <option value="high-price">High Price (51+)</option>
+                  <option value="high-price">High Price </option>
                 </select>
 
                 <div id="price-buttons" class="button-group">
                   <button class="filter-btn" data-value="">All Prices</button>
-                  <button class="filter-btn" data-value="low-price">Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-100k)'}</button>
-                  <button class="filter-btn" data-value="medium-price">Medium Price ${storeCurrency === "$" ? '(1-5)' : '(100k-500k)'}</button>
-                  <button class="filter-btn" data-value="high-price">High Price ${storeCurrency === "$" ? '(5+)' : '(500k+)'}</button>
+                  <button class="filter-btn" data-value="low-price">
+                  Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-' + oneCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="medium-price">
+                  Medium Price ${storeCurrency === "$" ? '(1-5)' : '(' + oneCostPriceFormatted + '-' + fiveCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="high-price">
+                  High Price ${storeCurrency === "$" ? '(5+)' : '(' + fiveCostPriceFormatted + '+)'}</button>
                 </div>
             </div>
 
@@ -1243,9 +1252,12 @@ function initProductPage() {
 
                 <div id="profit-buttons" class="button-group">
                   <button class="filter-btn" data-value="">All Profits</button>
-                  <button class="filter-btn" data-value="low-profit">Low profit (0-10)</button>
-                  <button class="filter-btn" data-value="medium-profit">Medium Profit (11-20)</button>
-                  <button class="filter-btn" data-value="high-profit">High Profit (21+)</button>
+                  <button class="filter-btn" data-value="low-profit">
+                  Low profit ${storeCurrency === "$" ? '(0-0.1)' : '(0-' + centProfitFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="medium-profit">
+                  Medium Profit ${storeCurrency === "$" ? '(0.1-1)' : '(' + centProfitFormatted + '-' + oneCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="high-profit">
+                  High Profit ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
                 </div>
             </div>
 
@@ -1366,16 +1378,17 @@ async function fetchProducts() {
             }
 
             const priceRange = priceSelect.value;
+            console.log("price range: ", priceRange);
             if (priceRange) {
                 switch (priceRange) {
                     case "low-price":
-                        filteredProducts = filteredProducts.filter(product => product.costPrice >= 0 && product.costPrice <= 10);
+                        filteredProducts = filteredProducts.filter(product => product.costPrice >= 0 && product.costPrice <= 1);
                         break;
                     case "medium-price":
-                        filteredProducts = filteredProducts.filter(product => product.costPrice >= 11 && product.costPrice <= 50);
+                        filteredProducts = filteredProducts.filter(product => product.costPrice > 1 && product.costPrice <= 5);
                         break;
                     case "high-price":
-                        filteredProducts = filteredProducts.filter(product => product.costPrice > 50);
+                        filteredProducts = filteredProducts.filter(product => product.costPrice > 5);
                         break;
                 }
             }
@@ -1574,7 +1587,7 @@ function displayProductForm(product) {
             <input type="text" id="costPrice" name="costPrice" value="${storeCurrency === "$" ? product.costPrice : convertCurrency(product.costPrice, "$", "LBP")}">
 
             <label for="profit">Profit (${storeCurrency}):</label>
-            <input type="text" id="profit" name="profit" value="${product.profit}">
+            <input type="text" id="profit" name="profit" value="${storeCurrency === "$" ? product.profit : convertCurrency(product.profit, "$", "LBP")}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -1698,8 +1711,6 @@ function displayProductForm(product) {
                                         .then(() => {
 
                                             showModalMessage("Product Updated Successfully!", true);
-                                            refreshProductList();
-                                            displayProducts(allProducts);
                                         })
                                         .catch(error => {
                                             console.error("Error updating product:", error);
@@ -1722,15 +1733,15 @@ function displayProductForm(product) {
                 .then(() => {
 
                     showModalMessage("Product Updated Successfully!", true);
-                    fetchProductsForDoc();
-                    refreshProductList();
-                    console.log("all products: ", allProducts);
-                    displayProducts(allProducts);
                 })
                 .catch(error => {
                     console.error("Error updating product:", error);
                 });
         }
+        refreshProductList();
+        setTimeout(() => {
+            displayProducts(allProducts);
+        }, 500);
     });
 
     $("#done-btn").on("click", function () {
@@ -3716,7 +3727,10 @@ function updateCurrencySelection(currency) {
             btn.textContent = storeCurrency === "$" ? "$" : "LBP";
         }
         function updateCurrencyView() {
-            location.reload();
+            if (isDOC)
+                displayProducts(allProducts);
+            else if (isProducts)
+                initProductPage();
         }
     }
 }
@@ -4478,17 +4492,15 @@ async function exportSalesTableToPDF(event) {
 let EXCHANGE_RATE = 90000;
 function displayCurrency(amount) {
     if (storeCurrency === "$") {
-        return amount + '$';
-    } else if (storeCurrency === "LBP"){
+        return amount.toFixed(2) + '$';
+    } else if (storeCurrency === "LBP") {
         const convertAmount = convertCurrency(amount, "$", "LBP");
         return `${formatCompactNumber(convertAmount)} LBP`;
     }
 }
 function convertCurrency(amount, from = "LBP", to = "$") {
-    let result = 0;
     if (from === "LBP" && to === "$") {
-        result = amount / EXCHANGE_RATE;
-        return result.toFixed(2);
+        return amount / EXCHANGE_RATE;
     } else if (from === "$" && to === "LBP") {
         return amount * EXCHANGE_RATE;
     }
