@@ -1179,112 +1179,25 @@ function showLoadingOverlay(duration = 400) {
 }
 // #endregion }
 
+let currentPageCurrencyUpdate = null;
 
+function setCurrencyUpdateCallback(callback) {
+    currentPageCurrencyUpdate = callback;
+}
+
+function updateCurrencyView() {
+    if (typeof currentPageCurrencyUpdate === "function") {
+        currentPageCurrencyUpdate();
+    }
+}
 // #region 1️⃣ Products Section {
 let storeCurrency = "LBP";
 let allProducts = [];
 let isDOC = false;
 let isProducts = false;
 function initProductPage() {
-    const mainContent = document.querySelector(".main-content");
-    const oneCostPrice = convertCurrency(1, "$", "LBP");
-    const oneCostPriceFormatted = formatCompactNumber(oneCostPrice);
-    const fiveCostPrice = convertCurrency(5, "$", "LBP");
-    const fiveCostPriceFormatted = formatCompactNumber(fiveCostPrice);
-    const centProfit = convertCurrency(0.1, "$", "LBP");
-    const centProfitFormatted = formatCompactNumber(centProfit);
-    mainContent.innerHTML = `
-        <div id="filter-options" class="filter-options">
-            <div class="filter-group">
-                <label for="category-select">Filter Category:</label>
-                <select id="category-select">
-                    <option value="">All Categories</option>
-                </select>
-            </div>
 
-            <div class="filter-group">
-                <label for="sort-by-price-stock-profit">Sort:</label>
-                <select id="sort-by-price-stock-profit">
-                    <option value="">No Sort</option>
-                    <optgroup label="Sort by Price">
-                        <option value="price-asc">Lowest to Highest</option>
-                        <option value="price-desc">Highest to Lowest</option>
-                    </optgroup>
-                    <optgroup label="Sort by Stock">
-                        <option value="stock-asc">Lowest to Highest</option>
-                        <option value="stock-desc">Highest to Lowest</option>
-                    </optgroup>
-                    <optgroup label="Sort by Profit">
-                        <option value="profit-asc">Lowest to Highest</option>
-                        <option value="profit-desc">Highest to Lowest</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="price-select">Filter Price (${storeCurrency}):</label>
-                <select id="price-select" style="display: none;">
-                  <option value="">All Prices</option>
-                  <option value="low-price">Low Price </option>
-                  <option value="medium-price">Medium Price </option>
-                  <option value="high-price">High Price </option>
-                </select>
-
-                <div id="price-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Prices</button>
-                  <button class="filter-btn" data-value="low-price">
-                  Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-' + oneCostPriceFormatted + ')'}</button>
-                  <button class="filter-btn" data-value="medium-price">
-                  Medium Price ${storeCurrency === "$" ? '(1-5)' : '(' + oneCostPriceFormatted + '-' + fiveCostPriceFormatted + ')'}</button>
-                  <button class="filter-btn" data-value="high-price">
-                  High Price ${storeCurrency === "$" ? '(5+)' : '(' + fiveCostPriceFormatted + '+)'}</button>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <label for="profit-select">Filter Profit (${storeCurrency}):</label>
-                <select id="profit-select" style="display: none;">
-                  <option value="">All Profits</option>
-                  <option value="low-profit">Low profit (0-10)</option>
-                  <option value="medium-profit">Medium Profit (11-20)</option>
-                  <option value="high-profit">High Profit (21+)</option>
-                </select>
-
-                <div id="profit-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Profits</button>
-                  <button class="filter-btn" data-value="low-profit">
-                  Low profit ${storeCurrency === "$" ? '(0-0.1)' : '(0-' + centProfitFormatted + ')'}</button>
-                  <button class="filter-btn" data-value="medium-profit">
-                  Medium Profit ${storeCurrency === "$" ? '(0.1-1)' : '(' + centProfitFormatted + '-' + oneCostPriceFormatted + ')'}</button>
-                  <button class="filter-btn" data-value="high-profit">
-                  High Profit ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <label for="stock-select">Filter Stock:</label>
-                <select id="stock-select" style="display: none;">
-                  <option value="">All Stocks</option>
-                  <option value="low-stock">Low Stock (0-5)</option>
-                  <option value="medium-stock">Medium Stock (6-30)</option>
-                  <option value="high-stock">High Stock (30+)</option>
-                </select>
-
-                <div id="stock-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Stocks</button>
-                  <button class="filter-btn" data-value="low-stock">Low Stock (0-5)</button>
-                  <button class="filter-btn" data-value="medium-stock">Medium Stock (6-30)</button>
-                  <button class="filter-btn" data-value="high-stock">High Stock (30+)</button>
-                </div>
-            </div>
-
-            <div class="products-actions">
-                <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
-                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT</button>
-            </div>
-        </div>
-        <div id="products-grid" class="products-grid"></div>
-    `;
+    renderFilters();
 
     initButtonSelect("price-select", "price-buttons");
     initButtonSelect("stock-select", "stock-buttons");
@@ -1336,6 +1249,10 @@ function initButtonSelect(selectId, buttonContainerId) {
     });
 }
 async function fetchProducts() {
+    console.log("fetch");
+    setCurrencyUpdateCallback(() => {
+        initProductPage();
+    });
     isProducts = true;
     isDOC = false;
     const productsGrid = document.getElementById("products-grid");
@@ -1473,6 +1390,108 @@ async function fetchProducts() {
         console.error("Error fetching products:", error);
     }
 }
+function renderFilters() {
+    console.log("test");
+    const mainContent = document.querySelector(".main-content");
+    const oneCostPrice = convertCurrency(1, "$", "LBP");
+    const oneCostPriceFormatted = formatCompactNumber(oneCostPrice);
+    const fiveCostPrice = convertCurrency(5, "$", "LBP");
+    const fiveCostPriceFormatted = formatCompactNumber(fiveCostPrice);
+    const centProfit = convertCurrency(0.1, "$", "LBP");
+    const centProfitFormatted = formatCompactNumber(centProfit);
+    mainContent.innerHTML = `
+        <div id="filter-options" class="filter-options">
+            <div class="filter-group">
+                <label for="category-select">Filter Category:</label>
+                <select id="category-select">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="sort-by-price-stock-profit">Sort:</label>
+                <select id="sort-by-price-stock-profit">
+                    <option value="">No Sort</option>
+                    <optgroup label="Sort by Price">
+                        <option value="price-asc">Lowest to Highest</option>
+                        <option value="price-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Stock">
+                        <option value="stock-asc">Lowest to Highest</option>
+                        <option value="stock-desc">Highest to Lowest</option>
+                    </optgroup>
+                    <optgroup label="Sort by Profit">
+                        <option value="profit-asc">Lowest to Highest</option>
+                        <option value="profit-desc">Highest to Lowest</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="price-select">Filter Price (${storeCurrency}):</label>
+                <select id="price-select" style="display: none;">
+                  <option value="">All Prices</option>
+                  <option value="low-price">Low Price </option>
+                  <option value="medium-price">Medium Price </option>
+                  <option value="high-price">High Price </option>
+                </select>
+
+                <div id="price-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Prices</button>
+                  <button class="filter-btn" data-value="low-price">
+                  Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-' + oneCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="medium-price">
+                  Medium Price ${storeCurrency === "$" ? '(1-5)' : '(' + oneCostPriceFormatted + '-' + fiveCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="high-price">
+                  High Price ${storeCurrency === "$" ? '(5+)' : '(' + fiveCostPriceFormatted + '+)'}</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="profit-select">Filter Profit (${storeCurrency}):</label>
+                <select id="profit-select" style="display: none;">
+                  <option value="">All Profits</option>
+                  <option value="low-profit">Low profit (0-10)</option>
+                  <option value="medium-profit">Medium Profit (11-20)</option>
+                  <option value="high-profit">High Profit (21+)</option>
+                </select>
+
+                <div id="profit-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Profits</button>
+                  <button class="filter-btn" data-value="low-profit">
+                  Low profit ${storeCurrency === "$" ? '(0-0.1)' : '(0-' + centProfitFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="medium-profit">
+                  Medium Profit ${storeCurrency === "$" ? '(0.1-1)' : '(' + centProfitFormatted + '-' + oneCostPriceFormatted + ')'}</button>
+                  <button class="filter-btn" data-value="high-profit">
+                  High Profit ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="stock-select">Filter Stock:</label>
+                <select id="stock-select" style="display: none;">
+                  <option value="">All Stocks</option>
+                  <option value="low-stock">Low Stock (0-5)</option>
+                  <option value="medium-stock">Medium Stock (6-30)</option>
+                  <option value="high-stock">High Stock (30+)</option>
+                </select>
+
+                <div id="stock-buttons" class="button-group">
+                  <button class="filter-btn" data-value="">All Stocks</button>
+                  <button class="filter-btn" data-value="low-stock">Low Stock (0-5)</button>
+                  <button class="filter-btn" data-value="medium-stock">Medium Stock (6-30)</button>
+                  <button class="filter-btn" data-value="high-stock">High Stock (30+)</button>
+                </div>
+            </div>
+
+            <div class="products-actions">
+                <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
+                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT</button>
+            </div>
+        </div>
+        <div id="products-grid" class="products-grid"></div>
+    `;
+}
 function productCard(product) {
     return `
         <div class="product-card" data-id="${product.id}">
@@ -1517,6 +1536,9 @@ function fetchProductsForDoc() {
     });
 }
 function displayProducts(filteredProducts) {
+    setCurrencyUpdateCallback(() => {
+        displayProducts(filteredProducts);
+    });
     const productCardsHTML = filteredProducts.map(product => productCard(product)).join("");
 
     const productsGridHTML = `
@@ -1559,8 +1581,12 @@ $(document).ready(function () {
 });
 //TODO: ehance forms valitdation after adding currency.
 //NOTE: add validation when currency is in LBP or $.
+//TODO: remove the returned $ from displayCurrency and added manually.
 let isProductForm = false;
 function displayProductForm(product) {
+    setCurrencyUpdateCallback(() => {
+        displayProductForm(product);
+    });
     isProductForm = true;
     const formHtml = `
         <div class = "header-container">
@@ -1584,10 +1610,10 @@ function displayProductForm(product) {
             </div>
             
             <label for="costPrice">Cost Price (${storeCurrency}):</label>
-            <input type="text" id="costPrice" name="costPrice" value="${storeCurrency === "$" ? product.costPrice : convertCurrency(product.costPrice, "$", "LBP")}">
+            <input type="text" id="costPrice" name="costPrice" value="${displayCurrency(product.costPrice)}">
 
             <label for="profit">Profit (${storeCurrency}):</label>
-            <input type="text" id="profit" name="profit" value="${storeCurrency === "$" ? product.profit : convertCurrency(product.profit, "$", "LBP")}">
+            <input type="text" id="profit" name="profit" value="${displayCurrency(product.profit)}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -1767,7 +1793,6 @@ function removeProductFromFirebase(productId) {
 
 // #region 2️⃣ Customers Section {
 function initCustomersPage() {
-
     const mainContent = document.querySelector(".main-content");
 
     mainContent.innerHTML = `
@@ -1856,6 +1881,9 @@ async function fetchCustomers() {
     }
 }
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
+    setCurrencyUpdateCallback(() => {
+        displayCustomerDetails(customerId, customerName, customerPhone);
+    });
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="header-container">
@@ -1966,46 +1994,56 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 
     document.getElementById("add-debt").addEventListener("click", () => {
-        mainContent.innerHTML = `
-            <form id="customer-debt" class="product-form">
-                <label for="debt-details">Details:</label>
-                <input type="text" id="debt-details" required />
-                <label for="debt-balance">Balance (${storeCurrency}):</label>
-                <input type="text" id="debt-balance" required />
-                <button type="submit" class="action-btn">Add</button>
-                <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
-            </form>
-        `;
-
-        document.getElementById("customer-debt").addEventListener("submit", async (event) => {
-            event.preventDefault();
-            const details = document.getElementById("debt-details").value.trim();
-            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
-            const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
-            console.log("balance: ", balance);
-            console.log("balance formatted: ", balanceConverted);
-
-            if (!details || isNaN(balance) || balance <= 0) {
-                showModalMessage("Invalid input. Please enter valid details and balance!", false);
-                return;
-            }
-
-            try {
-                await db.collection("customers").doc(customerId).collection("debts").add({
-                    details,
-                    balance: balanceConverted,
-                    createdAt: firebase.firestore.Timestamp.now(),
-                });
-                showModalMessage("Debt added successfully!", true);
-                document.getElementById("customer-debt").reset();
-            } catch (error) {
-                showModalMessage(`Error adding debt: ${error.message}`, false);
-            }
-        });
-
+        renderAddDebtForm();
         document.getElementById("cancel-debt-btn").addEventListener("click", () => {
+            console.log("clicked");
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
+        setCurrencyUpdateCallback(() => {
+            renderAddDebtForm();
+            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
+                console.log("clicked");
+                displayCustomerDetails(customerId, customerName, customerPhone);
+            });
+        });
+    });
+}
+function renderAddDebtForm() {
+    const mainContent = document.querySelector(".main-content");
+    mainContent.innerHTML = `
+    <form id="customer-debt" class="product-form">
+        <label for="debt-details">Details:</label>
+        <input type="text" id="debt-details" required />
+        <label for="debt-balance">Balance (${storeCurrency}):</label>
+        <input type="text" id="debt-balance" required />
+        <button type="submit" class="action-btn">Add</button>
+        <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
+    </form>
+`;
+    document.getElementById("customer-debt").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const details = document.getElementById("debt-details").value.trim();
+        const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+        const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
+        console.log("balance: ", balance);
+        console.log("balance formatted: ", balanceConverted);
+
+        if (!details || isNaN(balance) || balance <= 0) {
+            showModalMessage("Invalid input. Please enter valid details and balance!", false);
+            return;
+        }
+
+        try {
+            await db.collection("customers").doc(customerId).collection("debts").add({
+                details,
+                balance: balanceConverted,
+                createdAt: firebase.firestore.Timestamp.now(),
+            });
+            showModalMessage("Debt added successfully!", true);
+            document.getElementById("customer-debt").reset();
+        } catch (error) {
+            showModalMessage(`Error adding debt: ${error.message}`, false);
+        }
     });
 }
 // #endregion }
@@ -3718,6 +3756,7 @@ function updateCurrencySelection(currency) {
         }
     });
     storeCurrency = currency;
+    updateCurrencyView();
     const btn = document.getElementById("toggleCurrencyBtn");
     if (btn) {
         btn.textContent = storeCurrency === "$" ? "$" : "LBP";
@@ -3729,12 +3768,6 @@ function updateCurrencySelection(currency) {
 
         function updateToggleButtonText() {
             btn.textContent = storeCurrency === "$" ? "$" : "LBP";
-        }
-        function updateCurrencyView() {
-            if (isDOC)
-                displayProducts(allProducts);
-            else if (isProducts)
-                initProductPage();
         }
     }
 }
@@ -4285,7 +4318,7 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
-
+//TODO: continue from here.
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
     let total = 0;
@@ -4295,11 +4328,11 @@ async function fetchDebtDetailsForExport(customerId) {
         total += data.balance;
         return {
             details: data.details,
-            balance: data.balance,
+            balance: displayCurrency(data.balance),
             createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Unknown Date",
         };
     });
-
+    total = displayCurrency(total);
     return { debts, total: total };
 }
 async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, totalBalance) {
@@ -4502,6 +4535,7 @@ function displayCurrency(amount) {
         return `${formatCompactNumber(convertAmount)} LBP`;
     }
 }
+
 function convertCurrency(amount, from = "LBP", to = "$") {
     if (from === "LBP" && to === "$") {
         return amount / EXCHANGE_RATE;
