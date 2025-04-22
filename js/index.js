@@ -213,6 +213,9 @@ async function loadContent(section) {
 
 // #region 1️⃣ Add Product Section {
 function showProductForm() {
+    setCurrencyUpdateCallback(() => {
+        showProductForm();
+    });
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <h2>Add a New Product</h2>
@@ -578,7 +581,7 @@ function showCartForm() {
     mainContent.innerHTML = `
         <form id="cart-form" class="product-form">
             <label for="cartName">Cart Name: (required)</label>
-            <input type="text" id="cartName" name="cartName" required><br>
+            <input type="text" id="cartName" name="cartName" required>
             <button type="submit" class="action-btn" id="save-cart-btn">Create Cart</button>
             <button type="button" class="action-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
         </form>
@@ -690,6 +693,9 @@ async function addCart() {
     }
 }
 async function displayCart(cartId) {
+    setCurrencyUpdateCallback(() => {
+        displayCart(cartId);
+    });
     const cartDisplayContainer = document.getElementById("cart-display-container");
     setTimeout(() => {
         cartDisplayContainer.style.display = "block";
@@ -705,7 +711,7 @@ async function displayCart(cartId) {
             document.getElementById("cart-details").innerHTML = `
                 <p style="font-weight: bold; text-decoration: underline;">Cart Name: ${cart.name}</p>
                 <p><strong>Date Created: </strong>${cart.dateCreated.toDate().toLocaleString()}</p>
-                <p><strong>Total Cost: </strong>$${cart.totalCost}</p>
+                <p><strong>Total Cost: </strong>$${displayCurrency(cart.totalCost)}</p>
             `;
         }
     });
@@ -719,8 +725,8 @@ async function displayCart(cartId) {
                 <div class="cart-products-list">
                     <p style="font-weight: bold; text-decoration: underline;">${product.name}</p>
                     <p><strong>Quantity: </strong>${product.quantity}</p>
-                    <p><strong>costPrice: $</strong>${product.costPrice}</p>
-                    <p><strong>Total: $</strong>${product.total}</p>
+                    <p><strong>costPrice: $</strong>${displayCurrency(product.costPrice)}</p>
+                    <p><strong>Total: $</strong>${displayCurrency(product.total)}</p>
                 </div>
             `;
         });
@@ -1179,17 +1185,7 @@ function showLoadingOverlay(duration = 400) {
 }
 // #endregion }
 
-let currentPageCurrencyUpdate = null;
 
-function setCurrencyUpdateCallback(callback) {
-    currentPageCurrencyUpdate = callback;
-}
-
-function updateCurrencyView() {
-    if (typeof currentPageCurrencyUpdate === "function") {
-        currentPageCurrencyUpdate();
-    }
-}
 // #region 1️⃣ Products Section {
 let storeCurrency = "LBP";
 let allProducts = [];
@@ -1249,7 +1245,6 @@ function initButtonSelect(selectId, buttonContainerId) {
     });
 }
 async function fetchProducts() {
-    console.log("fetch");
     setCurrencyUpdateCallback(() => {
         initProductPage();
     });
@@ -1793,6 +1788,9 @@ function removeProductFromFirebase(productId) {
 
 // #region 2️⃣ Customers Section {
 function initCustomersPage() {
+    setCurrencyUpdateCallback(() => {
+        initCustomersPage();
+    });
     const mainContent = document.querySelector(".main-content");
 
     mainContent.innerHTML = `
@@ -1856,15 +1854,13 @@ async function fetchCustomers() {
         }
     });
 
-    // Initial Fetch
     try {
         const customersSnapshot = await db.collection("customers").get();
-        customersGrid.innerHTML = ""; // Clear previous content
+        customersGrid.innerHTML = "";
 
         customersSnapshot.forEach((doc) => {
-            const customer = { id: doc.id, ...doc.data() }; // Fix: Include document ID
+            const customer = { id: doc.id, ...doc.data() };
 
-            // Create a customer card for each customer
             const customerCard = document.createElement("div");
             customerCard.classList.add("customers-card");
             customerCard.innerHTML = `
@@ -4544,12 +4540,24 @@ function convertCurrency(amount, from = "LBP", to = "$") {
     }
     return amount;
 }
+
 function formatCompactNumber(num) {
     return new Intl.NumberFormat('en', {
         notation: "compact",
         compactDisplay: "short",
         maximumFractionDigits: 1
     }).format(num);
+}
+
+let currentPageCurrencyUpdate = null;
+function setCurrencyUpdateCallback(callback) {
+    currentPageCurrencyUpdate = callback;
+}
+
+function updateCurrencyView() {
+    if (typeof currentPageCurrencyUpdate === "function") {
+        currentPageCurrencyUpdate();
+    }
 }
 // #endregion ]
 

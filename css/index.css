@@ -462,7 +462,6 @@ nav {
 .search-bar {
   flex: 1;
   border: none;
-  background: transparent;
   outline: none;
   font-size: 20px;
   margin-left: 20px;
@@ -931,7 +930,7 @@ footer {
 
 .search-bar {
   text-align: left;
-  background-color: transparent !important;
+  background-color: var(--accent-color);
   color: var(--input-color);
   padding-left: 30px;
   width: 100%;
