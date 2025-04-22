@@ -1265,16 +1265,16 @@ function initProductPage() {
                 <label for="stock-select">Filter Stock:</label>
                 <select id="stock-select" style="display: none;">
                   <option value="">All Stocks</option>
-                  <option value="low-stock">Low Stock (0-10)</option>
-                  <option value="medium-stock">Medium Stock (11-50)</option>
-                  <option value="high-stock">High Stock (51+)</option>
+                  <option value="low-stock">Low Stock (0-5)</option>
+                  <option value="medium-stock">Medium Stock (6-30)</option>
+                  <option value="high-stock">High Stock (30+)</option>
                 </select>
 
                 <div id="stock-buttons" class="button-group">
                   <button class="filter-btn" data-value="">All Stocks</button>
-                  <button class="filter-btn" data-value="low-stock">Low Stock (0-10)</button>
-                  <button class="filter-btn" data-value="medium-stock">Medium Stock (11-50)</button>
-                  <button class="filter-btn" data-value="high-stock">High Stock (51+)</button>
+                  <button class="filter-btn" data-value="low-stock">Low Stock (0-5)</button>
+                  <button class="filter-btn" data-value="medium-stock">Medium Stock (6-30)</button>
+                  <button class="filter-btn" data-value="high-stock">High Stock (30+)</button>
                 </div>
             </div>
 
@@ -1310,6 +1310,7 @@ function initProductPage() {
             }
         }
     });
+
 }
 function initButtonSelect(selectId, buttonContainerId) {
     const select = document.getElementById(selectId);
@@ -1378,7 +1379,6 @@ async function fetchProducts() {
             }
 
             const priceRange = priceSelect.value;
-            console.log("price range: ", priceRange);
             if (priceRange) {
                 switch (priceRange) {
                     case "low-price":
@@ -1397,13 +1397,13 @@ async function fetchProducts() {
             if (stockRange) {
                 switch (stockRange) {
                     case "low-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 0 && product.stock <= 10);
+                        filteredProducts = filteredProducts.filter(product => product.stock >= 0 && product.stock <= 5);
                         break;
                     case "medium-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock >= 11 && product.stock <= 50);
+                        filteredProducts = filteredProducts.filter(product => product.stock > 5 && product.stock <= 30);
                         break;
                     case "high-stock":
-                        filteredProducts = filteredProducts.filter(product => product.stock > 50);
+                        filteredProducts = filteredProducts.filter(product => product.stock > 30);
                         break;
                 }
             }
@@ -1412,13 +1412,13 @@ async function fetchProducts() {
             if (profitRange) {
                 switch (profitRange) {
                     case "low-profit":
-                        filteredProducts = filteredProducts.filter(product => product.profit >= 0 && product.profit <= 10);
+                        filteredProducts = filteredProducts.filter(product => product.profit >= 0 && product.profit <= 0.1);
                         break;
                     case "medium-profit":
-                        filteredProducts = filteredProducts.filter(product => product.profit >= 11 && product.profit <= 20);
+                        filteredProducts = filteredProducts.filter(product => product.profit > 0.1 && product.profit <= 1);
                         break;
                     case "high-profit":
-                        filteredProducts = filteredProducts.filter(product => product.profit > 21);
+                        filteredProducts = filteredProducts.filter(product => product.profit > 1);
                         break;
                 }
             }
@@ -1919,14 +1919,15 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
             debtRow.innerHTML = `
                 <td>${debt.details}</td>
-                <td>${debt.balance}</td>
+                <td>${displayCurrency(debt.balance)}</td>
                 <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
                 <td><button class="remove-debt-btn" data-debt-id="${doc.id}">Remove</button></td>
             `;
             debtDetailsTable.appendChild(debtRow);
             totalBalance += debt.balance;
         });
-        totalBalanceElement.textContent = totalBalance + ' ' + storeCurrency;
+        const totalBalanceFormatted = displayCurrency(totalBalance);
+        totalBalanceElement.textContent = totalBalanceFormatted;
 
         document.querySelectorAll(".remove-debt-btn").forEach((button) => {
             button.addEventListener("click", async (event) => {
@@ -1970,7 +1971,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <label for="debt-details">Details:</label>
                 <input type="text" id="debt-details" required />
                 <label for="debt-balance">Balance (${storeCurrency}):</label>
-                <input type="number" id="debt-balance" required />
+                <input type="text" id="debt-balance" required />
                 <button type="submit" class="action-btn">Add</button>
                 <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
             </form>
@@ -1979,7 +1980,10 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         document.getElementById("customer-debt").addEventListener("submit", async (event) => {
             event.preventDefault();
             const details = document.getElementById("debt-details").value.trim();
-            const balance = parseInt(document.getElementById("debt-balance").value.trim());
+            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+            const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
+            console.log("balance: ", balance);
+            console.log("balance formatted: ", balanceConverted);
 
             if (!details || isNaN(balance) || balance <= 0) {
                 showModalMessage("Invalid input. Please enter valid details and balance!", false);
@@ -1989,7 +1993,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             try {
                 await db.collection("customers").doc(customerId).collection("debts").add({
                     details,
-                    balance,
+                    balance: balanceConverted,
                     createdAt: firebase.firestore.Timestamp.now(),
                 });
                 showModalMessage("Debt added successfully!", true);
