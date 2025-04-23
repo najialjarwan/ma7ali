@@ -1189,8 +1189,6 @@ function showLoadingOverlay(duration = 400) {
 // #region 1️⃣ Products Section {
 let storeCurrency = "LBP";
 let allProducts = [];
-let isDOC = false;
-let isProducts = false;
 function initProductPage() {
 
     renderFilters();
@@ -1248,8 +1246,6 @@ async function fetchProducts() {
     setCurrencyUpdateCallback(() => {
         initProductPage();
     });
-    isProducts = true;
-    isDOC = false;
     const productsGrid = document.getElementById("products-grid");
     const categorySelect = document.getElementById("category-select");
     const priceSelect = document.getElementById("price-select");
@@ -1506,8 +1502,6 @@ function productCard(product) {
     `;
 }
 function fetchProductsForDoc() {
-    isDOC = true;
-    isProducts = false;
     return db.collection("products").get().then((querySnapshot) => {
         let products = [];
         querySnapshot.forEach((doc) => {
@@ -1554,8 +1548,7 @@ function displayProducts(filteredProducts) {
     }
 }
 
-function refreshProductList() {
-    console.log("refresh");
+async function refreshProductList() {
     fetchProductsForDoc().then((products) => {
         allProducts = products;
     });
@@ -1566,7 +1559,6 @@ $(document).ready(function () {
         displayProducts(products);
     });
     $(".search-bar").on("input", function () {
-        isDOC = true;
         let searchText = $(this).val().toLowerCase().trim();
         let filtered = allProducts.filter(product =>
             product.label.toLowerCase().startsWith(searchText)
@@ -1574,15 +1566,11 @@ $(document).ready(function () {
         displayProducts(filtered);
     });
 });
-//TODO: ehance forms valitdation after adding currency.
-//NOTE: add validation when currency is in LBP or $.
-//TODO: remove the returned $ from displayCurrency and added manually.
-let isProductForm = false;
-function displayProductForm(product) {
+
+async function displayProductForm(product) {
     setCurrencyUpdateCallback(() => {
         displayProductForm(product);
     });
-    isProductForm = true;
     const formHtml = `
         <div class = "header-container">
             <h5 style="font-weight: bolder">Update Product</h5>
@@ -1605,10 +1593,12 @@ function displayProductForm(product) {
             </div>
             
             <label for="costPrice">Cost Price (${storeCurrency}):</label>
-            <input type="text" id="costPrice" name="costPrice" value="${displayCurrency(product.costPrice)}">
+            <input type="text" id="costPrice" name="costPrice" 
+            value="${storeCurrency === "LBP" ? convertCurrency(product.costPrice, "$", "LBP"): product.costPrice}">
 
             <label for="profit">Profit (${storeCurrency}):</label>
-            <input type="text" id="profit" name="profit" value="${displayCurrency(product.profit)}">
+            <input type="text" id="profit" name="profit" 
+            value="${storeCurrency === "LBP" ? convertCurrency(product.profit, "$", "LBP"): product.profit}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -1645,7 +1635,7 @@ function displayProductForm(product) {
         const form = document.getElementById("product-form");
         const formData = new FormData(form);
 
-        clearFieldErrors(); // Clear previous errors
+        clearFieldErrors();
 
         const { hasError, errors, values } = validateProductForm(formData);
 
@@ -1656,7 +1646,6 @@ function displayProductForm(product) {
             showModalMessage(`<p>Failed to update product!</p><p>Check the input fields.</p>`);
             return;
         }
-
         const {
             rawBarcode,
             rawLabel,
@@ -1676,11 +1665,9 @@ function displayProductForm(product) {
             profit: parseFloat(rawProfitToUSD),
             category: rawCategory,
             stock: parseInt(rawStock, 10),
-            img: imageFile?.name || product.img // Keep old image if not updated
+            img: imageFile?.name || product.img
         };
 
-
-        //other code to handle the submitting after validation...
         const file = $("#img")[0].files[0];
         if (file && file.size > 0) {
             const reader = new FileReader();
@@ -1721,17 +1708,16 @@ function displayProductForm(product) {
                             const storageRef = storage.ref(`product-images/${product.id}/${file.name.split(".")[0]}.webp`);
                             const metadata = { contentType: "image/webp" };
 
-                            // Upload the optimized image
                             storageRef.put(blob, metadata)
-                                .then(snapshot => snapshot.ref.getDownloadURL()) // Get the image URL
+                                .then(snapshot => snapshot.ref.getDownloadURL())
                                 .then(url => {
-                                    updatedProduct.img = url; // Add image URL to the updated product
+                                    updatedProduct.img = url;
 
-                                    // Update product details in Firestore
+                                    refreshProductList();
                                     db.collection("products").doc(product.id).update(updatedProduct)
                                         .then(() => {
-
                                             showModalMessage("Product Updated Successfully!", true);
+                                            displayProducts(allProducts);
                                         })
                                         .catch(error => {
                                             console.error("Error updating product:", error);
@@ -1742,27 +1728,24 @@ function displayProductForm(product) {
                                     showModalMessage("Image upload failed. Please try again.", false);
                                 });
                         },
-                        "image/webp", // Format (use JPEG if required)
-                        0.3 // Adjust quality for better control (lower = smaller file, worse quality)
+                        "image/webp",
+                        0.3
                     );
                 };
             };
 
             reader.readAsDataURL(file);
         } else {
+            refreshProductList();
             db.collection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
-
                     showModalMessage("Product Updated Successfully!", true);
+                    displayProducts(allProducts);
                 })
                 .catch(error => {
                     console.error("Error updating product:", error);
                 });
         }
-        refreshProductList();
-        setTimeout(() => {
-            displayProducts(allProducts);
-        }, 500);
     });
 
     $("#done-btn").on("click", function () {
@@ -4313,7 +4296,7 @@ async function fetchProductsforExporting() {
         throw error;
     }
 }
-//TODO: continue from here.
+
 async function fetchDebtDetailsForExport(customerId) {
     const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
     let total = 0;
