@@ -2306,7 +2306,6 @@ function renderSalesTable(salesData) {
                 <th>Product Name</th>
                 <th>Last Date Sold</th>
                 <th>Quantity</th>
-                
                 <th>Total Revenue</th>
                 <th>Total Profit</th>
             </tr>
@@ -2325,7 +2324,6 @@ function renderSalesTable(salesData) {
                     <td>${product.name || "N/A"}</td>
                     <td>${date}</td>
                     <td>${product.quantity ?? 0}</td>
-                    
                     <td>$${(displayCurrency(product.total) ?? 0)}</td>
                     <td>$${(displayCurrency(product.totalProfit) ?? 0)}</td>
                 `;
@@ -4410,8 +4408,8 @@ async function exportCartToPDF() {
         return {
             name: data.name,
             quantity: data.quantity,
-            costPrice: data.costPrice,
-            total: data.total
+            costPrice: displayCurrency(data.costPrice),
+            total: displayCurrency(data.total)
         };
     });
 
@@ -4422,7 +4420,7 @@ async function exportCartToPDF() {
     const cartDetailsBody = [
         ["Cart Name:", cartData.name],
         ["Date Created:", cartData.dateCreated.toDate().toLocaleString()],
-        ["Total Cost:", `$${cartData.totalCost}`]
+        ["Total Cost:", `${displayCurrency(cartData.totalCost)}`]
     ];
 
     pdf.autoTable({
@@ -4486,7 +4484,7 @@ async function exportSalesTableToPDF(event) {
             if (index === 0) {
                 return {
                     content: td.innerText,
-                    colSpan: 3,
+                    colSpan: 2,
                     styles: {
                         fontStyle: 'bold',
                         fillColor: [headerColor.r, headerColor.g, headerColor.b],
