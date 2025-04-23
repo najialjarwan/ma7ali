@@ -210,7 +210,7 @@ async function loadContent(section) {
 }
 // #endregion }
 
-
+//TODO: change the category input to select.
 // #region 1️⃣ Add Product Section {
 function showProductForm() {
     setCurrencyUpdateCallback(() => {
@@ -1538,7 +1538,6 @@ function displayProducts(filteredProducts) {
 
     $(".main-content").html(productCardsHTML ? productsGridHTML : "<p>No products found.</p>");
 
-    // Attach click handler only if there are products
     if (productCardsHTML) {
         $(".product-card").on("click", function () {
             const productId = $(this).data("id");
@@ -1740,6 +1739,7 @@ async function displayProductForm(product) {
             db.collection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
                     showModalMessage("Product Updated Successfully!", true);
+                    console.log(allProducts);
                     displayProducts(allProducts);
                 })
                 .catch(error => {
@@ -3368,6 +3368,7 @@ function renderLeastPopularProductsChart(productSales) {
 
 // #endregion }
 
+//TODO: let all the charts be in the least pdf pages as possible
 // #region Exports All Charts {
 const jsPDF = window.jspdf.jsPDF;
 async function exportAllChartsAsPDF() {
