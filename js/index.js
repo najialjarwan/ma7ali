@@ -2056,7 +2056,10 @@ function initCartsAndSalesSection() {
 
     const viewCartsBtn = document.getElementById("view-carts-btn");
     viewCartsBtn.addEventListener("click", async () => {
-
+        setCurrencyUpdateCallback(() => {
+            viewCartsBtn.click();
+            console.log(currentPageCurrencyUpdate);
+        });
         mainContent.innerHTML = `
             <div class="carts-container" id="carts-container">
 
@@ -2083,7 +2086,6 @@ function initCartsAndSalesSection() {
 }
 // #region Carts Section {
 async function fetchCartsData() {
-
     try {
         const cartsSnapshot = await firebase.firestore().collection("carts").get();
         const carts = [];
@@ -2093,7 +2095,7 @@ async function fetchCartsData() {
             carts.push({
                 id: doc.id,
                 name: data.name,
-                totalCost: data.totalCost,
+                totalCost: displayCurrency(data.totalCost),
                 dateCreated: data.dateCreated.toDate(),
             });
         });
@@ -2106,7 +2108,6 @@ async function fetchCartsData() {
     }
 }
 function renderCartsTable(carts) {
-
     const cartsTable = document.getElementById("carts-table");
     cartsTable.innerHTML = "";
 
@@ -2138,9 +2139,6 @@ function renderCartsTable(carts) {
         // Later we’ll add click listeners to toggle product visibility and fetch
         cartsTable.appendChild(cartDiv);
     });
-
-
-
     setupCartClickListeners();
 }
 function setupCartClickListeners() {
@@ -2184,8 +2182,8 @@ function setupCartClickListeners() {
                             <div class="product-item">
                                 <p><strong>${p.name}</strong></p>
                                 <p>Quantity: ${p.quantity}</p>
-                                <p>Cost Price: $${p.costPrice}</p>
-                                <p>Total: $${p.total}</p>
+                                <p>Cost Price: $${displayCurrency(p.costPrice)}</p>
+                                <p>Total: $${displayCurrency(p.total)}</p>
                             </div>
                         `;
                     }).join("");
@@ -2284,6 +2282,9 @@ async function fetchSalesData() {
     return salesData;
 }
 function renderSalesTable(salesData) {
+    setCurrencyUpdateCallback(() => {
+        renderSalesTable(salesData);
+    });
     const container = document.getElementById("sales-table-container");
     if (!container)
         return;
@@ -2304,8 +2305,8 @@ function renderSalesTable(salesData) {
             <tr>
                 <th>Product Name</th>
                 <th>Last Date Sold</th>
-                <th>Cost Price</th>
                 <th>Quantity</th>
+                
                 <th>Total Revenue</th>
                 <th>Total Profit</th>
             </tr>
@@ -2323,10 +2324,10 @@ function renderSalesTable(salesData) {
                 row.innerHTML = `
                     <td>${product.name || "N/A"}</td>
                     <td>${date}</td>
-                    <td>$${(product.costPrice ?? 0)}</td>
                     <td>${product.quantity ?? 0}</td>
-                    <td>$${(product.total ?? 0)}</td>
-                    <td>$${(product.totalProfit ?? 0)}</td>
+                    
+                    <td>$${(displayCurrency(product.total) ?? 0)}</td>
+                    <td>$${(displayCurrency(product.totalProfit) ?? 0)}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -2339,10 +2340,10 @@ function renderSalesTable(salesData) {
         const tfoot = document.createElement("tfoot");
         tfoot.innerHTML = `
             <tr class="sales-summary">
-                <td colspan="3"><strong>Totals:</strong></td>
+                <td colspan="2"><strong>Totals:</strong></td>
                 <td><strong>${sale.totalProductsSold}</strong></td>
-                <td><strong>$${sale.totalRevenue}</strong></td>
-                <td><strong>$${sale.totalProfit}</strong></td>
+                <td><strong>$${displayCurrency(sale.totalRevenue)}</strong></td>
+                <td><strong>$${displayCurrency(sale.totalProfit)}</strong></td>
             </tr>
         `;
 
@@ -4545,7 +4546,7 @@ function formatCompactNumber(num) {
     return new Intl.NumberFormat('en', {
         notation: "compact",
         compactDisplay: "short",
-        maximumFractionDigits: 1
+        maximumFractionDigits: 2
     }).format(num);
 }
 
