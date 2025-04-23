@@ -2869,7 +2869,6 @@ function processSalesDocsAndRender(docs) {
         });
     });
 
-    // Sort by date ascending
     profitData.sort((a, b) => a.date - b.date);
 
     const labels = profitData.map(entry => {
@@ -2878,8 +2877,6 @@ function processSalesDocsAndRender(docs) {
     });
     const profits = profitData.map(entry => entry.profit);
     const productsSold = profitData.map(entry => entry.productsSold);
-    console.log("profits: ", profits);
-    console.log("productsSold: ", productsSold);
 
     calculateAndDisplayGrowth(profits, productsSold);
     renderProfitTrendChart(labels, profits, productsSold);
@@ -2899,8 +2896,8 @@ function calculateAndDisplayGrowth(profits, productsSold) {
         productsSoldGrowth = firstSold === 0 ? 0 : ((lastSold - firstSold) / firstSold) * 100;
     }
 
-    document.getElementById("profit-growth").textContent = `${profitGrowth}%`;
-    document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth}%`;
+    document.getElementById("profit-growth").textContent = `${profitGrowth.toFixed(2)}%`;
+    document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth.toFixed(2)}%`;
 }
 function renderProfitTrendChart(labels, profits, productsSold) {
     const canvasId = 'salesTrendChart';
@@ -2912,18 +2909,15 @@ function renderProfitTrendChart(labels, profits, productsSold) {
 
     const ctx = canvas.getContext('2d');
 
-    // Destroy existing chart if it exists
     if (chartInstances[canvasId]) {
         chartInstances[canvasId].destroy();
     }
 
-    // Create data points
     const profitData = labels.map((label, i) => ({
         x: label,
         y: storeCurrency === "LBP" ? convertCurrency(profits[i], "$", "LBP") : Number(profits[i]),
         productsSold: productsSold[i]
     }));
-    console.log("profitData: ", profitData);
 
     const productsSoldData = labels.map((label, i) => ({
         x: label,
@@ -3038,6 +3032,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
 }
 // #endregion }
 
+//TODO: add Averages.
 //#region Proftability Margin {
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
@@ -3143,7 +3138,7 @@ function renderProductLifecycleMetrics(products) {
     const totalAge = products.reduce((acc, product) => acc + product.ageInDays, 0);
     const averageAge = totalAge / products.length;
 
-    document.getElementById("average-product-age").textContent = averageAge;
+    document.getElementById("average-product-age").textContent = averageAge.toFixed(2);
 }
 function renderProductAgeChart(products) {
     const canvasId = 'productAgeChart';
@@ -3462,7 +3457,7 @@ async function fetchInventorySummary() {
         const totalValue = allProducts.reduce((sum, product) => {
             return sum + ((product.stock || 0) * (product.costPrice || 0));
         }, 0);
-        document.querySelector("#inventory-value span").textContent = `$${totalValue}`;
+        document.querySelector("#inventory-value span").textContent = `${displayCurrency(totalValue)}`;
 
         // Low Stock (<= 5)
         const lowStockProducts = allProducts.filter(product => (product.stock || 0) <= 5);
@@ -3523,11 +3518,11 @@ function getSmartInsights(salesData) {
 }
 function renderSmartInsights(insights) {
 
-    document.querySelector("#highest-sales-day").textContent = `${insights.highestSalesDay.date}, Revenue: $${insights.highestSalesDay.revenue}`;
+    document.querySelector("#highest-sales-day").textContent = `${insights.highestSalesDay.date}, Revenue: ${displayCurrency(insights.highestSalesDay.revenue)}`;
 
-    document.querySelector("#lowest-sales-day").textContent = `${insights.lowestSalesDay.date}, Revenue: $${insights.lowestSalesDay.revenue}`;
+    document.querySelector("#lowest-sales-day").textContent = `${insights.lowestSalesDay.date}, Revenue: ${displayCurrency(insights.lowestSalesDay.revenue)}`;
 
-    document.querySelector("#average-order-value").textContent = `$${insights.AOV}`;
+    document.querySelector("#average-order-value").textContent = `${displayCurrency(insights.AOV)}`;
 }
 async function fetchSalesDataAndRenderInsights() {
     try {
