@@ -1594,11 +1594,11 @@ async function displayProductForm(product) {
             
             <label for="costPrice">Cost Price (${storeCurrency}):</label>
             <input type="text" id="costPrice" name="costPrice" 
-            value="${storeCurrency === "LBP" ? convertCurrency(product.costPrice, "$", "LBP"): product.costPrice}">
+            value="${storeCurrency === "LBP" ? convertCurrency(product.costPrice, "$", "LBP") : product.costPrice}">
 
             <label for="profit">Profit (${storeCurrency}):</label>
             <input type="text" id="profit" name="profit" 
-            value="${storeCurrency === "LBP" ? convertCurrency(product.profit, "$", "LBP"): product.profit}">
+            value="${storeCurrency === "LBP" ? convertCurrency(product.profit, "$", "LBP") : product.profit}">
             
             <label for="category">Category:</label>
             <input type="text" id="category" name="category" value="${product.category}">
@@ -2399,6 +2399,9 @@ function filterSales(salesData, filterType) {
 
 // #region 4️⃣ Dashboard Section {
 function initDashboard() {
+    setCurrencyUpdateCallback(() => {
+        initDashboard();
+    });
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="inventory-analytics" id="inventory-analytics">
@@ -2750,12 +2753,11 @@ async function fetchSalesForPeriod(period) {
     docs.forEach(doc => {
         if (doc.exists) {
             const data = doc.data();
-            totalRevenue += data.totalRevenue || 0;
+            totalRevenue += storeCurrency === "LBP" ? parseInt(convertCurrency(data.totalRevenue, "$", "LBP")) : parseInt(data.totalRevenue);
             totalProductsSold += data.totalProductsSold || 0;
-            totalProfit += data.totalProfit || 0;
+            totalProfit += storeCurrency === "LBP" ? parseInt(convertCurrency(data.totalProfit, "$", "LBP")) : parseInt(data.totalProfit);
         }
     });
-
     return { totalRevenue, totalProductsSold, totalProfit };
 }
 const chartInstances = {};
@@ -2876,6 +2878,8 @@ function processSalesDocsAndRender(docs) {
     });
     const profits = profitData.map(entry => entry.profit);
     const productsSold = profitData.map(entry => entry.productsSold);
+    console.log("profits: ", profits);
+    console.log("productsSold: ", productsSold);
 
     calculateAndDisplayGrowth(profits, productsSold);
     renderProfitTrendChart(labels, profits, productsSold);
@@ -2916,9 +2920,10 @@ function renderProfitTrendChart(labels, profits, productsSold) {
     // Create data points
     const profitData = labels.map((label, i) => ({
         x: label,
-        y: profits[i],
+        y: storeCurrency === "LBP" ? convertCurrency(profits[i], "$", "LBP") : Number(profits[i]),
         productsSold: productsSold[i]
     }));
+    console.log("profitData: ", profitData);
 
     const productsSoldData = labels.map((label, i) => ({
         x: label,
@@ -2965,7 +2970,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     callbacks: {
                         label: function (context) {
                             if (context.dataset.label === 'Total Profit') {
-                                return `Profit: $${context.parsed.y}`;
+                                return `Profit: ${formatCompactNumber(context.parsed.y)}`;
                             } else if (context.dataset.label === 'Total Products Sold') {
                                 return `Products Sold: ${context.parsed.y}`;
                             }
@@ -2995,14 +3000,15 @@ function renderProfitTrendChart(labels, profits, productsSold) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Profit ($)',
+                        text: 'Profit (' + storeCurrency + ')',
                         font: {
                             size: 10
                         }
                     },
                     ticks: {
-                        font: {
-                            size: 8
+                        font: { size: 8 },
+                        callback: function (value) {
+                            return formatCompactNumber(value);
                         }
                     }
                 },
