@@ -3726,6 +3726,14 @@ async function loadUserProfile() {
         }
         updateComboSelection(data.combo);
         updateAccentColor(data.combo);
+        if(data.storeName){
+            const sideBar = document.getElementById("sidebar");
+            const storeName = data.storeName;
+            const storeNameEle = document.createElement("div");
+            storeNameEle.className = "store-name";
+            storeNameEle.textContent = storeName;
+            sideBar.appendChild(storeNameEle);
+        }
     }
 }
 function updateCurrencySelection(currency) {

@@ -136,21 +136,32 @@ body {
   flex-direction: column;
 }
 
-#sidebar>div {
+.store-name{
+  position: absolute;
+  top: 2px;
+  left: 10px;
+  width: fit-content !important;
+  color: var(--input-color);
+  font-size: 20px;
+}
+
+#sidebar .side-links-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  text-align: left;
+  padding: 10px;
   width: 100%;
 }
 
 .sidebar-link {
-  margin: 5px;
   font-size: 1.5rem;
   text-decoration: none;
   color: var(--input-color);
   width: 100%;
   border-top: 1px solid var(--input-color);
+  padding: 10px 0;
 }
 
 .sidebar-link:first-child {
