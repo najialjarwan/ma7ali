@@ -391,24 +391,46 @@ body {
 .help-section {
   font-family: 'Times New Roman', Times, serif;
   line-height: 1.6;
-  margin: 0 0 20px 0;
   padding: 20px;
   max-width: fit-content;
   max-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  font-size: 13px;
 }
 
 .help-section h1 {
-  font-size: 2.5em;
-  margin-bottom: 20px;
-  text-align: center;
+  color: var(--text-color);
+  padding: 0.5rem;
+  font-size: 1.3rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  font-family: sans-serif;
+  font-weight: bolder;
 }
-
-.help-section h2 {
-  font-size: 2em;
-  margin-top: 30px;
-  margin-bottom: 15px;
+.app-description{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.app-header, .app-overview, .app-benefits{
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  border-radius: 15px;
+  background-color: var(--input-color);
+}
+.app-title{
+  border-bottom: 1px solid black;
+  padding: 10px;
+}
+.app-subtitle{
+  padding: 10px;
+  text-align: left;
+  border-radius: 15px;
+}
+.help-section ul li{
+  list-style-type:decimal;
+  text-align: left;
+  line-height: normal;
 }
 
 .help-section h3 {

@@ -4042,21 +4042,58 @@ function submitFeedback() {
 function initHelp() {
     document.body.innerHTML = `
         <div class="help-section">
-            <h1>Help Section for POS Application</h1>
+            <h1>Overview of the Ma7ali Application</h1>
+            <section class="app-description">
+                <header class="app-header">
+                  <h2 class="app-title">Your All-in-One Mobile POS Solution – Simple, Smart, and Built for Your Business</h2>
+                  <p class="app-subtitle">
+                    This application is a complete Point of Sale (POS) and inventory management system designed specifically for small to medium-sized businesses that want speed, simplicity, and full control—all from a mobile or tablet device.
+                  </p>
+                </header>
 
-            <h2>1. Getting Started</h2>
-            <h3>Overview of the POS System</h3>
-            <p>This is a brief overview of the POS system, explaining its purpose and features.</p>
-            
-            <h3>Installation/Setup Guide</h3>
-            <ul>
-                <li>Step 1: Download and install the application.</li>
-                <li>Step 2: Open the app and create your first store.</li>
-                <li>Step 3: Set up initial product categories and products.</li>
-                <li>Step 4: Start processing sales and managing inventory.</li>
-            </ul>
+               <section class="app-overview">
+                  <h2 class="app-title">What You Can Expect:</h2>
+                  <ul class="feature-list">
+                    <li>
+                      <strong>Quick Sales Processing:</strong></br>Sell faster and smarter with an easy-to-use cart system, on-screen product lists, and real-time updates.
+                    </li>
+                    <li>
+                      <strong>Inventory Control:</strong></br>Add, update, and organize your products by category, barcode, or stock level. Instantly see what's in stock, low on stock, or out of stock.
+                    </li>
+                    <li>
+                      <strong>Smart Dashboards:</strong></br>Get powerful insights with interactive charts showing your daily, weekly, and monthly sales, profits, best-selling products, and more.
+                    </li>
+                    <li>
+                      <strong>Customer Management:</strong></br>Keep track of your customers and their debt balances, with full history and details per customer.
+                    </li>
+                    <li>
+                      <strong>PDF Reports & Export:</strong></br>Export sales records, product lists, customer debts, and performance charts into professional PDF files with one tap.
+                    </li>
+                    <li>
+                      <strong>Multi-User Ready:</strong></br>Each user gets their own data. Whether you manage one store or many, your information stays separate and secure.
+                    </li>
+                    <li>
+                      <strong>Offline Support:</strong></br>No internet? No problem. Work offline and sync data automatically when you’re back online.
+                    </li>
+                    <li>
+                      <strong>Mobile-Optimized & PWA:</strong></br>Works like an app directly from your home screen—no download needed. Fast, responsive, and always with you.
+                    </li>
+                  </ul>
+                </section>
 
-            <h2>2. Frequently Asked Questions (FAQs)</h2>
+               <section class="app-benefits">
+                  <h2 class="app-title">Why You’ll Love It:</h2>
+                  <ul class="benefit-list">
+                    <li>Saves you time by automating sales and inventory tracking.</li>
+                    <li>Helps you make better business decisions with real-time data and smart insights.</li>
+                    <li>Keeps you organized with simple tools that just work.</li>
+                    <li>Gives you full visibility over your store’s performance anytime, from your phone or tablet.</li>
+                  </ul>
+                </section>
+            <section>
+            <hr>
+
+            <h1>2. Frequently Asked Questions</h1>
             <h3>How do I add products to the POS?</h3>
             <p>Instructions on adding products to the system.</p>
 
