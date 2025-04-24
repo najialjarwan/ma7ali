@@ -2433,7 +2433,9 @@ function initDashboard() {
                 </div>
                 <canvas id="salesTrendChart" height = "350"></canvas>
                 <p><strong class="profit-growth">Profit Growth: </strong><span id="profit-growth"></span></p>
+                <p><strong class="profit-growth">Average Profit: </strong><span id="average-profit"></span></p>
                 <p><strong class="products-sold-growth">Products Sold Growth: </strong><span id="products-sold-growth"></span></p>
+                <p><strong class="products-sold-growth">Average Products Sold: </strong><span id="average-products-sold"></span></p>
             </div>
             <hr>
 
@@ -2884,6 +2886,8 @@ function processSalesDocsAndRender(docs) {
 function calculateAndDisplayGrowth(profits, productsSold) {
     let profitGrowth = 0;
     let productsSoldGrowth = 0;
+    let averageProfit = 0;
+    let averageProductsSold = 0;
 
     if (profits.length >= 2) {
         const firstProfit = profits[0];
@@ -2896,8 +2900,22 @@ function calculateAndDisplayGrowth(profits, productsSold) {
         productsSoldGrowth = firstSold === 0 ? 0 : ((lastSold - firstSold) / firstSold) * 100;
     }
 
+    let totalProfits = 0;
+    profits.forEach(profit => {
+        totalProfits += profit;
+    })
+    averageProfit = totalProfits / profits.length;
+
+    let totalProductsSold = 0;
+    productsSold.forEach(productSold => {
+        totalProductsSold += productSold;
+    })
+    averageProductsSold = totalProductsSold / productsSold.length;
+
+    document.getElementById("average-profit").textContent = displayCurrency(averageProfit);
     document.getElementById("profit-growth").textContent = `${profitGrowth.toFixed(2)}%`;
     document.getElementById("products-sold-growth").textContent = `${productsSoldGrowth.toFixed(2)}%`;
+    document.getElementById("average-products-sold").textContent = parseInt(averageProductsSold);
 }
 function renderProfitTrendChart(labels, profits, productsSold) {
     const canvasId = 'salesTrendChart';
@@ -3032,7 +3050,6 @@ function renderProfitTrendChart(labels, profits, productsSold) {
 }
 // #endregion }
 
-//TODO: add Averages.
 //#region Proftability Margin {
 function fetchProfitabilityData() {
     const productsRef = db.collection("products");
@@ -3368,7 +3385,6 @@ function renderLeastPopularProductsChart(productSales) {
 
 // #endregion }
 
-//TODO: let all the charts be in the least pdf pages as possible
 // #region Exports All Charts {
 const jsPDF = window.jspdf.jsPDF;
 async function exportAllChartsAsPDF() {
@@ -3561,7 +3577,6 @@ async function fetchSalesDataAndRenderInsights() {
 // #region 🟦 Sidebar Region [
 
 // #region Profile Settings {
-// TODO: enhance form validation and feedback.
 const DEMO_USER_ID = "demo-user";
 function getCurrentUserId() {
     return DEMO_USER_ID;
@@ -3592,18 +3607,18 @@ function renderProfileForm() {
                 <input type="text" id="storeName" placeholder="Enter your store name" />
                                
                 <label>Exchange Rate (1$ = LBP)</label>
-                <input type="text" id="exchangeRate" placeholder="LBP amount" />
+                <input type="text" id="exchangeRate" placeholder="1500" />
 
                 <label>Currency</label>
                 <div id="currencyOptions" class="button-selector">
-                    <button type="button" class="currency-btn" data-value="$">$</button>
+                    <button type="button" class="currency-btn selected" data-value="$">$</button>
                     <button type="button" class="currency-btn" data-value="LBP">LBP</button>
                 </div>
 
                 <label>Themes Combos</label>
                 <div class="themes-combos" id="comboOptions">
                     <strong>Default:</strong>
-                    <div class="combo-btn" data-value="default">
+                    <div class="combo-btn selected" data-value="default">
                         <div style="background-color: #708090;"></div>
                         <div style="background-color: #97B8D8;"></div>
                     </div>
@@ -3667,7 +3682,11 @@ function addEventListeners() {
             const currency = getSelectedCurrency();
             const combo = getSelectedCombo();
 
-            if (!storeName || !currency || !combo) return;
+            if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
+                !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false) 
+                : showModalMessage("Exchange rate must be a number", false);
+                return;
+            }
 
             const profileData = { storeName, exchangeRate, currency, combo, updatedAt: new Date() };
             await saveUserProfile(profileData);
@@ -3687,6 +3706,7 @@ function addEventListeners() {
             const userId = getCurrentUserId();
             try {
                 await db.collection('profile').doc(userId).set(profileData);
+                showModalMessage("Store Settings Saved Successfully.", true);
             } catch (error) {
                 console.error("Failed to save profile settings:", error);
             }
@@ -3726,13 +3746,15 @@ async function loadUserProfile() {
         }
         updateComboSelection(data.combo);
         updateAccentColor(data.combo);
-        if(data.storeName){
+        if (data.storeName) {
             const sideBar = document.getElementById("sidebar");
-            const storeName = data.storeName;
-            const storeNameEle = document.createElement("div");
-            storeNameEle.className = "store-name";
-            storeNameEle.textContent = storeName;
-            sideBar.appendChild(storeNameEle);
+            if (sideBar) {
+                const storeName = data.storeName;
+                const storeNameEle = document.createElement("div");
+                storeNameEle.className = "store-name";
+                storeNameEle.textContent = storeName;
+                sideBar.appendChild(storeNameEle);
+            }
         }
     }
 }
@@ -3740,6 +3762,7 @@ function updateCurrencySelection(currency) {
     const buttons = document.querySelectorAll('.currency-btn');
     buttons.forEach(btn => {
         if (btn.dataset.value === currency) {
+            buttons.forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
         }
     });
@@ -3763,6 +3786,7 @@ function updateComboSelection(combo) {
     const comboBtns = document.querySelectorAll('.combo-btn');
     comboBtns.forEach(btn => {
         if (btn.dataset.value === combo) {
+            comboBtns.forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
         }
     });
@@ -4514,7 +4538,7 @@ async function exportSalesTableToPDF(event) {
 
 
 // #region 👀 Other [
-let EXCHANGE_RATE = 90000;
+let EXCHANGE_RATE = 1500;
 function displayCurrency(amount) {
     if (storeCurrency === "$") {
         return amount.toFixed(2) + '$';
@@ -4560,3 +4584,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // TODO: add confirmation and dont ask again to some actions.
+// TODO: add user guid if the user is first time using the app.
