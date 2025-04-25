@@ -4042,7 +4042,7 @@ function submitFeedback() {
 function initHelp() {
     document.body.innerHTML = `
         <div class="help-section">
-            <h1>Overview of the Ma7ali Application</h1>
+            <h1>1-Overview of the Ma7ali Application</h1>
             <section class="app-description">
                 <header class="app-header">
                   <h2 class="app-title">Your All-in-One Mobile POS Solution – Simple, Smart, and Built for Your Business</h2>
@@ -4090,22 +4090,172 @@ function initHelp() {
                     <li>Gives you full visibility over your store’s performance anytime, from your phone or tablet.</li>
                   </ul>
                 </section>
-            <section>
+
+            </section>
+
+            </br>
             <hr>
+            </br>
 
             <h1>2. Frequently Asked Questions</h1>
-            <h3>How do I add products to the POS?</h3>
-            <p>Instructions on adding products to the system.</p>
+            <section class="app-questions">
+                <section class="app-faqs">
+                    <div class="app-title">
+                        <h2>How do I add resources to the store?</h2>
+                        <p><strong>To add resources (Product-Customer-Sales-Carts):</strong></br>
+                            <ul>
+                                <li>
+                                    press the + icon located in the bottom of the screen to open adder section
+                                </li>
+                                <li>
+                                    press the icon that represents the rescource you want to add, and you will be directed to add it to the store
+                                </li>
+                            </ul>
+                        </p>
+                    </div>
+                    <div class="app-title">
+                        <h2>How do I view and edit customer's debt and details?</h2>
 
-            <h3>How do I view my sales reports?</h3>
-            <p>Instructions on how to access sales reports.</p>
+                        <p><strong>To view details:</strong></p>
+                        <ul>
+                            <li>Press the second icon located in the bottom of the screen to the right to view the customers in the store</li>
+                            <li>Search a customer with phone number or name.</li>
+                            <li>Click on the customer you want to view the details</li>
+                            <li>You can then edit customer details or remove the customer.</li>
+                        </ul>
 
-            <h3>What should I do if a product is out of stock?</h3>
-            <p>Steps to follow if a product is out of stock.</p>
+                        <p><strong>To add debt:</strong></p>
+                        <ul>
+                            <li>From the debt details click the button "Add"</li>
+                            <li>Enter the details and balance and press "Add"</li>
+                        </ul>
+                    </div>  
+                    <div class="app-title">
+                        <h2>How to update product stock and info?</h2>
+                        <p><strong>To update a product:</strong>
+                        <ul>
+                            <li>Press "Search Product" in the top of the Screen.</li>
+                            <li>Type the product Name or Label.</li>
+                            <li>Click on the product to open update product tool.</li>
+                            <li>From the update product tool update the stock to the value you want.</li>
+                            <li>You can also update any product field like cost price, profit and image.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>What should I do if I accidently added a product to the cart?</h2>
+                        <p>If you accidenly added a product or quantity to the cart you can cancel the cart and start a new one by clicking the "Cancel Cart" button</p>
+                    </div>
+                    <div class="app-title">
+                        <h2>What should I do if I accidently added a product to the sale?</h2>
+                        <p>If you accidenly added a product to the sale you can cancel or remove it from sales from the add to sale section.</br>
+                        <strong>To do that:</strong>
+                        <ul>
+                            <li>
+                                press on + icon in the bottom of the screen then click on the icon that has a + symbol in a square.
+                            </li>
+                            <li>
+                                Search for the product you want to cancel with the label or barcode
+                            </li>
+                            <li>
+                                Click on cancel and the product will be canceled from sales and returned to the stock
+                            </li>
+                        </ul>
+                         </p>
+                    </div>
+                    <div class="app-title">
+                        <h2>Why can't I find a product when I search it?</h2>
+                        <p>If you cant find a product when you search it you probably miss typed the product label or barcode.</br>
+                        product Label and Barcode are you unique to the product, so make sure you double check the poduct you are adding and searching.</p>
+                    </div>
+                    <div class="app-title">
+                        <h2>How do I set the currency to LBP or $ on default?</h2>
+                        <p>You can select the default currency from the "Store Setting" button in the side bar. Select the currency you want and press "Save Setting".</p>
+                    </div>
+                </section>
+            </section>
 
-            <h2>3. User Manual</h2>
+            </br>
+            <hr>
+            </br>
+
+            <h1>3. User Manual</h1>
+            <section class="user-manual">
+                <section class="products-instructions">
+                    <div class="app-title">
+                        <h2>Manage Products</h2>
+                        <p><strong>To correctly manage your products follow these instructions:</strong></br></p>
+                        <ul>
+                            <li>When you add or update a new product enter carefully products info to avoid wrong calculations, analysis and details.</li>
+                            <li>You can always swtich the currency from the button located in the top screen and enter the cost and profit of the product based on the currency.</li>
+                            <li>You can filter the products in the products view section how ever you desire. The filtering also applies to the exportation of the products.</li>
+                            <li>If product stock reached 0 the product will still be in the products list, if you want to remove it from the list search for it and remove it.<br>
+                            Refer to the FAQs to read the instructions on how to remove a product.</li>
+                            <li>Profit should always be less than Cost Price or you will get negative values on Total Profits analytics.</br>
+                            If you accidenlty set a Profit more than the Cost Price refer to the FAQs to read how to update product Profit and Cost Price.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>Manage Customers</h2>
+                        <p><strong>To correctly manage your customers follow these instructions:</strong></br></p>
+                        <ul>
+                            <li>When you add a customer make sure to enter the Name and Phone Number correclty to avoid loosing track of the customer.</li>
+                            <li>Customer Name and Phone Number are both unique to facilate identefying customers.</br>
+                            So when you add or update a customer you will be notified if the Name or Phone Number already exist in your customers list.</li>
+                            <li>You only need to add a customer when he has debt. So when the customer debt is 0 you can remove him/her from the list.</li>
+                            <li>You can also remove customer debt and balance if he/she payed for it, you can do that by locating the customer debt and remove it.</li>
+                            <li>Use the debt exporting button to export the details to inform the customer about his debt before or after he pays them.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>Manage Sales</h2>
+                        <p><strong>To correctly manage your sales follow these instructions:</strong></br></p>
+                        <ul>
+                            <li>Your sales are tracked based on 24 hours local time. So every day you add a sale you will track them in carts and sales section.</li>
+                            <li>Sales are added from the "add to sales" and "add carts" sections. So when you start a cart you are also adding to the sales.</li>
+                            <li>You can cancel a sale from "add to sales" by locating the product and pressing cancel.</li>
+                            <li>When you cancel a cart you also cancel the products added to the cart from the sales.</li>
+                            <li>View your sales and carts in the "carts and Sales" section located in the bottm of the screen on the left side of the + icon.</li>
+                            <li>Press "View Carts" to see the all the carts you created and the products that are added to each cart (Press on the cart details to see the products that are added to it). You can also search for the cart by the name.</br>
+                            <strong>Note:</strong>
+                            Carts names are not unique so you can create cart with the same name. But if you want a cart to be unique to help searching for a cart check exsiting carts before creating one.</li>
+                            <li>You can filter the sales based on daily, weekly, monthly, yearly and specific sales dates.</li>
+                            <li>Use the export sales button under each sales date to export the sales details.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>View Dashboard</h2>
+                        <p><strong>To boost and manage you store use the dashboard section:</strong></br></p>
+                        <ul>
+                            <li>Dashboard section provides you with powerfull analytics of your store such as your products inventory and sales.</li>
+                            <li>Check your dashboard hourly or daily to keep track of your products stock, sales, revenues, profits and more.</li>
+                            <li>Each chart and table in the dashboard provides you with powerfull different analytics, use them to create notes in your notes tool in the side bar to keep track of the things you want to add, update or change.</li>
+                            <li>You can also remove customer debt and balance if he/she payed for it, you can do that by locating the customer debt and remove it.</li>
+                            <li>Use the debt exporting button to export the details to inform the customer about his debt before or after he pays them.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>Other tools</h2>
+                        <p><strong>Other tools you can use:</strong></br></p>
+                        <ul>
+                            <li></li>
+                            <li>Check your dashboard hourly or daily to keep track of your products stock, sales, revenues, profits and more.</li>
+                            <li>Each chart and table in the dashboard provides you with powerfull different analytics, use them to create notes in your notes tool in the side bar to keep track of the things you want to add, update or change.</li>
+                            <li>You can also remove customer debt and balance if he/she payed for it, you can do that by locating the customer debt and remove it.</li>
+                            <li>Use the debt exporting button to export the details to inform the customer about his debt before or after he pays them.</li>
+                        </ul>
+                    </div>
+                </section>
+            </section>
+
+            </br>
+            <hr>
+            </br>
+
+            
             <h3>Dashboard Overview</h3>
-            <p>Description of the dashboard's key features and layout.</p>
+                                    <h2>How do I add products to the sotre?</h2>
+                        <p>To add a new product press the + icon located in the bot bottom of the application to open adder section.
+                        After that press the icon with an arrow and box. Then you will need to enter products details and press add.</p>
 
             <h3>Managing Products</h3>
             <p>Instructions on how to manage products in the system.</p>
@@ -4622,3 +4772,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // TODO: add confirmation and dont ask again to some actions.
 // TODO: add user guid if the user is first time using the app.
+// TODO: Add first time? check help center.
+// TODO: implement Create note section.
