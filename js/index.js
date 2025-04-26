@@ -1,5 +1,4 @@
-// #region ✅ Firebase Config
-// Firebase config
+// #region ✅ Firebase Config [
 const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
@@ -18,28 +17,58 @@ const storage = firebase.storage();
 window.db = db;
 window.auth = auth;
 
-// Function to get the stored user ID (anywhere in your app)
-function getUserId() {
-    return localStorage.getItem('DEMO_USER_ID') || null;
-}
+let currentUser = null;
+let storeCurrency = "LBP";
+let allProducts = [];
+async function initializeApp() {
+    const firstInstall = localStorage.getItem('firstInstallDone');
+    if (!firstInstall) {
+        localStorage.setItem('firstInstallDone', 'true');
+        window.location.href = "walkthrough.html";
+    } else {
+        console.log("Waiting for user authentication...");
 
-// Example usage:
-const userID = getUserId();
-if (userID) {
-    console.log("Retrieved User ID:", userID);
-} else {
-    console.log("No User ID found in storage");
-}
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = "signup.html";
+                console.log("No user found, redirecting...");
+                return;
+            }
+            currentUser = user; // 🔥 Store the user globally
+            console.log("User logged in:", user.uid);
 
+            // ✅ Now you can start calling anything immediately
+            loadUserProfile(); // ← Safe to call here because user is ready
+            initializeEventListeners();
+            showLoadingOverlay(1500);
+        });
+    }
+}
 export const getUserCollection = (collectionName) => {
-    if (!userID) throw new Error("UserID is required!");
-    return db.collection("users").doc(userID).collection(collectionName);
+    if (!currentUser) {
+        console.error("No user is logged in yet!");
+        return null;
+    }
+    return db.collection("users").doc(currentUser.uid).collection(collectionName);
 };
 
-// #endregion
+// #endregion ]
 
 // #region ▶️ EventListeners and LoadContent {
-function initializeEventListeners() {
+async function initializeEventListeners() {
+
+    const products = await fetchProductsForDoc();
+    allProducts = products;
+    displayProducts(products);
+
+    // ✅ Now attach search bar events
+    $(".search-bar").on("input", function () {
+        let searchText = $(this).val().toLowerCase().trim();
+        let filtered = allProducts.filter(product =>
+            product.label.toLowerCase().startsWith(searchText)
+        );
+        displayProducts(filtered);
+    });
 
     // #region Pop Button And Adders
     const popButton = document.getElementById("pop");
@@ -116,6 +145,18 @@ function initializeEventListeners() {
     const profileLink = document.getElementById('profile');
     const logoutBtn = document.getElementById("logout-btn");
 
+    menuBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    function openSidebar() {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+
     profileLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("profile");
@@ -141,18 +182,6 @@ function initializeEventListeners() {
         });
     }
 
-    menuBtn.addEventListener('click', openSidebar);
-    closeBtn.addEventListener('click', closeSidebar);
-    overlay.addEventListener('click', closeSidebar);
-    function openSidebar() {
-        sidebar.classList.add('active');
-        overlay.classList.add('active');
-    }
-    function closeSidebar() {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    }
-
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
         // e.preventDefault(); // optionally remove this so checkbox toggle works visually
         toggleTheme();
@@ -175,30 +204,6 @@ function initializeEventListeners() {
         popButton.classList.remove("active");
     }
     // #endregion
-
-    const firstInstall = localStorage.getItem('firstInstallDone');
-
-    if (!firstInstall) {
-        // First-time install ➔ redirect to walkthrough
-        localStorage.setItem('firstInstallDone', 'true');
-        window.location.href = "walkthrough.html";
-    } else {
-        // Check auth state
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                // No user logged in ➔ redirect to signup
-                window.location.href = "signup-method.html";
-                console.log("No user found");
-                return;
-            }
-            // User is logged in ➔ store UID in localStorage
-            localStorage.setItem('DEMO_USER_ID', user.uid);
-            console.log("User ID stored:", user.uid);
-
-            // Optional: Also keep it in a global variable
-            window.DEMO_USER_ID = user.uid;
-        });
-    }
 }
 async function loadContent(section) {
     const mainContent = document.querySelector(".main-content");
@@ -385,7 +390,7 @@ function addProduct() {
 
                 // Get download URL
                 productData.img = await imageRef.getDownloadURL();
-                console.log("Image uploaded successfully:", productData.img);
+
             } catch (error) {
                 console.error("[IMAGE] Upload failed:", error);
                 showModalMessage("Image upload failed. Please try again.", false);
@@ -1242,8 +1247,6 @@ function showLoadingOverlay(duration = 400) {
 
 
 // #region 1️⃣ Products Section {
-let storeCurrency = "LBP";
-let allProducts = [];
 function initProductPage() {
 
     renderFilters();
@@ -1437,7 +1440,7 @@ async function fetchProducts() {
     }
 }
 function renderFilters() {
-    console.log("test");
+
     const mainContent = document.querySelector(".main-content");
     const oneCostPrice = convertCurrency(1, "$", "LBP");
     const oneCostPriceFormatted = formatCompactNumber(oneCostPrice);
@@ -1601,26 +1604,11 @@ function displayProducts(filteredProducts) {
         });
     }
 }
-
 async function refreshProductList() {
     fetchProductsForDoc().then((products) => {
         allProducts = products;
     });
 }
-$(document).ready(function () {
-    fetchProductsForDoc().then(products => {
-        allProducts = products;
-        displayProducts(products);
-    });
-    $(".search-bar").on("input", function () {
-        let searchText = $(this).val().toLowerCase().trim();
-        let filtered = allProducts.filter(product =>
-            product.label.toLowerCase().startsWith(searchText)
-        );
-        displayProducts(filtered);
-    });
-});
-
 async function displayProductForm(product) {
     setCurrencyUpdateCallback(() => {
         displayProductForm(product);
@@ -1794,7 +1782,7 @@ async function displayProductForm(product) {
             getUserCollection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
                     showModalMessage("Product Updated Successfully!", true);
-                    console.log(allProducts);
+
                     displayProducts(allProducts);
                 })
                 .catch(error => {
@@ -2030,13 +2018,13 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     document.getElementById("add-debt").addEventListener("click", () => {
         renderAddDebtForm(customerId);
         document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-            console.log("clicked");
+
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
         setCurrencyUpdateCallback(() => {
             renderAddDebtForm(customerId);
             document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-                console.log("clicked");
+
                 displayCustomerDetails(customerId, customerName, customerPhone);
             });
         });
@@ -2094,7 +2082,7 @@ function initCartsAndSalesSection() {
     viewCartsBtn.addEventListener("click", async () => {
         setCurrencyUpdateCallback(() => {
             viewCartsBtn.click();
-            console.log(currentPageCurrencyUpdate);
+
         });
         mainContent.innerHTML = `
             <div class="carts-container" id="carts-container">
@@ -3761,11 +3749,11 @@ function addEventListeners() {
 }
 async function loadUserProfile() {
     const profileRef = getUserCollection("profile").doc("storeSettings");
-    console.log(profileRef);
+
 
     try {
         const doc = await profileRef.get();
-        console.log(doc);
+
         if (doc.exists) {
             const data = doc.data();
             applyUserProfileSettings(data);
@@ -3778,7 +3766,7 @@ async function loadUserProfile() {
                 combo: "default",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             }, { merge: true });
-            console.log("Initialized profile with defaults");
+
         }
     } catch (error) {
         console.error("Error loading profile:", error);
@@ -3882,7 +3870,7 @@ async function initpdfLayout() {
 
     const doc = await getUserCollection("pdfLayout").doc("pdfSettings").get();
     const settings = doc.exists ? doc.data() : {};
-    console.log(settings);
+
 
     const originalSettings = {
         fillColor: settings.fillColor || "#ffffff",
@@ -4817,9 +4805,7 @@ function updateCurrencyView() {
 // #endregion ]
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadUserProfile();
-    initializeEventListeners();
-    showLoadingOverlay(1500);
+    initializeApp();
 });
 
 // TODO: add confirmation and dont ask again to some actions.
@@ -4827,3 +4813,4 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: Add first time? check help center.
 // TODO: implement Create note section.
 // TODO: add change email and password setting with phone number too.
+// TODO: add delete cart and all cart buttons.

@@ -78,7 +78,6 @@ function getLoginFormErrors(email, password, inputs) {
 // 🔐 Auth & Validation
 document.addEventListener("DOMContentLoaded", () => {
   const auth = window.fbAuth;
-  console.log(auth);
   const db = window.fbDb;
   const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = window.fbAuthFunctions;
   const { doc, setDoc, getDoc, serverTimestamp } = window.fbFirestore;
