@@ -24,31 +24,19 @@ window.auth = auth;
 const firstInstall = localStorage.getItem('firstInstallDone');
 
 if (!firstInstall) {
-  // Never opened app before ➔ treat like fresh install
-  localStorage.setItem('firstInstallDone', 'true');
-  window.location.href = "walkthrough.html";
+    // Never opened app before ➔ treat like fresh install
+    localStorage.setItem('firstInstallDone', 'true');
+    window.location.href = "walkthrough.html";
 } else {
-  // Already installed before ➔ check if user logged in
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      window.location.href = "signup-method.html"; 
-    } else {
-      // User is logged in
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        if (userData.seenWalkthrough === false) {
-          window.location.href = "walkthrough.html";
-        } else {
-          console.log("Welcome back!");
-          // stay on index.html
+    // Already installed before ➔ check if user logged in
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "signup-method.html";
+            console.log("No user found");
         }
-      } else {
-        window.location.href = "signup-method.html";
-      }
-    }
-  });
+        console.log(user.uid);
+        DEMO_USER_ID = user.uid;
+    });
 }
 
 // #endregion
@@ -1279,7 +1267,11 @@ async function fetchProducts() {
     const sortByPriceStockProfit = document.getElementById("sort-by-price-stock-profit");
 
     try {
-        const snapshot = await db.collection("products").get();
+        const snapshot = await db
+            .collection("users")
+            .doc(DEMO_USER_ID)
+            .collection("products")
+            .get();
 
         if (snapshot.empty) {
             productsGrid.innerHTML = "<p>No products available.</p>";
@@ -3602,7 +3594,7 @@ async function fetchSalesDataAndRenderInsights() {
 // #region 🟦 Sidebar Region [
 
 // #region Profile Settings {
-const DEMO_USER_ID = "demo-user";
+let DEMO_USER_ID = "demo-user";
 function getCurrentUserId() {
     return DEMO_USER_ID;
 }
