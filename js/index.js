@@ -10,9 +10,7 @@ const firebaseConfig = {
     measurementId: "G-R3D4GLJTD2",
 };
 
-// Initialize Firebase (old style)
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
 const auth = firebase.auth();
 const storage = firebase.storage();
@@ -20,24 +18,23 @@ const storage = firebase.storage();
 window.db = db;
 window.auth = auth;
 
-// Handle authentication
-const firstInstall = localStorage.getItem('firstInstallDone');
-
-if (!firstInstall) {
-    // Never opened app before ➔ treat like fresh install
-    localStorage.setItem('firstInstallDone', 'true');
-    window.location.href = "walkthrough.html";
-} else {
-    // Already installed before ➔ check if user logged in
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = "signup-method.html";
-            console.log("No user found");
-        }
-        console.log(user.uid);
-        DEMO_USER_ID = user.uid;
-    });
+// Function to get the stored user ID (anywhere in your app)
+function getUserId() {
+    return localStorage.getItem('DEMO_USER_ID') || null;
 }
+
+// Example usage:
+const userID = getUserId();
+if (userID) {
+    console.log("Retrieved User ID:", userID);
+} else {
+    console.log("No User ID found in storage");
+}
+
+export const getUserCollection = (collectionName) => {
+    if (!userID) throw new Error("UserID is required!");
+    return db.collection("users").doc(userID).collection(collectionName);
+};
 
 // #endregion
 
@@ -179,6 +176,29 @@ function initializeEventListeners() {
     }
     // #endregion
 
+    const firstInstall = localStorage.getItem('firstInstallDone');
+
+    if (!firstInstall) {
+        // First-time install ➔ redirect to walkthrough
+        localStorage.setItem('firstInstallDone', 'true');
+        window.location.href = "walkthrough.html";
+    } else {
+        // Check auth state
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                // No user logged in ➔ redirect to signup
+                window.location.href = "signup-method.html";
+                console.log("No user found");
+                return;
+            }
+            // User is logged in ➔ store UID in localStorage
+            localStorage.setItem('DEMO_USER_ID', user.uid);
+            console.log("User ID stored:", user.uid);
+
+            // Optional: Also keep it in a global variable
+            window.DEMO_USER_ID = user.uid;
+        });
+    }
 }
 async function loadContent(section) {
     const mainContent = document.querySelector(".main-content");
@@ -354,11 +374,18 @@ function addProduct() {
         if (imageFile && imageFile.name && imageFile.size > 0) {
             try {
                 const resizedImage = await convertToJPEG(imageFile);
-                const storageRef = storage.ref();
+                const storageRef = firebase.storage().ref();
                 const imageRef = storageRef.child(`product-images/${imageFile.name}`);
-                await imageRef.put(resizedImage);
+
+                // Use the Firebase SDK put() method instead of direct XHR
+                const uploadTask = imageRef.put(resizedImage);
+
+                // Wait for upload to complete
+                await uploadTask;
+
+                // Get download URL
                 productData.img = await imageRef.getDownloadURL();
-                console.timeEnd("[IMAGE] Resize and upload");
+                console.log("Image uploaded successfully:", productData.img);
             } catch (error) {
                 console.error("[IMAGE] Upload failed:", error);
                 showModalMessage("Image upload failed. Please try again.", false);
@@ -368,11 +395,11 @@ function addProduct() {
 
         try {
             showLoadingOverlay(1500);
-            const snapshot = await db.collection("products")
+            const snapshot = await getUserCollection("products", userID)
                 .where("barcode", "==", productData.barcode)
                 .get();
 
-            const labelSnapshot = await db.collection("products")
+            const labelSnapshot = await getUserCollection("products", userID)
                 .where("label", "==", productData.label)
                 .get();
 
@@ -391,7 +418,7 @@ function addProduct() {
                     form.reset();
                     document.getElementById("fileName").textContent = `No file selected`;
                 }, 1500);
-                const docRef = await db.collection("products").add({
+                const docRef = await getUserCollection("products", userID).add({
                     ...productData,
                     createdAt: firebase.firestore.Timestamp.now(),
                 });
@@ -548,7 +575,7 @@ async function addCustomer() {
     }
 
     try {
-        const customersSnapshot = await db.collection("customers").get();
+        const customersSnapshot = await getUserCollection("customers").get();
         let nameExists = false;
         let phoneNumberExists = false;
 
@@ -575,7 +602,7 @@ async function addCustomer() {
             }
             showModalMessage(errorMessage, false);
         } else {
-            await db.collection("customers").add({ name, phoneNumber });
+            await getUserCollection("customers").add({ name, phoneNumber });
             showModalMessage("Customer added successfully!", true);
             const customerForm = document.getElementById("customer-form");
             customerForm.reset();
@@ -828,7 +855,7 @@ async function fetchProductToAdd() {
     const productCardContainer = document.getElementById("cart-products-container");
 
     try {
-        const querySnapshot = await db.collection("products").orderBy("label").get();
+        const querySnapshot = await getUserCollection("products", userID).orderBy("label").get();
         let allProducts = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -896,7 +923,7 @@ async function displayProductToAdd(product, productId) {
     const cancelBtn = productCard.querySelector(".cancel-sale-btn");
     let lastAnimationTime = 0;
     const animationCooldown = 100;
-    const productSnap = await db.collection("products").doc(productId).get();
+    const productSnap = await getUserCollection("products", userID).doc(productId).get();
     let currentStock = productSnap.data().stock;
     actionBtn.addEventListener("click", async function () {
 
@@ -995,7 +1022,7 @@ async function addToSales(productId, label, costPrice, profit) {
         localSale = {};
     }
 
-    const productRef = db.collection("products").doc(productId);
+    const productRef = getUserCollection("products", userID).doc(productId);
 
     if (localSale[productId]) {
         localSale[productId].quantity += 1;
@@ -1068,7 +1095,7 @@ async function cancelSale(productId) {
     }
 
     const saleDocRef = db.collection("sales").doc(currentSaleId);
-    const productRef = db.collection("products").doc(productId);
+    const productRef = getUserCollection("products", userID).doc(productId);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
 
     // Step 1: Decrease the quantity in localSale
@@ -1120,7 +1147,7 @@ async function cancelProductQuantity(productId, quantityToCancel) {
     const today = new Date().toLocaleDateString('en-CA');
     const saleDocRef = db.collection("sales").doc(today);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
-    const productRef = db.collection("products").doc(productId);
+    const productRef = getUserCollection("products", userID).doc(productId);
 
     const productDoc = await productSoldRef.get();
     if (!productDoc.exists) return;
@@ -1267,11 +1294,7 @@ async function fetchProducts() {
     const sortByPriceStockProfit = document.getElementById("sort-by-price-stock-profit");
 
     try {
-        const snapshot = await db
-            .collection("users")
-            .doc(DEMO_USER_ID)
-            .collection("products")
-            .get();
+        const snapshot = await getUserCollection("products", userID).get();
 
         if (snapshot.empty) {
             productsGrid.innerHTML = "<p>No products available.</p>";
@@ -1519,7 +1542,7 @@ function productCard(product) {
     `;
 }
 function fetchProductsForDoc() {
-    return db.collection("products").get().then((querySnapshot) => {
+    return getUserCollection("products", userID).get().then((querySnapshot) => {
         let products = [];
         querySnapshot.forEach((doc) => {
             let data = doc.data();
@@ -1730,7 +1753,7 @@ async function displayProductForm(product) {
                                     updatedProduct.img = url;
 
                                     refreshProductList();
-                                    db.collection("products").doc(product.id).update(updatedProduct)
+                                    getUserCollection("products", userID).doc(product.id).update(updatedProduct)
                                         .then(() => {
                                             showModalMessage("Product Updated Successfully!", true);
                                             displayProducts(allProducts);
@@ -1753,7 +1776,7 @@ async function displayProductForm(product) {
             reader.readAsDataURL(file);
         } else {
             refreshProductList();
-            db.collection("products").doc(product.id).update(updatedProduct)
+            getUserCollection("products", userID).doc(product.id).update(updatedProduct)
                 .then(() => {
                     showModalMessage("Product Updated Successfully!", true);
                     console.log(allProducts);
@@ -1773,7 +1796,7 @@ async function displayProductForm(product) {
     });
 }
 function removeProductFromFirebase(productId) {
-    db.collection("products").doc(productId).delete()
+    getUserCollection("products", userID).doc(productId).delete()
         .then(() => {
 
             showModalMessage("Product Removed Successfully!", true);
@@ -1813,7 +1836,7 @@ async function fetchCustomers() {
 
         try {
 
-            const customersSnapshot = await db.collection("customers").get();
+            const customersSnapshot = await getUserCollection("customers").get();
 
 
             const filteredCustomers = [];
@@ -1855,7 +1878,7 @@ async function fetchCustomers() {
     });
 
     try {
-        const customersSnapshot = await db.collection("customers").get();
+        const customersSnapshot = await getUserCollection("customers").get();
         customersGrid.innerHTML = "";
 
         customersSnapshot.forEach((doc) => {
@@ -1931,7 +1954,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     async function loadDebts() {
         const debtDetailsTable = document.getElementById("debt-details-table");
         const totalBalanceElement = document.getElementById("total-balance");
-        const debtRef = db.collection("customers").doc(customerId).collection("debts");
+        const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
         const debtsSnapshot = await debtRef.get();
         let totalBalance = 0;
 
@@ -1956,7 +1979,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         document.querySelectorAll(".remove-debt-btn").forEach((button) => {
             button.addEventListener("click", async (event) => {
                 const debtId = event.target.getAttribute("data-debt-id");
-                await db.collection("customers").doc(customerId).collection("debts").doc(debtId).delete();
+                await getUserCollection("customers").doc(customerId).collection("debts").doc(debtId).delete();
                 loadDebts();
             });
         });
@@ -1969,7 +1992,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         const updatedPhone = document.getElementById("customer-phone").value.trim();
 
         try {
-            await db.collection("customers").doc(customerId).update({ name: updatedName, phoneNumber: updatedPhone });
+            await getUserCollection("customers").doc(customerId).update({ name: updatedName, phoneNumber: updatedPhone });
             showModalMessage("Customer Edited Successfully!", true);
         } catch (error) {
             showModalMessage(`Error updating customer: ${error.message}`, false);
@@ -1979,7 +2002,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     document.getElementById("remove-customer-btn").addEventListener("click", async () => {
         try {
             setTimeout(() => initCustomersPage(), 10);
-            await db.collection("customers").doc(customerId).delete();
+            await getUserCollection("customers").doc(customerId).delete();
         } catch (error) {
             showModalMessage(`Error removing customer: ${error.message}`, false);
         }
@@ -1990,13 +2013,13 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 
     document.getElementById("add-debt").addEventListener("click", () => {
-        renderAddDebtForm();
+        renderAddDebtForm(customerId);
         document.getElementById("cancel-debt-btn").addEventListener("click", () => {
             console.log("clicked");
             displayCustomerDetails(customerId, customerName, customerPhone);
         });
         setCurrencyUpdateCallback(() => {
-            renderAddDebtForm();
+            renderAddDebtForm(customerId);
             document.getElementById("cancel-debt-btn").addEventListener("click", () => {
                 console.log("clicked");
                 displayCustomerDetails(customerId, customerName, customerPhone);
@@ -2004,7 +2027,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
     });
 }
-function renderAddDebtForm() {
+function renderAddDebtForm(customerId) {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
     <form id="customer-debt" class="product-form">
@@ -2021,8 +2044,6 @@ function renderAddDebtForm() {
         const details = document.getElementById("debt-details").value.trim();
         const balance = parseFloat(document.getElementById("debt-balance").value.trim());
         const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
-        console.log("balance: ", balance);
-        console.log("balance formatted: ", balanceConverted);
 
         if (!details || isNaN(balance) || balance <= 0) {
             showModalMessage("Invalid input. Please enter valid details and balance!", false);
@@ -2030,7 +2051,7 @@ function renderAddDebtForm() {
         }
 
         try {
-            await db.collection("customers").doc(customerId).collection("debts").add({
+            await getUserCollection("customers").doc(customerId).collection("debts").add({
                 details,
                 balance: balanceConverted,
                 createdAt: firebase.firestore.Timestamp.now(),
@@ -2600,7 +2621,7 @@ function initDashboard() {
 }
 // #region Category Disribution {
 async function fetchCategoryDistribution() {
-    const snapshot = await db.collection("products").get();
+    const snapshot = await getUserCollection("products", userID).get();
     const categoryCounts = {};
 
     snapshot.forEach(doc => {
@@ -3069,7 +3090,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
 
 //#region Proftability Margin {
 function fetchProfitabilityData() {
-    const productsRef = db.collection("products");
+    const productsRef = getUserCollection("products", userID);
     let products = [];
     productsRef.get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
@@ -3147,7 +3168,7 @@ function renderProfitMarginChart(products) {
 
 // #region Products Lifecycle {
 function fetchProductLifecycleData() {
-    const productsRef = db.collection("products");
+    const productsRef = getUserCollection("products", userID);
     let products = [];
     productsRef.get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
@@ -3472,7 +3493,7 @@ async function generatePDFfromCanvas(canvasId, title) {
 // #region Inventory Summary {
 async function fetchInventorySummary() {
     try {
-        const snapshot = await db.collection("products").get();
+        const snapshot = await getUserCollection("products", userID).get();
         const allProducts = snapshot.docs.map(doc => doc.data());
 
         // Total Products
@@ -3594,10 +3615,6 @@ async function fetchSalesDataAndRenderInsights() {
 // #region 🟦 Sidebar Region [
 
 // #region Profile Settings {
-let DEMO_USER_ID = "demo-user";
-function getCurrentUserId() {
-    return DEMO_USER_ID;
-}
 let initialBaseColor;
 let currentComboColors = [];
 let currentThemeIndex = 0;
@@ -3720,9 +3737,8 @@ function addEventListeners() {
         }
 
         async function saveUserProfile(profileData) {
-            const userId = getCurrentUserId();
             try {
-                await db.collection('profile').doc(userId).set(profileData);
+                await getUserCollection("profile").doc("storeSettings").set(profileData);
                 showModalMessage("Store Settings Saved Successfully.", true);
             } catch (error) {
                 console.error("Failed to save profile settings:", error);
@@ -3733,14 +3749,25 @@ function addEventListeners() {
     }
 }
 async function loadUserProfile() {
-    const userId = getCurrentUserId();
-    const profileRef = db.collection('profile').doc(userId);
+    const profileRef = getUserCollection("profile").doc("storeSettings");
+    console.log(profileRef);
 
     try {
         const doc = await profileRef.get();
+        console.log(doc);
         if (doc.exists) {
             const data = doc.data();
             applyUserProfileSettings(data);
+        }
+        else{
+            await profileRef.set({
+                storeName: "",
+                exchangeRate: "",
+                currency: "$",
+                combo: "default",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            console.log("Initialized profile with defaults");
         }
     } catch (error) {
         console.error("Error loading profile:", error);
@@ -3821,7 +3848,7 @@ async function toggleTheme() {
     const root = document.documentElement;
 
     if (!currentComboColors.length) {
-        const profileRef = db.collection('profile').doc(DEMO_USER_ID);
+        const profileRef = db.collection('profile').doc(userID);
         const doc = await profileRef.get();
         if (!doc.exists) return;
 
@@ -3842,10 +3869,9 @@ async function toggleTheme() {
 // #region PDF Layout {
 async function initpdfLayout() {
 
-    const userId = getCurrentUserId();
-
-    const doc = await db.collection("pdfLayout").doc(userId).get();
+    const doc = await getUserCollection("pdfLayout").doc("pdfSettings").get();
     const settings = doc.exists ? doc.data() : {};
+    console.log(settings);
 
     const originalSettings = {
         fillColor: settings.fillColor || "#ffffff",
@@ -3986,7 +4012,6 @@ async function initpdfLayout() {
     });
 }
 async function saveLayout() {
-    const userId = "demo-user";
 
     // Background color
     const fillColor = document.getElementById("fillColorPicker").value;
@@ -4023,7 +4048,7 @@ async function saveLayout() {
     };
 
     try {
-        await db.collection("pdfLayout").doc(userId).set(settings);
+        await getUserCollection("pdfLayout").doc("pdfSettings").set(settings);
         showModalMessage(`<p>Layout Changed Successfully.</p>`, true);
     } catch (err) {
         console.error("Error saving layout:", err);
@@ -4359,8 +4384,8 @@ async function createStyledPDF(titleText) {
     return { pdf, settings };
 }
 async function setPDFLayout(pdf, titleText) {
-    const userId = "demo-user";
-    const doc = await db.collection("pdfLayout").doc(userId).get();
+    const userID = "demo-user";
+    const doc = await db.collection("pdfLayout").doc(userID).get();
 
     const settings = doc.exists ? doc.data() : {};
 
@@ -4463,7 +4488,7 @@ async function fetchProductsforExporting() {
         const profitSelect = document.getElementById("profit-select").value;
         const sort = document.getElementById("sort-by-price-stock-profit").value;
 
-        let query = db.collection("products");
+        let query = getUserCollection("products", userID);
 
         if (categoryFilter) {
             query = query.where("category", "==", categoryFilter);
@@ -4536,7 +4561,7 @@ async function fetchProductsforExporting() {
 }
 
 async function fetchDebtDetailsForExport(customerId) {
-    const snapshot = await db.collection("customers").doc(customerId).collection("debts").get();
+    const snapshot = await getUserCollection("customers").doc(customerId).collection("debts").get();
     let total = 0;
 
     const debts = snapshot.docs.map(doc => {
