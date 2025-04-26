@@ -1,44 +1,56 @@
 // #region ✅ Firebase Config
+// Firebase config
 const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
     projectId: "paperless-a64a0",
-    storageBucket: "paperless-a64a0.firebasestorage.app",
+    storageBucket: "paperless-a64a0.appspot.com",
     messagingSenderId: "554212290727",
     appId: "1:554212290727:web:ba60b058c0305284902b82",
     measurementId: "G-R3D4GLJTD2",
 };
 
+// Initialize Firebase (old style)
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
+const auth = firebase.auth();
 const storage = firebase.storage();
+
 window.db = db;
+window.auth = auth;
 
-firebase.firestore().enablePersistence()
-    .then(() => {
+// Handle authentication
+const firstInstall = localStorage.getItem('firstInstallDone');
 
-    })
-    .catch((err) => {
-        console.error("Failed to enable offline mode:", err);
-    });
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/js/sw.js")
-        .then(() => console.log("🔥 Service Worker Registered!"))
-        .catch((err) => console.error("Service Worker Failed:", err));
-}
-
-function updateOnlineStatus() {
-    if (navigator.onLine) {
-
+if (!firstInstall) {
+  // Never opened app before ➔ treat like fresh install
+  localStorage.setItem('firstInstallDone', 'true');
+  window.location.href = "walkthrough.html";
+} else {
+  // Already installed before ➔ check if user logged in
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      window.location.href = "signup-method.html"; 
     } else {
+      // User is logged in
+      const userDocSnap = await getDoc(userDocRef);
 
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        if (userData.seenWalkthrough === false) {
+          window.location.href = "walkthrough.html";
+        } else {
+          console.log("Welcome back!");
+          // stay on index.html
+        }
+      } else {
+        window.location.href = "signup-method.html";
+      }
     }
+  });
 }
 
-window.addEventListener("load", updateOnlineStatus);
-window.addEventListener("online", updateOnlineStatus);
-window.addEventListener("offline", updateOnlineStatus);
 // #endregion
 
 // #region ▶️ EventListeners and LoadContent {
@@ -117,6 +129,7 @@ function initializeEventListeners() {
     const pdfLayoutLink = document.getElementById('pdf-layout');
     const helpLink = document.getElementById('help');
     const profileLink = document.getElementById('profile');
+    const logoutBtn = document.getElementById("logout-btn");
 
     profileLink.addEventListener('click', (e) => {
         e.preventDefault();
@@ -130,6 +143,18 @@ function initializeEventListeners() {
         e.preventDefault();
         loadContent("help");
     });
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                await firebase.auth().signOut(); // This uses the namespaced firebase auth
+                window.location.href = "login.html"; // Redirect to login page after logout
+            } catch (error) {
+                console.error("Logout failed:", error);
+            }
+        });
+    }
 
     menuBtn.addEventListener('click', openSidebar);
     closeBtn.addEventListener('click', closeSidebar);
@@ -3683,8 +3708,8 @@ function addEventListeners() {
             const combo = getSelectedCombo();
 
             if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
-                !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false) 
-                : showModalMessage("Exchange rate must be a number", false);
+                !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false)
+                    : showModalMessage("Exchange rate must be a number", false);
                 return;
             }
 
@@ -4774,3 +4799,4 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
 // TODO: implement Create note section.
+// TODO: add change email and password setting with phone number too.

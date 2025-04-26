@@ -6,14 +6,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Signup</title>
   <link rel="stylesheet" href="css/style.css">
-  <script type="text/javascript" src="js/validation.js" defer></script>
+<!-- Place this script in your HTML file before validation.js -->
+<script type="module">
+  // Import Firebase services
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, serverTimestamp } 
+    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
+    authDomain: "paperless-a64a0.firebaseapp.com",
+    projectId: "paperless-a64a0",
+    storageBucket: "paperless-a64a0.appspot.com",
+    messagingSenderId: "554212290727",
+    appId: "1:554212290727:web:ba60b058c0305284902b82",
+    measurementId: "G-R3D4GLJTD2"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Export to window
+  window.fbAuth = auth;
+  window.fbDb = db;
+  window.fbAuthFunctions = {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+  };
+  window.fbFirestore = {
+    doc,
+    setDoc,
+    getDoc,
+    serverTimestamp
+  };
+</script>
+  <script type="module" src="/js/validation.js" defer></script>
 </head>
 
 <body>
   <div class="wrapper">
     <h1>Signup</h1>
     <p id="error-message"></p>
-    <form id="form">
+    <form id="signupForm">
       <div>
         <label for="firstname-input">
           <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
@@ -27,7 +66,7 @@
         <label for="email-input">
           <span>@</span>
         </label>
-        <input type="email" name="email" id="email-input" placeholder="Email">
+        <input type="text" name="email" id="email-input" placeholder="Email">
       </div>
       <div>
         <label for="password-input">

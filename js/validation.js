@@ -1,3 +1,4 @@
+// 🚀 Walkthrough Logic
 const slides = document.querySelectorAll('.slide');
 const dots = document.querySelectorAll('.dot');
 const nextBtn = document.querySelector('.next-btn');
@@ -10,10 +11,8 @@ function showSlide(index) {
     dots[i].classList.toggle('active', i === index);
   });
 
-  if (index === slides.length - 1) {
-    nextBtn.textContent = 'Get Started';
-  } else {
-    nextBtn.textContent = 'Next';
+  if (nextBtn) {
+    nextBtn.textContent = index === slides.length - 1 ? 'Get Started' : 'Next';
   }
 }
 
@@ -22,92 +21,205 @@ function nextSlide() {
     currentSlide++;
     showSlide(currentSlide);
   } else {
-    // Redirect to Sign Up Method UI
     window.location.href = 'signup-method.html';
+    localStorage.setItem('seenWalkthrough', 'false');
   }
 }
 
 function skipWalkthrough() {
   window.location.href = 'signup-method.html';
+  localStorage.setItem('seenWalkthrough', 'false');
 }
+// ✏️ Validation Helpers
+function getSignupFormErrors(firstname, email, password, repeatPassword, inputs) {
+  const errors = [];
 
-const form = document.getElementById('form')
-const firstname_input = document.getElementById('firstname-input')
-const email_input = document.getElementById('email-input')
-const password_input = document.getElementById('password-input')
-const repeat_password_input = document.getElementById('repeat-password-input')
-const error_message = document.getElementById('error-message')
-
-form.addEventListener('submit', (e) => {
-  let errors = []
-
-  if (firstname_input) {
-    // If we have a firstname input then we are in the signup
-    errors = getSignupFormErrors(firstname_input.value, email_input.value, password_input.value, repeat_password_input.value)
+  if (!firstname) {
+    errors.push("Firstname is required");
+    inputs.firstname_input.parentElement.classList.add("incorrect");
   }
-  else {
-    // If we don't have a firstname input then we are in the login
-    errors = getLoginFormErrors(email_input.value, password_input.value)
+  if (!email) {
+    errors.push("Email is required");
+    inputs.email_input.parentElement.classList.add("incorrect");
   }
-
-  if (errors.length > 0) {
-    // If there are any errors
-    e.preventDefault()
-    error_message.innerText = errors.join(". ")
-  }
-})
-
-function getSignupFormErrors(firstname, email, password, repeatPassword) {
-  let errors = []
-
-  if (firstname === '' || firstname == null) {
-    errors.push('Firstname is required')
-    firstname_input.parentElement.classList.add('incorrect')
-  }
-  if (email === '' || email == null) {
-    errors.push('Email is required')
-    email_input.parentElement.classList.add('incorrect')
-  }
-  if (password === '' || password == null) {
-    errors.push('Password is required')
-    password_input.parentElement.classList.add('incorrect')
+  if (!password) {
+    errors.push("Password is required");
+    inputs.password_input.parentElement.classList.add("incorrect");
   }
   if (password.length < 8) {
-    errors.push('Password must have at least 8 characters')
-    password_input.parentElement.classList.add('incorrect')
+    errors.push("Password must have at least 8 characters");
+    inputs.password_input.parentElement.classList.add("incorrect");
   }
   if (password !== repeatPassword) {
-    errors.push('Password does not match repeated password')
-    password_input.parentElement.classList.add('incorrect')
-    repeat_password_input.parentElement.classList.add('incorrect')
+    errors.push("Password does not match repeated password");
+    inputs.password_input.parentElement.classList.add("incorrect");
+    inputs.repeat_password_input.parentElement.classList.add("incorrect");
+  }
+
+  return errors;
+}
+
+function getLoginFormErrors(email, password, inputs) {
+  const errors = [];
+
+  if (!email) {
+    errors.push("Email is required");
+    inputs.email_input.parentElement.classList.add("incorrect");
+  }
+  if (!password) {
+    errors.push("Password is required");
+    inputs.password_input.parentElement.classList.add("incorrect");
   }
 
 
   return errors;
 }
 
-function getLoginFormErrors(email, password) {
-  let errors = []
+// 🔐 Auth & Validation
+document.addEventListener("DOMContentLoaded", () => {
+  const auth = window.fbAuth;
+  console.log(auth);
+  const db = window.fbDb;
+  const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = window.fbAuthFunctions;
+  const { doc, setDoc, getDoc, serverTimestamp } = window.fbFirestore;
 
-  if (email === '' || email == null) {
-    errors.push('Email is required')
-    email_input.parentElement.classList.add('incorrect')
+  const signupForm = document.getElementById("signupForm");
+  const loginForm = document.getElementById("loginForm");
+
+  if (signupForm) {
+    const firstname_input = document.getElementById("firstname-input");
+    const email_input = document.getElementById("email-input");
+    const password_input = document.getElementById("password-input");
+    const repeat_password_input = document.getElementById("repeat-password-input");
+    const error_message = document.getElementById("error-message");
+
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const firstname = firstname_input.value.trim();
+      const email = email_input.value.trim();
+      const password = password_input.value.trim();
+      const repeatPassword = repeat_password_input.value.trim();
+
+      error_message.textContent = ""; // Clear previous errors
+
+      const errors = getSignupFormErrors(firstname, email, password, repeatPassword, {
+        firstname_input,
+        email_input,
+        password_input,
+        repeat_password_input,
+      });
+
+      if (errors.length > 0) {
+        error_message.textContent = errors.join(". ");
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+          firstname,
+          email,
+          createdAt: serverTimestamp()
+        });
+
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Signup Error:", error.code, error.message);
+
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            error_message.textContent = "This email is already registered. Try logging in.";
+            break;
+          case 'auth/invalid-email':
+            error_message.textContent = "Please enter a valid email address.";
+            break;
+          case 'auth/network-request-failed':
+            error_message.textContent = "Network error. Please check your internet connection.";
+            break;
+          default:
+            error_message.textContent = "Something went wrong. Please try again later.";
+            break;
+        }
+      }
+    });
+
+    // Clear error message while typing
+    [firstname_input, email_input, password_input, repeat_password_input].forEach(input => {
+      input.addEventListener("input", () => {
+        error_message.textContent = "";
+      });
+    });
   }
-  if (password === '' || password == null) {
-    errors.push('Password is required')
-    password_input.parentElement.classList.add('incorrect')
+
+
+  if (loginForm) {
+    const email_input = document.getElementById("email-input");
+    const password_input = document.getElementById("password-input");
+    const error_message = document.getElementById("error-message");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = email_input.value.trim();
+      const password = password_input.value.trim();
+
+      console.log(password);
+      const errors = getLoginFormErrors(email, password, {
+        email_input,
+        password_input,
+      });
+
+      if (errors.length > 0) {
+        error_message.textContent = errors.join(". ");
+        return;
+      }
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.seenWalkthrough === false) {
+            window.location.href = "walkthrough.html"; // ➡️ First time user
+          } else {
+            window.location.href = "index.html"; // ➡️ Returning user
+          }
+        } else {
+          console.error("User document not found!");
+          error_message.textContent = "User document not found! Please try again.";
+        }
+      } catch (error) {
+        if (error.code === 'auth/invalid-credential') {
+          error_message.textContent = "Invalid email or password. Please try again.";
+        } else if (error.code === 'auth/too-many-requests') {
+          error_message.textContent = "Too many failed attempts. Please wait and try again later.";
+        } else if (error.code === 'auth/network-request-failed') {
+          error_message.textContent = "Network error. Please check your internet connection.";
+        } else if (error.code === 'auth/user-disabled') {
+          error_message.textContent = "This account has been disabled. Please contact support.";
+        } else if (error.code === 'auth/invalid-email') {
+          error_message.textContent = "Please enter a valid email address.";
+        } else {
+          error_message.textContent = "Something went wrong. Please try again.";
+        }
+      }
+    });
+
+    [email_input, password_input].forEach(input => {
+      input.addEventListener("input", () => {
+        if (input.parentElement.classList.contains("incorrect")) {
+          input.parentElement.classList.remove("incorrect");
+          error_message.innerText = "";
+        }
+      });
+    });
   }
 
-  return errors;
-}
-
-const allInputs = [firstname_input, email_input, password_input, repeat_password_input].filter(input => input != null)
-
-allInputs.forEach(input => {
-  input.addEventListener('input', () => {
-    if (input.parentElement.classList.contains('incorrect')) {
-      input.parentElement.classList.remove('incorrect')
-      error_message.innerText = ''
-    }
-  })
-})
+});
