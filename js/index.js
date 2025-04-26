@@ -395,11 +395,11 @@ function addProduct() {
 
         try {
             showLoadingOverlay(1500);
-            const snapshot = await getUserCollection("products", userID)
+            const snapshot = await getUserCollection("products")
                 .where("barcode", "==", productData.barcode)
                 .get();
 
-            const labelSnapshot = await getUserCollection("products", userID)
+            const labelSnapshot = await getUserCollection("products")
                 .where("label", "==", productData.label)
                 .get();
 
@@ -418,24 +418,27 @@ function addProduct() {
                     form.reset();
                     document.getElementById("fileName").textContent = `No file selected`;
                 }, 1500);
-                const docRef = await getUserCollection("products", userID).add({
+
+                const productRef = getUserCollection("products").doc(productData.label); // Set doc ID to product label
+
+                await productRef.set({
                     ...productData,
                     createdAt: firebase.firestore.Timestamp.now(),
                 });
 
-                const newDoc = await docRef.get();
+                const newDoc = await productRef.get();
                 const newProductData = newDoc.data();
 
                 allProducts.push({
                     ...newProductData,
-                    id: docRef.id,
+                    id: productRef.id, // not docRef anymore, it's productRef now
                     createdAt: newProductData.createdAt.toDate().toLocaleDateString(),
                 });
 
             } catch (error) {
-                console.error("[PRODUCT] Error adding product:", error);
-                showModalMessage(`Failed to add product: ${error.message}`, false);
+                console.error("Error adding product:", error);
             }
+
         } catch (error) {
             showModalMessage(`Failed to add product: ${error.message}`, false);
             console.error("[PRODUCT] Error checking existing product:", error);
@@ -602,10 +605,22 @@ async function addCustomer() {
             }
             showModalMessage(errorMessage, false);
         } else {
-            await getUserCollection("customers").add({ name, phoneNumber });
-            showModalMessage("Customer added successfully!", true);
-            const customerForm = document.getElementById("customer-form");
-            customerForm.reset();
+            const customerRef = getUserCollection("customers").doc(name);
+
+            const customerData = {
+                name: name,
+                phoneNumber: phoneNumber,
+                createdAt: firebase.firestore.Timestamp.now()
+            };
+
+            try {
+                await customerRef.set(customerData);
+                showModalMessage("Customer added successfully!", true);
+                const customerForm = document.getElementById("customer-form");
+                customerForm.reset();
+            } catch (error) {
+                console.error("Error adding customer:", error);
+            }
         }
     } catch (error) {
         showModalMessage(`Error checking for duplicates: ${error.message}`, false);
@@ -670,7 +685,7 @@ async function cancelCart() {
     try {
         showLoadingOverlay(1000);
         showCartForm();
-        const cartDocRef = db.collection("carts").doc(currentCartId);
+        const cartDocRef = getUserCollection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
 
         const cancelMap = {};
@@ -714,7 +729,7 @@ async function addCart() {
         return;
     }
 
-    const cartRef = db.collection("carts").doc();
+    const cartRef = getUserCollection("carts").doc();
     const cartData = {
         name: cartName,
         dateCreated: firebase.firestore.Timestamp.now(),
@@ -745,7 +760,7 @@ async function displayCart(cartId) {
         <div class="cart-products-list-container" id="cart-products-list-container"></div>
     `;
 
-    db.collection("carts").doc(cartId).onSnapshot(doc => {
+    getUserCollection("carts").doc(cartId).onSnapshot(doc => {
         if (doc.exists) {
             const cart = doc.data();
             document.getElementById("cart-details").innerHTML = `
@@ -756,7 +771,7 @@ async function displayCart(cartId) {
         }
     });
 
-    db.collection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
+    getUserCollection("carts").doc(cartId).collection("cartProducts").onSnapshot(snapshot => {
         let cartProductsHTML = "";
 
         snapshot.forEach(doc => {
@@ -832,7 +847,7 @@ function updateLocalCartUI() {
     }
 }
 async function syncCartToFirestore() {
-    const cartDoc = db.collection("carts").doc(currentCartId);
+    const cartDoc = getUserCollection("carts").doc(currentCartId);
     let totalCost = 0;
 
     for (const productId in localCart) {
@@ -855,7 +870,7 @@ async function fetchProductToAdd() {
     const productCardContainer = document.getElementById("cart-products-container");
 
     try {
-        const querySnapshot = await getUserCollection("products", userID).orderBy("label").get();
+        const querySnapshot = await getUserCollection("products").orderBy("label").get();
         let allProducts = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -923,7 +938,7 @@ async function displayProductToAdd(product, productId) {
     const cancelBtn = productCard.querySelector(".cancel-sale-btn");
     let lastAnimationTime = 0;
     const animationCooldown = 100;
-    const productSnap = await getUserCollection("products", userID).doc(productId).get();
+    const productSnap = await getUserCollection("products").doc(productId).get();
     let currentStock = productSnap.data().stock;
     actionBtn.addEventListener("click", async function () {
 
@@ -1022,7 +1037,7 @@ async function addToSales(productId, label, costPrice, profit) {
         localSale = {};
     }
 
-    const productRef = getUserCollection("products", userID).doc(productId);
+    const productRef = getUserCollection("products").doc(productId);
 
     if (localSale[productId]) {
         localSale[productId].quantity += 1;
@@ -1051,7 +1066,7 @@ async function addToSales(productId, label, costPrice, profit) {
 }
 async function syncSalesToFirestore(productId) {
     const product = localSale[productId];
-    const saleDoc = db.collection("sales").doc(currentSaleId);
+    const saleDoc = getUserCollection("sales").doc(currentSaleId);
 
     await saleDoc.collection("productsSold").doc(productId).set({
         name: product.name,
@@ -1094,8 +1109,8 @@ async function cancelSale(productId) {
         return;
     }
 
-    const saleDocRef = db.collection("sales").doc(currentSaleId);
-    const productRef = getUserCollection("products", userID).doc(productId);
+    const saleDocRef = getUserCollection("sales").doc(currentSaleId);
+    const productRef = getUserCollection("products").doc(productId);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
 
     // Step 1: Decrease the quantity in localSale
@@ -1145,9 +1160,9 @@ async function cancelSale(productId) {
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
     const today = new Date().toLocaleDateString('en-CA');
-    const saleDocRef = db.collection("sales").doc(today);
+    const saleDocRef = getUserCollection("sales").doc(today);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
-    const productRef = getUserCollection("products", userID).doc(productId);
+    const productRef = getUserCollection("products").doc(productId);
 
     const productDoc = await productSoldRef.get();
     if (!productDoc.exists) return;
@@ -1182,7 +1197,7 @@ async function loadTodaySaleToLocal() {
     currentSaleId = today;
     localSale = {};
 
-    const saleDocRef = db.collection("sales").doc(today);
+    const saleDocRef = getUserCollection("sales").doc(today);
     const productsSnapshot = await saleDocRef.collection("productsSold").get();
 
     productsSnapshot.forEach(doc => {
@@ -1294,7 +1309,7 @@ async function fetchProducts() {
     const sortByPriceStockProfit = document.getElementById("sort-by-price-stock-profit");
 
     try {
-        const snapshot = await getUserCollection("products", userID).get();
+        const snapshot = await getUserCollection("products").get();
 
         if (snapshot.empty) {
             productsGrid.innerHTML = "<p>No products available.</p>";
@@ -1542,7 +1557,7 @@ function productCard(product) {
     `;
 }
 function fetchProductsForDoc() {
-    return getUserCollection("products", userID).get().then((querySnapshot) => {
+    return getUserCollection("products").get().then((querySnapshot) => {
         let products = [];
         querySnapshot.forEach((doc) => {
             let data = doc.data();
@@ -1753,7 +1768,7 @@ async function displayProductForm(product) {
                                     updatedProduct.img = url;
 
                                     refreshProductList();
-                                    getUserCollection("products", userID).doc(product.id).update(updatedProduct)
+                                    getUserCollection("products").doc(product.id).update(updatedProduct)
                                         .then(() => {
                                             showModalMessage("Product Updated Successfully!", true);
                                             displayProducts(allProducts);
@@ -1776,7 +1791,7 @@ async function displayProductForm(product) {
             reader.readAsDataURL(file);
         } else {
             refreshProductList();
-            getUserCollection("products", userID).doc(product.id).update(updatedProduct)
+            getUserCollection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
                     showModalMessage("Product Updated Successfully!", true);
                     console.log(allProducts);
@@ -1796,7 +1811,7 @@ async function displayProductForm(product) {
     });
 }
 function removeProductFromFirebase(productId) {
-    getUserCollection("products", userID).doc(productId).delete()
+    getUserCollection("products").doc(productId).delete()
         .then(() => {
 
             showModalMessage("Product Removed Successfully!", true);
@@ -2108,7 +2123,7 @@ function initCartsAndSalesSection() {
 // #region Carts Section {
 async function fetchCartsData() {
     try {
-        const cartsSnapshot = await firebase.firestore().collection("carts").get();
+        const cartsSnapshot = await getUserCollection("carts").get();
         const carts = [];
 
         cartsSnapshot.forEach((doc) => {
@@ -2188,11 +2203,7 @@ function setupCartClickListeners() {
 
 
             try {
-                const productsSnapshot = await firebase.firestore()
-                    .collection("carts")
-                    .doc(cartId)
-                    .collection("cartProducts")
-                    .get();
+                const productsSnapshot = await getUserCollection("carts").doc(cartId).collection("cartProducts").get();
 
                 if (productsSnapshot.empty) {
                     productsContainer.innerHTML = "<p>No products in this cart.</p>";
@@ -2265,7 +2276,7 @@ async function loadSalesData() {
     });
 }
 async function fetchSalesData() {
-    const salesCollection = db.collection("sales");
+    const salesCollection = getUserCollection("sales");
     const snapshot = await salesCollection.get();
     const salesData = [];
 
@@ -2621,7 +2632,7 @@ function initDashboard() {
 }
 // #region Category Disribution {
 async function fetchCategoryDistribution() {
-    const snapshot = await getUserCollection("products", userID).get();
+    const snapshot = await getUserCollection("products").get();
     const categoryCounts = {};
 
     snapshot.forEach(doc => {
@@ -2785,7 +2796,7 @@ async function fetchSalesForPeriod(period) {
 
     // Fetch all documents in parallel
     const promises = dates.map(date =>
-        db.collection("sales").doc(date).get()
+        getUserCollection("sales").doc(date).get()
     );
     const docs = await Promise.all(promises);
 
@@ -2869,7 +2880,7 @@ function renderComparisonChart(comparisonData, metric, canvasId, title) {
 
 // #region Sales Over Time {
 function fetchYearlyProfitTrend() {
-    const salesRef = db.collection("sales");
+    const salesRef = getUserCollection("sales");
     salesRef.get().then(snapshot => {
         const docs = [];
         snapshot.forEach(doc => docs.push(doc));
@@ -2883,7 +2894,7 @@ async function fetchSalesOverTimeForRange(startDate, endDate) {
 
     const dates = getDatesBetween(startDate, endDate);
     const promises = dates.map(date =>
-        db.collection("sales").doc(date).get()
+        getUserCollection("sales").doc(date).get()
     );
 
     try {
@@ -3090,7 +3101,7 @@ function renderProfitTrendChart(labels, profits, productsSold) {
 
 //#region Proftability Margin {
 function fetchProfitabilityData() {
-    const productsRef = getUserCollection("products", userID);
+    const productsRef = getUserCollection("products");
     let products = [];
     productsRef.get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
@@ -3168,7 +3179,7 @@ function renderProfitMarginChart(products) {
 
 // #region Products Lifecycle {
 function fetchProductLifecycleData() {
-    const productsRef = getUserCollection("products", userID);
+    const productsRef = getUserCollection("products");
     let products = [];
     productsRef.get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
@@ -3244,14 +3255,14 @@ function renderProductAgeChart(products) {
 
 // #region Most Popular Products {
 function fetchMostPopularProducts() {
-    const salesRef = db.collection("sales");
+    const salesRef = getUserCollection("sales");
     let productSales = {};
 
     salesRef.get().then((querySnapshot) => {
         const salesPromises = [];
 
         querySnapshot.forEach((doc) => {
-            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+            const productsSoldRef = getUserCollection("sales").doc(doc.id).collection("productsSold");
 
             const promise = productsSoldRef.get().then((productsSnapshot) => {
                 productsSnapshot.forEach((productDoc) => {
@@ -3331,14 +3342,14 @@ function renderMostPopularProductsChart(productSales) {
 
 // #region Least Poplular Products {
 function fetchLeastPopularProducts() {
-    const salesRef = db.collection("sales");
+    const salesRef = getUserCollection("sales");
     let productSales = {};
 
     salesRef.get().then((querySnapshot) => {
         const salesPromises = [];
 
         querySnapshot.forEach((doc) => {
-            const productsSoldRef = db.collection("sales").doc(doc.id).collection("productsSold");
+            const productsSoldRef = getUserCollection("sales").doc(doc.id).collection("productsSold");
 
             const promise = productsSoldRef.get().then((productsSnapshot) => {
                 productsSnapshot.forEach((productDoc) => {
@@ -3493,7 +3504,7 @@ async function generatePDFfromCanvas(canvasId, title) {
 // #region Inventory Summary {
 async function fetchInventorySummary() {
     try {
-        const snapshot = await getUserCollection("products", userID).get();
+        const snapshot = await getUserCollection("products").get();
         const allProducts = snapshot.docs.map(doc => doc.data());
 
         // Total Products
@@ -3581,12 +3592,12 @@ function renderSmartInsights(insights) {
 }
 async function fetchSalesDataAndRenderInsights() {
     try {
-        const snapshot = await db.collection("sales").get();
+        const snapshot = await getUserCollection("sales").get();
         const salesData = [];
 
         for (const doc of snapshot.docs) {
             const sale = doc.data();
-            const productsSnapshot = await db.collection("sales").doc(doc.id).collection("productsSold").get();
+            const productsSnapshot = await getUserCollection("sales").doc(doc.id).collection("productsSold").get();
 
             const productsSold = [];
             productsSnapshot.forEach(prodDoc => {
@@ -3759,7 +3770,7 @@ async function loadUserProfile() {
             const data = doc.data();
             applyUserProfileSettings(data);
         }
-        else{
+        else {
             await profileRef.set({
                 storeName: "",
                 exchangeRate: "",
@@ -3848,7 +3859,7 @@ async function toggleTheme() {
     const root = document.documentElement;
 
     if (!currentComboColors.length) {
-        const profileRef = db.collection('profile').doc(userID);
+        const profileRef = getUserCollection("profile").doc("profileSettings");
         const doc = await profileRef.get();
         if (!doc.exists) return;
 
@@ -4384,8 +4395,7 @@ async function createStyledPDF(titleText) {
     return { pdf, settings };
 }
 async function setPDFLayout(pdf, titleText) {
-    const userID = "demo-user";
-    const doc = await db.collection("pdfLayout").doc(userID).get();
+    const doc = await getUserCollection("pdfLayout").doc("pdfSettings").get();
 
     const settings = doc.exists ? doc.data() : {};
 
@@ -4488,7 +4498,7 @@ async function fetchProductsforExporting() {
         const profitSelect = document.getElementById("profit-select").value;
         const sort = document.getElementById("sort-by-price-stock-profit").value;
 
-        let query = getUserCollection("products", userID);
+        let query = getUserCollection("products");
 
         if (categoryFilter) {
             query = query.where("category", "==", categoryFilter);
@@ -4638,7 +4648,7 @@ async function exportCartToPDF() {
         return;
     }
 
-    const cartDocRef = db.collection("carts").doc(currentCartId);
+    const cartDocRef = getUserCollection("carts").doc(currentCartId);
     const cartSnapshot = await cartDocRef.get();
     if (!cartSnapshot.exists) {
         console.error("Cart does not exist.");
