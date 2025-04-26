@@ -34,11 +34,10 @@ async function initializeApp() {
                 console.log("No user found, redirecting...");
                 return;
             }
-            currentUser = user; // 🔥 Store the user globally
+            currentUser = user;
             console.log("User logged in:", user.uid);
 
-            // ✅ Now you can start calling anything immediately
-            loadUserProfile(); // ← Safe to call here because user is ready
+            loadUserProfile();
             initializeEventListeners();
             showLoadingOverlay(1500);
         });
@@ -3618,10 +3617,10 @@ let initialBaseColor;
 let currentComboColors = [];
 let currentThemeIndex = 0;
 const themeCombos = {
-    default: ["#708090", "#97B8D8"],
+    default: ["#00B3FF", "#00EEFF"],
     combo1: ["#808090", "#909090"],
     combo2: ["#102030", "#405060"],
-    combo3: ["#302010", "#605040"]
+    combo3: ["#708090", "#97B8D8"]
 };
 function initProfile() {
     renderProfileForm();
@@ -3652,8 +3651,8 @@ function renderProfileForm() {
                 <div class="themes-combos" id="comboOptions">
                     <strong>Default:</strong>
                     <div class="combo-btn selected" data-value="default">
-                        <div style="background-color: #708090;"></div>
-                        <div style="background-color: #97B8D8;"></div>
+                        <div style="background-color: #00EEff"></div>
+                        <div style="background-color: #00CCEE;"></div>
                     </div>
                     <strong>Combo 1:</strong>
                     <div class="combo-btn" data-value="combo1">
@@ -3667,8 +3666,8 @@ function renderProfileForm() {
                     </div>
                     <strong>Combo 3:</strong>
                     <div class="combo-btn" data-value="combo3">
-                        <div style="background-color: #302010;"></div>
-                        <div style="background-color: #605040;"></div>
+                        <div style="background-color:  #708090;"></div>
+                        <div style="background-color:  #97B8D8;"></div>
                     </div>
                 </div>
 

@@ -21,16 +21,16 @@ function nextSlide() {
     currentSlide++;
     showSlide(currentSlide);
   } else {
-    window.location.href = 'signup-method.html';
+    window.location.href = 'signup.html';
     localStorage.setItem('seenWalkthrough', 'false');
   }
 }
 
 function skipWalkthrough() {
-  window.location.href = 'signup-method.html';
+  window.location.href = 'signup.html';
   localStorage.setItem('seenWalkthrough', 'false');
 }
-// ✏️ Validation Helpers
+
 function getSignupFormErrors(firstname, email, password, repeatPassword, inputs) {
   const errors = [];
 
@@ -75,7 +75,6 @@ function getLoginFormErrors(email, password, inputs) {
   return errors;
 }
 
-// 🔐 Auth & Validation
 document.addEventListener("DOMContentLoaded", () => {
   const auth = window.fbAuth;
   const db = window.fbDb;
@@ -165,7 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = email_input.value.trim();
       const password = password_input.value.trim();
 
-      console.log(password);
       const errors = getLoginFormErrors(email, password, {
         email_input,
         password_input,

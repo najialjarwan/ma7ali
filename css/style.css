@@ -2,9 +2,9 @@
 
 :root {
   --accent-color: rgb(0, 179, 255);
-  --base-color: #2E2B41;
-  --text-color: rgb(0, 179, 200);
-  --input-color: #F3F0FF;
+  --base-color: white;
+  --text-color: black;
+  --input-color: #708090;
 }
 
 * {
@@ -17,6 +17,7 @@ html {
   font-size: 12pt;
   color: var(--text-color);
   text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 body {
@@ -24,7 +25,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--base-color);
 }
 .walkthrough {
   position: relative;
@@ -130,7 +130,12 @@ body {
 
 .wrapper {
   box-sizing: border-box;
-  background-color: var(--base-color);
+  background: url("../images/background10.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center center;
+  overflow: hidden;
+  touch-action: manipulation;
   height: 100vh;
   width: max(40%, 600px);
   padding: 10px;
@@ -142,15 +147,17 @@ body {
 }
 
 h1 {
-  font-size: 3rem;
+  width: 100%;
+  font-size: 2rem;
   font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 5px;
+  color: var(--accent-color);
 }
 
 form {
   width: min(400px, 100%);
-  margin-top: 20px;
-  margin-bottom: 50px;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -186,10 +193,11 @@ form input {
   padding: 1em;
   font: inherit;
   border-radius: 0 10px 10px 0;
-  border: 2px solid var(--input-color);
+  border: none;
   border-left: none;
-  background-color: var(--input-color);
+  background: linear-gradient(to right, white, var(--accent-color));
   transition: 150ms ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 form input:hover {
@@ -198,7 +206,7 @@ form input:hover {
 
 form input:focus {
   outline: none;
-  border-color: var(--text-color);
+  border-color: var(--base-color);
 }
 
 div:has(input:focus)>label {
@@ -261,14 +269,15 @@ form div.incorrect input {
 }
 
 /* Sign-Up Methods Styles */
-.signup-method {
+.signupMethods {
+  display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .method-buttons {
   margin-top: 30px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 15px;
 }
