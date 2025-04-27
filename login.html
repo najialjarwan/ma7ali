@@ -6,33 +6,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <link rel="stylesheet" href="css/style.css">
-
-  <!-- Place this script in your HTML file before validation.js -->
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="icon" type="image/png" href="/icons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+  <link rel="shortcut icon" href="/icons/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Ma7ali" />
+  
   <script type="module">
-    // Import Firebase services
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
       from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
-      from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Your Firebase config
+    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
       authDomain: "paperless-a64a0.firebaseapp.com",
       projectId: "paperless-a64a0",
-      storageBucket: "paperless-a64a0.appspot.com",
+      storageBucket: "paperless-a64a0.firebasestorage.app",
       messagingSenderId: "554212290727",
       appId: "1:554212290727:web:ba60b058c0305284902b82",
       measurementId: "G-R3D4GLJTD2"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Export to window
     window.fbAuth = auth;
     window.fbDb = db;
     window.fbAuthFunctions = {

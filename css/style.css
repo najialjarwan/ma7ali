@@ -25,11 +25,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 .walkthrough {
   position: relative;
   justify-content: flex-start;
   padding: 40px 20px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .walkthrough-header {
@@ -55,8 +59,9 @@ body {
 .slide-container {
   width: 100%;
   max-width: 400px;
-  height: 400px;
+  height: 500px;
   position: relative;
+  width: 100%;
 }
 
 .slide {
@@ -71,16 +76,15 @@ body {
 }
 
 .slide img {
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
+  width: 300PX;
+  max-height: 300PX;
   margin-bottom: 20px;
 }
 
-.slide h2 {
-  font-size: 1.75rem;
+.slide h2{
+  font-size: 2rem;
   margin-bottom: 10px;
-  color: var(--text-color);
+  color: var(--accent-color);
 }
 
 .slide p {
@@ -124,10 +128,6 @@ body {
   transition: 150ms ease;
 }
 
-.next-btn:hover {
-  background-color: var(--text-color);
-}
-
 .wrapper {
   box-sizing: border-box;
   background: url("../images/background10.png");
@@ -146,7 +146,7 @@ body {
   justify-content: center;
 }
 
-h1 {
+.wrapper h1 {
   width: 100%;
   font-size: 2rem;
   font-weight: 900;
@@ -229,10 +229,6 @@ form button {
   text-transform: uppercase;
   cursor: pointer;
   transition: 150ms ease;
-}
-
-form button:hover {
-  background-color: var(--text-color);
 }
 
 form button:focus {

@@ -49,7 +49,7 @@ async function initializeApp() {
 
             loadUserProfile();
             initializeEventListeners();
-            
+
         });
     }
 }
@@ -3628,9 +3628,9 @@ let currentComboColors = [];
 let currentThemeIndex = 0;
 const themeCombos = {
     default: ["#00B3FF", "#00EEFF"],
-    combo1: ["#808090", "#909090"],
-    combo2: ["#102030", "#405060"],
-    combo3: ["#708090", "#97B8D8"]
+    combo1: ["#808090", "#908080"],
+    combo2: ["#00CCCC", "#00DDAA"],
+    combo3: ["#6F91CC", "#97B8FF"]
 };
 function initProfile() {
     renderProfileForm();
@@ -3671,13 +3671,13 @@ function renderProfileForm() {
                     </div>
                     <strong>Combo 2:</strong>
                     <div class="combo-btn" data-value="combo2">
-                        <div style="background-color: #102030;"></div>
-                        <div style="background-color: #405060;"></div>
+                        <div style="background-color: #00CCCC;"></div>
+                        <div style="background-color: #00DDAA;"></div>
                     </div>
                     <strong>Combo 3:</strong>
                     <div class="combo-btn" data-value="combo3">
-                        <div style="background-color:  #708090;"></div>
-                        <div style="background-color:  #97B8D8;"></div>
+                        <div style="background-color:  #6F91CC;"></div>
+                        <div style="background-color:  #97B8FF;"></div>
                     </div>
                 </div>
 
@@ -3688,7 +3688,7 @@ function renderProfileForm() {
 }
 function addEventListeners() {
     document.getElementById("done-btn").addEventListener("click", () => {
-        location.reload();
+        window.location.reload();
     });
     setupCurrencySelector();
     setupComboSelector();
@@ -3889,13 +3889,25 @@ async function initpdfLayout() {
         titleTextColor: "#000000",
         titleFontSize: 16,
         titleAlign: "left",
-        headerColor: "#708090",
+        headerColor: "#00B3FF",
         headerTextColor: "#ffffff",
-        evenRowColor: "#e6e6d2",
+        evenRowColor: "#BFE8FF",
         evenRowTextColor: "#000000",
         oddRowColor: "#ffffff",
         oddRowTextColor: "#000000"
     };
+    const matchCombo = {
+        fillColor: "#ffffff",
+        titleTextColor: "#000000",
+        titleFontSize: 16,
+        titleAlign: "left",
+        headerColor: "#00B3FF",
+        headerTextColor: "#ffffff",
+        evenRowColor: "#BFE8FF",
+        evenRowTextColor: "#000000",
+        oddRowColor: "#ffffff",
+        oddRowTextColor: "#000000"
+    }
 
     document.body.innerHTML = `
     <div id="pdf-layout-controls" class="container">
@@ -3937,6 +3949,7 @@ async function initpdfLayout() {
     
             <button type="submit" id="save-layout" class="action-btn">Save</button>
             <button id="reset-changes" type="button" class="action-btn">Reset Changes</button>
+            <button id="match-combo" type="button" class="action-btn">Match Theme</button>
             <button id="reset-layout-default" type="button" class="action-btn" style="color: red;">Reset to Default</button>
 
         </form>
@@ -3998,6 +4011,14 @@ async function initpdfLayout() {
         });
     });
 
+    const matchComboBtn = document.getElementById("match-combo");
+    matchComboBtn.addEventListener("click", () => {
+        const headerColor = currentComboColors[0];
+        const evenRowColor = currentComboColors[1];
+        applyInputValue("headerColor", headerColor);
+        applyInputValue("evenRowColor", evenRowColor);
+    });
+
     document.getElementById("reset-layout-default").addEventListener("click", () => {
         Object.entries(factoryDefaults).forEach(([key, value]) => {
             applyInputValue(key, value);
@@ -4006,7 +4027,7 @@ async function initpdfLayout() {
 
     const exitBtn = document.getElementById("done-btn");
     exitBtn.addEventListener("click", () => {
-        location.reload();
+        window.location.reload();
     });
 }
 async function saveLayout() {
@@ -4454,7 +4475,7 @@ async function exportToPDF(data) {
     try {
         const { pdf, settings } = await createStyledPDF("Products List");
 
-        const columns = ["Label", "Barcode", "Cost Price ($)", "Profit ($)", "Category", "Stock", "Created At"];
+        const columns = ["Label", "Barcode", "Cost Price (" + storeCurrency + ")", "Profit (" + storeCurrency + ")", "Category", "Stock", "Created At"];
         const rows = data.map(product => [
             product.label,
             product.barcode,
@@ -4541,8 +4562,8 @@ async function fetchProductsforExporting() {
             return {
                 label: data.label,
                 barcode: data.barcode,
-                costPrice: displayCurrency(data.costPrice),
-                profit: displayCurrency(data.profit),
+                costPrice: storeCurrency === "LBP" ? convertCurrency(data.costPrice, "$", "LBP") : data.costPrice,
+                profit: storeCurrency === "LBP" ? convertCurrency(data.profit, "$", "LBP") : data.profit,
                 category: data.category,
                 stock: data.stock,
                 createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString() : "Unknown Date"
@@ -4817,3 +4838,4 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: change the loading overlay to be calaculated based on netwrok requests and others.
 // TODO: add headers to other sub pages/sections.
 // TODO: style the header container button done to bhe consistent across all pages.
+// TODO: Change how store and pdf settings are rendered.
