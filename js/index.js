@@ -3,7 +3,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
     projectId: "paperless-a64a0",
-    storageBucket: "paperless-a64a0.appspot.com",
+    storageBucket: "paperless-a64a0.firebasestorage.app",
     messagingSenderId: "554212290727",
     appId: "1:554212290727:web:ba60b058c0305284902b82",
     measurementId: "G-R3D4GLJTD2",
@@ -17,17 +17,27 @@ const storage = firebase.storage();
 window.db = db;
 window.auth = auth;
 
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+            console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch((error) => {
+            console.log('Service Worker registration failed:', error);
+        });
+}
+
 let currentUser = null;
 let storeCurrency = "LBP";
 let allProducts = [];
 async function initializeApp() {
+    showLoadingOverlay(2000);
     const firstInstall = localStorage.getItem('firstInstallDone');
     if (!firstInstall) {
         localStorage.setItem('firstInstallDone', 'true');
         window.location.href = "walkthrough.html";
     } else {
-        console.log("Waiting for user authentication...");
-
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = "signup.html";
@@ -39,7 +49,7 @@ async function initializeApp() {
 
             loadUserProfile();
             initializeEventListeners();
-            showLoadingOverlay(1500);
+            
         });
     }
 }
@@ -3757,16 +3767,6 @@ async function loadUserProfile() {
             const data = doc.data();
             applyUserProfileSettings(data);
         }
-        else {
-            await profileRef.set({
-                storeName: "",
-                exchangeRate: "",
-                currency: "$",
-                combo: "default",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
-
-        }
     } catch (error) {
         console.error("Error loading profile:", error);
     }
@@ -4813,3 +4813,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: implement Create note section.
 // TODO: add change email and password setting with phone number too.
 // TODO: add delete cart and all cart buttons.
+// BUG: fex walktrhgou links and styling.
+// TODO: change the loading overlay to be calaculated based on netwrok requests and others.
+// TODO: add headers to other sub pages/sections.
+// TODO: style the header container button done to bhe consistent across all pages.

@@ -22,8 +22,8 @@ html {
 body {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 300px 1fr;
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
   grid-template-areas:
     "navbar"
     "main"
@@ -34,6 +34,10 @@ body {
   background-position: center center;
   overflow: hidden;
   touch-action: manipulation;
+}
+
+h2, h5{
+  color: var(--accent-color) !important;
 }
 
 .action-btn{
@@ -55,7 +59,7 @@ body {
   width: 100%;
   border: none;
   background-color: transparent;
-  color: var(--text-color);
+  color: var(--accent-color);
   border: 5px groove var(--input-color);
   border-radius: 10px;
   font-weight: bolder;
@@ -220,7 +224,7 @@ body {
   width: 50%;
   border-radius: 10px;
   border: 4px groove var(--input-color);
-  color: var(--text-color);
+  color: var(--accent-color);
   background-color: transparent;
   font-weight: bolder;
 }
@@ -603,12 +607,6 @@ input:checked+.sliderr::before {
   transform: translateX(28px);
 }
 
-@media (max-width: 800px) {
-  body {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Main Content */
 main {
   grid-area: main;
@@ -663,7 +661,7 @@ footer {
   cursor: pointer;
   padding: 10px;
   position: relative;
-  bottom: 10px;
+  bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -699,6 +697,7 @@ footer {
   background-color: transparent;
   display: flex;
   align-items: flex-start;
+  margin-bottom: 10px;
 }
 
 .pop.active {
@@ -939,7 +938,7 @@ footer {
   width: 100%;
   border: 4px solid var(--accent-color);
   border-radius: 5px;
-  background-color: var(--accent-color);
+  background-color: var(--input-color);
   color: white;
   text-align: left;
   padding-left: 5px;
@@ -949,9 +948,10 @@ footer {
 .product-card p,
 .customers-card p {
   font-size: 12px;
-  color: var(--text-color);
+  color: var(--accent-color);
   height: 20px;
   margin-bottom: 0px;
+  font-weight: 900;
 }
 
 .product-card p strong,
@@ -1531,7 +1531,7 @@ footer {
 }
 
 .inventory-analytics h2 {
-  color: var(--text-color);
+  color: var(--accent-color);
   width: 100%;
   padding: 1rem;
   font-size: 1.3rem;
