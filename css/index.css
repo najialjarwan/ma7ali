@@ -427,8 +427,17 @@ h5 {
   background-color: var(--input-color);
   border-radius: 20px;
 }
-.task-item input:checked{
-  background-color: greenyellow;
+.status-button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background-color: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.status-button:hover {
+  transform: scale(1.1);
 }
 
 .task-item p{

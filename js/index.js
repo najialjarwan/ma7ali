@@ -3896,45 +3896,61 @@ async function fetchTasks() {
 function startTaskNotifications() {
     console.log("[Task Notification] Starting task reminder service...");
 
-    setInterval(() => {
+    setInterval(async () => {
         const now = new Date();
         const tasksToRemove = [];
 
-        localTasks.forEach((task, index) => {
+        for (let index = 0; index < localTasks.length; index++) {
+            const task = localTasks[index];
+
             if (!task.dueDate || task.status === 'completed') {
-                // Ignore tasks without due date or completed
-                return;
+                continue;
             }
 
-            const dueDate = task.dueDate.toDate(); // Firestore Timestamp to JS Date
+            const dueDate = task.dueDate.toDate();
             const timeDiffMs = dueDate - now;
             const timeDiffMinutes = timeDiffMs / (1000 * 60);
 
             console.log(`[Task Tracking] "${task.title}" - ${Math.round(timeDiffMinutes)} minutes left.`);
 
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
-                // First alert: 10 minutes left
+                // 10-minute early alert
                 alert(`⏳ 10 minutes left for: "${task.title}"`);
                 console.log(`[Task Notification] 10-minute alert for "${task.title}"`);
-                task.alerted10Min = true; // Mark as alerted to prevent repeated alerts
+                task.alerted10Min = true;
             }
 
             if (timeDiffMinutes <= 0) {
-                // Final alert: time due
+                // Final reminder
                 alert(`🔔 Reminder: "${task.title}" is due now!`);
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
 
+                // Update task as completed in Firestore
+                try {
+                    await getUserCollection("tasks").doc(task.id).update({
+                        status: 'completed'
+                    });
+                    console.log(`[Task Notification] Marked "${task.title}" as completed in Firestore.`);
+                } catch (error) {
+                    console.error(`Error updating task "${task.title}" status to completed:`, error);
+                }
+
+                // Also mark locally
+                task.status = 'completed';
+
+                // Remove from localTasks for cleaner memory
                 tasksToRemove.push(index);
             }
-        });
+        }
 
-        // Clean up tasks that already fired final reminder
+        // Clean up tasks that completed
         tasksToRemove.reverse().forEach(index => {
             localTasks.splice(index, 1);
         });
 
     }, 30000); // Check every 30 seconds
 }
+
 
 async function initTasksAndReminders(){
     const doneBtn = document.getElementById('done-btn');
@@ -3950,24 +3966,59 @@ async function tasksList() {
     const tasksList = document.getElementById('tasks-list');
     const tasksRef = getUserCollection("tasks");
     tasksList.innerHTML = ''; // Clear existing tasks
-    try{
+
+    try {
         const snapshot = await tasksRef.get();
         snapshot.forEach((doc) => {
             const task = doc.data();
+            const taskId = doc.id;
+
             const taskItem = document.createElement('div');
             taskItem.className = 'task-item';
-            taskItem.innerHTML = `
-                <input type="checkbox" id="${task.title}" ${task.status === 'completed' ? 'checked' : ''}>
-                <p>${task.title}</p>
-                `;
+
+            const statusButton = document.createElement('button');
+            statusButton.className = 'status-button';
+            statusButton.innerText = task.status === 'completed' ? '✔️' : '⬜'; // Example icons
+
+            statusButton.addEventListener('click', async () => {
+                const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+
+                try {
+                    await getUserCollection("tasks").doc(taskId).update({
+                        status: newStatus
+                    });
+                    console.log(`Task "${task.title}" status updated to ${newStatus}`);
+
+                    // Update localTasks
+                    const localTask = localTasks.find(t => t.id === taskId);
+                    if (localTask) {
+                        localTask.status = newStatus;
+                        console.log(localTask.title, localTask.status);
+                    }
+
+                    // Update UI immediately
+                    task.status = newStatus;
+                    statusButton.innerText = newStatus === 'completed' ? '✔️' : '⬜';
+
+                } catch (error) {
+                    console.error('Error updating task status:', error);
+                    alert('Failed to update task status. Please try again.');
+                }
+            });
+
+            const titleP = document.createElement('p');
+            titleP.textContent = task.title;
+
+            taskItem.appendChild(statusButton);
+            taskItem.appendChild(titleP);
             tasksList.appendChild(taskItem);
         });
-    }
-    catch (error) {
-        console.error('Error fetching tasks: ', error);
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
         alert('Something went wrong. Try again.');
     }
 }
+
 async function saveTask() {
     const title = document.getElementById('task-title').value.trim();
     const content = document.getElementById('task-content').value.trim();
