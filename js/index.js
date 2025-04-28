@@ -180,6 +180,20 @@ async function initializeEventListeners() {
         initTasksAndReminders();
     });
 
+    const addTaskBtn = document.getElementById('add-task-btn');
+    addTaskBtn.addEventListener('click', async () => {
+        console.log("Add task is clicked:");
+        addTaskBtn.disabled = true;
+    
+        try {
+            await saveTask();
+        } catch (error) {
+            console.error("Error saving task:", error);
+        } finally {
+            addTaskBtn.disabled = false;
+        }
+    });
+
     pdfLayoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("pdflayout");
@@ -3952,14 +3966,13 @@ function startTaskNotifications() {
 }
 
 
-async function initTasksAndReminders(){
+async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
+    console.log("attach event listener to done button");
     doneBtn.addEventListener('click', () => {
         tasks.classList.remove('active');
     });
-    document.getElementById('add-task-btn').addEventListener('click', () => {
-        saveTask();
-    });
+    // Hold a reference to the button
     await tasksList();
 }
 async function tasksList() {
@@ -3978,31 +3991,39 @@ async function tasksList() {
 
             const statusButton = document.createElement('button');
             statusButton.className = 'status-button';
-            statusButton.innerText = task.status === 'completed' ? '✔️' : '⬜'; // Example icons
+
+            // Always start with white square, regardless of status
+            statusButton.innerText = '⬜';
 
             statusButton.addEventListener('click', async () => {
-                const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+                if (statusButton.innerText === '⬜') {
+                    // User is marking task as completed manually
 
-                try {
-                    await getUserCollection("tasks").doc(taskId).update({
-                        status: newStatus
-                    });
-                    console.log(`Task "${task.title}" status updated to ${newStatus}`);
+                    try {
+                        await getUserCollection("tasks").doc(taskId).update({
+                            status: 'completed'
+                        });
+                        console.log(`Task "${task.title}" manually marked as completed.`);
 
-                    // Update localTasks
-                    const localTask = localTasks.find(t => t.id === taskId);
-                    if (localTask) {
-                        localTask.status = newStatus;
-                        console.log(localTask.title, localTask.status);
+                        // Update localTasks
+                        const localTask = localTasks.find(t => t.id === taskId);
+                        if (localTask) {
+                            localTask.status = 'completed';
+                        }
+
+                        // Update button UI
+                        statusButton.innerText = '✔️';
+
+                        // Remove from localTasks
+                        const indexToRemove = localTasks.findIndex(t => t.id === taskId);
+                        if (indexToRemove !== -1) {
+                            localTasks.splice(indexToRemove, 1);
+                        }
+
+                    } catch (error) {
+                        console.error('Error updating task status:', error);
+                        alert('Failed to update task status. Please try again.');
                     }
-
-                    // Update UI immediately
-                    task.status = newStatus;
-                    statusButton.innerText = newStatus === 'completed' ? '✔️' : '⬜';
-
-                } catch (error) {
-                    console.error('Error updating task status:', error);
-                    alert('Failed to update task status. Please try again.');
                 }
             });
 
@@ -4020,6 +4041,7 @@ async function tasksList() {
 }
 
 async function saveTask() {
+    console.log("saveTask is called");
     const title = document.getElementById('task-title').value.trim();
     const content = document.getElementById('task-content').value.trim();
     const dueDate = document.getElementById('task-due-date').value;
