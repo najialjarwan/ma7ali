@@ -47,6 +47,8 @@ async function initializeApp() {
             currentUser = user;
             console.log("User logged in:", user.uid);
 
+            await fetchTasks();
+            startTaskNotifications();
             loadUserProfile();
             initializeEventListeners();
 
@@ -149,6 +151,7 @@ async function initializeEventListeners() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
+    const tasksLink = document.getElementById('tasksLink');
     const pdfLayoutLink = document.getElementById('pdf-layout');
     const helpLink = document.getElementById('help');
     const profileLink = document.getElementById('profile');
@@ -170,10 +173,18 @@ async function initializeEventListeners() {
         e.preventDefault();
         loadContent("profile");
     });
+
+    tasksLink.addEventListener('click', () => {
+        const tasks = document.getElementById('tasks');
+        tasks.classList.add('active');
+        initTasksAndReminders();
+    });
+
     pdfLayoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("pdflayout");
     });
+
     helpLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("help");
@@ -214,6 +225,7 @@ async function initializeEventListeners() {
     }
     // #endregion
 }
+
 async function loadContent(section) {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = "<p>Loading...</p>";
@@ -3863,7 +3875,138 @@ async function toggleTheme() {
     root.style.setProperty("--accent-color", currentComboColors[currentThemeIndex]);
 }
 // #endregion }
+let localTasks = []; // Global variable
 
+async function fetchTasks() {
+    const tasksRef = getUserCollection("tasks");
+    try {
+        const snapshot = await tasksRef.get();
+        localTasks = [];
+        snapshot.forEach(doc => {
+            const task = { id: doc.id, alerted10Min: false, ...doc.data() };
+            localTasks.push(task);
+        });
+        console.log(`[Task Notification] Loaded ${localTasks.length} tasks for tracking.`, localTasks);
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+        alert('Something went wrong while fetching tasks.');
+    }
+}
+
+function startTaskNotifications() {
+    console.log("[Task Notification] Starting task reminder service...");
+
+    setInterval(() => {
+        const now = new Date();
+        const tasksToRemove = [];
+
+        localTasks.forEach((task, index) => {
+            if (!task.dueDate || task.status === 'completed') {
+                // Ignore tasks without due date or completed
+                return;
+            }
+
+            const dueDate = task.dueDate.toDate(); // Firestore Timestamp to JS Date
+            const timeDiffMs = dueDate - now;
+            const timeDiffMinutes = timeDiffMs / (1000 * 60);
+
+            console.log(`[Task Tracking] "${task.title}" - ${Math.round(timeDiffMinutes)} minutes left.`);
+
+            if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
+                // First alert: 10 minutes left
+                alert(`⏳ 10 minutes left for: "${task.title}"`);
+                console.log(`[Task Notification] 10-minute alert for "${task.title}"`);
+                task.alerted10Min = true; // Mark as alerted to prevent repeated alerts
+            }
+
+            if (timeDiffMinutes <= 0) {
+                // Final alert: time due
+                alert(`🔔 Reminder: "${task.title}" is due now!`);
+                console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
+
+                tasksToRemove.push(index);
+            }
+        });
+
+        // Clean up tasks that already fired final reminder
+        tasksToRemove.reverse().forEach(index => {
+            localTasks.splice(index, 1);
+        });
+
+    }, 30000); // Check every 30 seconds
+}
+
+async function initTasksAndReminders(){
+    const doneBtn = document.getElementById('done-btn');
+    doneBtn.addEventListener('click', () => {
+        tasks.classList.remove('active');
+    });
+    document.getElementById('add-task-btn').addEventListener('click', () => {
+        saveTask();
+    });
+    await tasksList();
+}
+async function tasksList() {
+    const tasksList = document.getElementById('tasks-list');
+    const tasksRef = getUserCollection("tasks");
+    tasksList.innerHTML = ''; // Clear existing tasks
+    try{
+        const snapshot = await tasksRef.get();
+        snapshot.forEach((doc) => {
+            const task = doc.data();
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item';
+            taskItem.innerHTML = `
+                <input type="checkbox" id="${task.title}" ${task.status === 'completed' ? 'checked' : ''}>
+                <p>${task.title}</p>
+                `;
+            tasksList.appendChild(taskItem);
+        });
+    }
+    catch (error) {
+        console.error('Error fetching tasks: ', error);
+        alert('Something went wrong. Try again.');
+    }
+}
+async function saveTask() {
+    const title = document.getElementById('task-title').value.trim();
+    const content = document.getElementById('task-content').value.trim();
+    const dueDate = document.getElementById('task-due-date').value;
+
+    if (!title) {
+        alert('Please enter a task title.');
+        return;
+    }
+
+    if (!currentUser) {
+        alert('You must be logged in to add tasks.');
+        return;
+    }
+
+    const newTask = {
+        title,
+        content,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'pending',
+    };
+
+    if (dueDate) {
+        newTask.dueDate = firebase.firestore.Timestamp.fromDate(new Date(dueDate));
+    }
+
+    try {
+        await getUserCollection("tasks").add(newTask);
+        alert('Task added successfully!');
+        // NOTE: You can uncomment the following line if you want to refresh the tasks after adding a new one.
+        await fetchTasks(); // Refresh tasks after adding a new one
+        await tasksList();
+
+    } catch (error) {
+        console.error('Error adding task: ', error);
+        alert('Something went wrong. Try again.');
+    }
+}
+// TODO: add sound to remnders
 // #region PDF Layout {
 async function initpdfLayout() {
 
@@ -4839,3 +4982,5 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: add headers to other sub pages/sections.
 // TODO: style the header container button done to bhe consistent across all pages.
 // TODO: Change how store and pdf settings are rendered.
+// TODO: add expriry date to products and send a notification to the user when a product expires.
+// TODO: set a loading animation or something to when the application is loading.

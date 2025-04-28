@@ -21,7 +21,8 @@
       <img src="icons/bars-solid (1).svg" alt="" width="24" height="24" />
     </button>
     <div class="search-container-main">
-      <input type="text" class="search-bar" id="search-products-bar" autocomplete="mobile" placeholder="Search Product" />
+      <input type="text" class="search-bar" id="search-products-bar" autocomplete="mobile"
+        placeholder="Search Product" />
       <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon" />
       <div class="top-bar">
         <button id="toggleCurrencyBtn" class="currency-toggle-btn"></button>
@@ -44,12 +45,37 @@
 
     <div class="side-links-container">
       <a href="#" class="sidebar-link" data-section="profile" id="profile">Store</a>
+      <a href="#" class="sidebar-link" id="tasksLink">Tasks & Reminders</a>
       <a href="#" class="sidebar-link" data-section="pdflayout" id="pdf-layout">PDF Layout</a>
       <a href="#" class="sidebar-link" id="feedback-btn">Feedback</a>
       <a href="#" class="sidebar-link" data-section="help" id="help">Help Center</a>
       <a href="#" class="sidebar-link logout-btn" id="logout-btn">Logout</a>
     </div>
   </aside>
+
+  <div class="tasks" id="tasks">
+    <div class="header-container">
+      <h5 style="font-weight: bolder">Set Tasks & Reminders</h5>
+      <button type="button" id="done-btn">Done</button>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="task-modal">
+      <div class="task-modal-content">
+        <h2 id="modal-title">Add New Task</h2>
+        <input type="text" id="task-title" placeholder="Task title">
+        <textarea id="task-content" placeholder="Task details (optional)"></textarea>
+
+        <label for="task-due-date">Due Date & Time (optional):</label>
+        <input type="datetime-local" id="task-due-date">
+
+        <button type="button" class="action-btn" id="add-task-btn">Add Task</button>
+      </div>
+    </div>
+
+    <h2>Your Tasks</h2>
+    <div class="tasks-list" id="tasks-list"></div>
+  </div>
 
   <div id="overlay"></div>
 
@@ -99,7 +125,6 @@
       <span class="active-indicator" id="active-indicator"></span>
     </div>
   </footer>
-
 
   <div id="feedback-modal" class="modal">
     <div class="modal-content">

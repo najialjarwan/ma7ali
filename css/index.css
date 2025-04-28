@@ -37,13 +37,14 @@ body {
   touch-action: manipulation;
 }
 
-h2, h5{
+h2,
+h5 {
   color: var(--accent-color) !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
-  
+
 }
 
-.action-btn{
+.action-btn {
   background-color: var(--accent-color);
   color: var(--input-color);
   border: none;
@@ -69,7 +70,9 @@ h2, h5{
   padding: 7px;
   transition: transform 0.1 ease-in-out;
 }
-.func-btn:active, .action-btn:active {
+
+.func-btn:active,
+.action-btn:active {
   transform: scaleY(0.8);
 }
 
@@ -143,7 +146,7 @@ h2, h5{
   flex-direction: column;
 }
 
-.store-name{
+.store-name {
   position: absolute;
   top: 0px;
   left: 10px;
@@ -231,6 +234,7 @@ h2, h5{
   background-color: transparent;
   font-weight: bolder;
 }
+
 .container .header-container {
   padding: 20px;
   margin-bottom: 10px;
@@ -270,13 +274,14 @@ h2, h5{
   padding: 0 20px 50px 20px;
 }
 
-.button-selector{
+.button-selector {
   display: flex;
   gap: 4px;
   margin-bottom: 10px;
   width: 100%;
 }
-.button-selector button{
+
+.button-selector button {
   padding: 16px 16px;
   font-weight: bolder;
   font-size: 1rem;
@@ -288,7 +293,9 @@ h2, h5{
   border-radius: 6px;
   transition: all 0.2s ease;
 }
-.align-btn.selected, .currency-btn.selected {
+
+.align-btn.selected,
+.currency-btn.selected {
   background-color: var(--accent-color);
   color: white;
   border-color: var(--accent-color);
@@ -300,14 +307,14 @@ h2, h5{
   justify-content: flex-start;
 }
 
-.container input{
+.container input {
   width: 100%;
   height: 50px;
   font-size: 20px;
   margin-bottom: 10px;
 }
 
-.container input[type="color"]{
+.container input[type="color"] {
   border: none !important;
 }
 
@@ -315,10 +322,11 @@ h2, h5{
   transform: scaleY(0.8);
 }
 
-.themes-combos{
+.themes-combos {
   display: flex;
   flex-direction: column;
 }
+
 .combo-btn {
   border: 2px solid transparent;
   padding: 5px;
@@ -326,12 +334,108 @@ h2, h5{
   cursor: pointer;
   display: flex;
 }
+
 .combo-btn.selected {
   border-color: var(--accent-color);
 }
+
 .combo-btn div {
   width: 100%;
   height: 50px;
+}
+
+/* Tasks Section */
+.tasks {
+  position: fixed;
+  bottom: -100%;
+  height: 100vh;
+  width: 100%;
+  background-color: var(--input-color);
+  transition: bottom 0.4s ease;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.tasks.active{
+  bottom: 0;
+}
+.tasks .header-container{
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background-color: var(--input-color);
+}
+.tasks .header-container button{
+  top: 15px;
+  right: 20px;
+  width: 35%;
+  height: 40px;
+  font-size: large;
+}
+
+/* Modal overall */
+.task-modal {
+  display: flex;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  margin: 20px;
+}
+
+/* Modal content box */
+.task-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+.task-modal-content label{
+  display: flex;
+  align-self: flex-start;
+}
+
+/* Form inputs inside modal */
+.task-modal-content input,
+.task-modal-content textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.tasks-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 8px;
+}
+.task-item{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  background-color: var(--accent-color);
+  height: 50px;
+  padding-left: 10px;
+}
+.task-item input{
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: var(--input-color);
+  border-radius: 20px;
+}
+.task-item input:checked{
+  background-color: greenyellow;
+}
+
+.task-item p{
+  font-size: 1rem;
+  font-weight: bolder;
+  color: var(--text-color);
+  margin: 0;
 }
 
 /* FeedBack Section */
@@ -421,32 +525,38 @@ h2, h5{
   text-align: left;
 }
 
-.app-description, .app-questions,.user-manual{
+.app-description,
+.app-questions,
+.user-manual {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .app-header,
 .app-overview,
 .app-benefits,
 .app-faqs,
-.products-instructions{
+.products-instructions {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   border-radius: 15px;
   background-color: var(--input-color);
 }
-.app-title{
+
+.app-title {
   border-bottom: 1px solid black;
   padding: 10px;
 }
-.app-subtitle{
+
+.app-subtitle {
   padding: 10px;
   text-align: left;
   border-radius: 15px;
 }
-.help-section ul li{
-  list-style-type:decimal;
+
+.help-section ul li {
+  list-style-type: decimal;
   text-align: left;
   line-height: normal;
 }
@@ -460,7 +570,8 @@ h2, h5{
   margin-bottom: 10px;
 }
 
-.app-questions h2, .user-manual h2{
+.app-questions h2,
+.user-manual h2 {
   text-align: left;
 }
 
@@ -540,14 +651,15 @@ nav {
   filter: brightness(0) invert(1);
 }
 
-.top-bar{
+.top-bar {
   width: 20%;
   height: 91%;
   position: absolute;
   top: 2px;
   right: 2px;
 }
-.currency-toggle-btn{
+
+.currency-toggle-btn {
 
   width: 100%;
   height: 100%;
@@ -1544,7 +1656,7 @@ footer {
 }
 
 canvas {
-  width: 100% ;
+  width: 100%;
   height: auto !important;
 }
 
