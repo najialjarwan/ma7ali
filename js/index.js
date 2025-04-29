@@ -3903,7 +3903,6 @@ async function fetchTasks() {
         alert('Something went wrong while fetching tasks.');
     }
 }
-
 function startTaskNotifications() {
 
     setInterval(async () => {
@@ -3913,40 +3912,54 @@ function startTaskNotifications() {
         for (let index = 0; index < localTasks.length; index++) {
             const task = localTasks[index];
 
-            if (!task.dueDate || task.status === 'completed') {
+            if (!task.dueDate || task.status === 'completed' || task.alerted) {
                 continue;
             }
 
             const dueDate = task.dueDate.toDate();
             const timeDiffMs = dueDate - now;
-            const timeDiffMinutes = timeDiffMs / (1000 * 60);
+            const timeDiffMinutes = parseFloat(timeDiffMs / (1000 * 60));
 
-            console.log(`[Task Tracking] "${task.title}" - ${Math.round(timeDiffMinutes)} minutes left.`);
+            console.log(`[Task Tracking] "${task.title}" - ${timeDiffMinutes} minutes left.`);
 
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
                 // 10-minute early alert
-                alert(`⏳ 10 minutes left for: "${task.title}"`);
+                alert(`⏳Reminder: 10 minutes left for: "${task.title}"`);
                 console.log(`[Task Notification] 10-minute alert for "${task.title}"`);
                 task.alerted10Min = true;
             }
 
             if (timeDiffMinutes <= 0) {
                 // Final reminder
-                alert(`🔔 Reminder: "${task.title}" is due now!`);
+                const notification = document.getElementById('notification');;
+                console.log(notification);
+                if (notification) {
+                    notification.innerHTML = `
+                        <p>⏰Reminder: Dont't forget to ${task.title}</p>
+                        <button id="close-notification">Close</button>
+                    `;
+                    notification.classList.add('active');
+                    setTimeout(() => {
+                        notification.classList.remove('active');
+                    }, 7000);
+                    document.getElementById('close-notification').addEventListener('click', () => {
+                        notification.classList.remove('active');
+                    });
+                }
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
 
-                // Update task as completed in Firestore
                 try {
                     await getUserCollection("tasks").doc(task.id).update({
-                        status: 'completed'
+                        alerted: true
                     });
                     console.log(`[Task Notification] Marked "${task.title}" as completed in Firestore.`);
                 } catch (error) {
                     console.error(`Error updating task "${task.title}" status to completed:`, error);
+                    alert(`Failed to mark "${task.title}" as completed. Please try again.`);
                 }
 
                 // Also mark locally
-                task.status = 'completed';
+                task.alerted = true;
 
                 // Remove from localTasks for cleaner memory
                 tasksToRemove.push(index);
@@ -3958,10 +3971,8 @@ function startTaskNotifications() {
             localTasks.splice(index, 1);
         });
 
-    }, 30000); // Check every 30 seconds
+    }, 1000); // Check every 30 seconds
 }
-
-
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
     console.log("attach event listener to done button");
@@ -3974,7 +3985,7 @@ async function initTasksAndReminders() {
 async function tasksList() {
     const tasksList = document.getElementById('tasks-list');
     const tasksRef = getUserCollection("tasks");
-    tasksList.innerHTML = ''; // Clear existing tasks
+    tasksList.innerHTML = '';
 
     try {
         const snapshot = await tasksRef.get();
@@ -3988,12 +3999,10 @@ async function tasksList() {
             const statusButton = document.createElement('button');
             statusButton.className = 'status-button';
 
-            // Always start with white square, regardless of status
-            statusButton.innerText = '⬜';
+            statusButton.innerText = task.status === "completed" ? '✔️' : '⬜';
 
             statusButton.addEventListener('click', async () => {
                 if (statusButton.innerText === '⬜') {
-                    // User is marking task as completed manually
 
                     try {
                         await getUserCollection("tasks").doc(taskId).update({
@@ -4035,7 +4044,6 @@ async function tasksList() {
         alert('Something went wrong. Try again.');
     }
 }
-
 async function saveTask() {
     console.log("saveTask is called");
     const title = document.getElementById('task-title').value.trim();
@@ -4056,6 +4064,7 @@ async function saveTask() {
         title,
         content,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        alerted: false,
         status: 'pending',
     };
 
@@ -4065,7 +4074,8 @@ async function saveTask() {
 
     try {
         await getUserCollection("tasks").add(newTask);
-        alert('Task added successfully!');
+        console.log('Task added successfully!');
+        //alert('Task added successfully!');
         // NOTE: You can uncomment the following line if you want to refresh the tasks after adding a new one.
         await fetchTasks(); // Refresh tasks after adding a new one
         await tasksList();
