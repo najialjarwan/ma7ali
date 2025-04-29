@@ -17,9 +17,9 @@ const storage = firebase.storage();
 window.db = db;
 window.auth = auth;
 
+// Register correct service worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-        .register('/sw.js')
+    navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
             console.log('Service Worker registered with scope:', registration.scope);
         })
@@ -46,12 +46,10 @@ async function initializeApp() {
             }
             currentUser = user;
             console.log("User logged in:", user.uid);
-
             await fetchTasks();
             startTaskNotifications();
             loadUserProfile();
             initializeEventListeners();
-
         });
     }
 }
@@ -184,7 +182,7 @@ async function initializeEventListeners() {
     addTaskBtn.addEventListener('click', async () => {
         console.log("Add task is clicked:");
         addTaskBtn.disabled = true;
-    
+
         try {
             await saveTask();
         } catch (error) {
@@ -3900,7 +3898,6 @@ async function fetchTasks() {
             const task = { id: doc.id, alerted10Min: false, ...doc.data() };
             localTasks.push(task);
         });
-        console.log(`[Task Notification] Loaded ${localTasks.length} tasks for tracking.`, localTasks);
     } catch (error) {
         console.error('Error fetching tasks:', error);
         alert('Something went wrong while fetching tasks.');
@@ -3908,7 +3905,6 @@ async function fetchTasks() {
 }
 
 function startTaskNotifications() {
-    console.log("[Task Notification] Starting task reminder service...");
 
     setInterval(async () => {
         const now = new Date();
