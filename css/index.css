@@ -395,6 +395,7 @@ h5 {
   position: absolute;
   top: 10px;
   left: 10px;
+  filter: brightness(100%) invert(0.4);
 }
 .notification p {
   position: absolute;
@@ -409,10 +410,7 @@ h5 {
 }
 .tasks .header-container{
   padding: 20px;
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  background-color: var(--input-color);
+  background-color: transparent;
 }
 .tasks .header-container button{
   top: 15px;
@@ -510,6 +508,8 @@ h5 {
   margin: 0;
   padding: 0;
   text-align: left;
+  word-break: break-all;
+  font-weight: 350;
 }
 .task-content.show {
   max-height: 300px;

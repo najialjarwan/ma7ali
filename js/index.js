@@ -285,7 +285,6 @@ async function loadContent(section) {
 }
 // #endregion }
 
-//TODO: change the category input to select.
 // #region 1️⃣ Add Product Section {
 function showProductForm() {
     setCurrencyUpdateCallback(() => {
@@ -1631,7 +1630,7 @@ function displayProducts(filteredProducts) {
         </div>
     `;
 
-    $(".main-content").html(productCardsHTML ? productsGridHTML : "<p>No products found.</p>");
+    $(".main-content").html(productCardsHTML ? productsGridHTML : "<p>No products found. Add your first products.</p>");
 
     if (productCardsHTML) {
         $(".product-card").on("click", function () {
@@ -3891,8 +3890,9 @@ async function toggleTheme() {
     root.style.setProperty("--accent-color", currentComboColors[currentThemeIndex]);
 }
 // #endregion }
-let localTasks = []; // Global variable
 
+// #region Tasks & Reminders{
+let localTasks = [];
 async function fetchTasks() {
     const tasksRef = getUserCollection("tasks");
     try {
@@ -3983,7 +3983,6 @@ function startTaskNotifications() {
 
     }, 5000);
 }
-
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
     console.log("attach event listener to done button");
@@ -4078,11 +4077,11 @@ function renderTask(task, taskId) {
         const dateObj = new Date(timestamp.seconds * 1000);
         const dateStr = dateObj.toLocaleDateString();
         const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        dueText = `Due: ${dateStr} at ${timeStr}`;
+        dueText = `${dateStr} at ${timeStr}`;
     }
     taskContent.innerHTML = `
-        <p>Details: ${task.content}</p>
-        <p>${dueText}</p>
+        <p><strong>Details: </strong>${task.content ? task.content : ""}</p>
+        <p><strong>Due: </strong>${dueText ? dueText : ""}</p>
     `;
 
     const taskContainer = document.createElement('div');
@@ -4115,12 +4114,16 @@ function renderTask(task, taskId) {
         taskItem.dataset.loaded = "true";
     });
 
-    // Event: Mark task as completed
+    const checkSound = new Audio('sounds/Check-mark-ding-sound-effect.mp3');
     statusButton.addEventListener('click', async () => {
         try {
             const isCompleted = statusButton.innerText === '✔️';
             const newStatus = isCompleted ? 'pending' : 'completed';
             statusButton.innerText = isCompleted ? '⬜' : '✔️';
+            if(statusButton.innerText === '✔️'){
+                checkSound.currentTime = 0; // Reset to start
+                checkSound.play();
+            }
 
             // Update Firestore status
             await getUserCollection("tasks").doc(taskId).update({
@@ -4204,8 +4207,8 @@ function renderTask(task, taskId) {
     }
 
 }
+// #endregion }
 
-// TODO: add sound to remnders
 // #region PDF Layout {
 async function initpdfLayout() {
 
