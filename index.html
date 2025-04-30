@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Ma7ali</title>
   <link rel="stylesheet" href="css/index.css" />
   <link rel="manifest" href="site.webmanifest" />
@@ -12,7 +12,6 @@
   <link rel="shortcut icon" href="/icons/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Ma7ali" />
-
 </head>
 
 <body>
@@ -55,7 +54,7 @@
 
   <div class="tasks" id="tasks">
     <div class="header-container">
-      <h5 style="font-weight: bolder">Set Tasks & Reminders</h5>
+      <h5 style="font-weight: bolder">Tasks & Reminders</h5>
       <button type="button" id="done-btn">Done</button>
     </div>
 
@@ -77,9 +76,7 @@
     <div class="tasks-list" id="tasks-list"></div>
   </div>
 
-  <div class="notification active" id="notification">
-    <img src="icons/bell-solid.svg" alt="alert">
-    <p><strong>Reminder: </strong>Dont't forget to ${task.title} asdfasdfasdfdasfasf</p>
+  <div class="notification" id="notification">
   </div>
 
   <div id="overlay"></div>

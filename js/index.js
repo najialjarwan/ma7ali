@@ -27,6 +27,10 @@ if ('serviceWorker' in navigator) {
             console.log('Service Worker registration failed:', error);
         });
 }
+window.addEventListener('resize', (e) => {
+    e.preventDefault(); // Prevent resizing effects
+});
+document.addEventListener('gesturestart', e => e.preventDefault());
 
 let currentUser = null;
 let storeCurrency = "LBP";
@@ -3912,7 +3916,7 @@ function startTaskNotifications() {
         for (let index = 0; index < localTasks.length; index++) {
             const task = localTasks[index];
 
-            if (!task.dueDate || task.status === 'completed' || task.alerted) {
+            if (!task || !task.dueDate || task.status === 'completed' || task.alerted) {
                 continue;
             }
 
@@ -3943,6 +3947,21 @@ function startTaskNotifications() {
                     }, 7000);
                 }
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
+                let touchStartY = 0;
+                let touchEndY = 0;
+
+                notification.addEventListener('touchstart', (e) => {
+                    touchStartY = e.changedTouches[0].screenY;
+                });
+
+                notification.addEventListener('touchend', (e) => {
+                    touchEndY = e.changedTouches[0].screenY;
+
+                    if (touchStartY - touchEndY > 50) { // Swipe up threshold
+                        notification.classList.remove('active');
+                    }
+                });
+
 
                 try {
                     await getUserCollection("tasks").doc(task.id).update({
@@ -3951,7 +3970,6 @@ function startTaskNotifications() {
                     console.log(`[Task Notification] Marked "${task.title}" as completed in Firestore.`);
                 } catch (error) {
                     console.error(`Error updating task "${task.title}" status to completed:`, error);
-                    alert(`Failed to mark "${task.title}" as completed. Please try again.`);
                 }
 
                 task.alerted = true;
@@ -4051,45 +4069,124 @@ function renderTask(task, taskId) {
     deleteTask.className = "delete-task";
     deleteTask.appendChild(img);
 
-    taskItem.appendChild(deleteTask);
-    taskItem.appendChild(statusButton);
-    taskItem.appendChild(titleP);
+    const taskContent = document.createElement('div');
+    taskContent.className = "task-content";
+
+    let dueText = ``;
+    if (task.dueDate) {
+        const timestamp = task.dueDate;
+        const dateObj = new Date(timestamp.seconds * 1000);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        dueText = `Due: ${dateStr} at ${timeStr}`;
+    }
+    taskContent.innerHTML = `
+        <p>Details: ${task.content}</p>
+        <p>${dueText}</p>
+    `;
+
+    const taskContainer = document.createElement('div');
+    taskContainer.className = "task-container";
+
+    taskContainer.appendChild(deleteTask);
+    taskContainer.appendChild(statusButton);
+    taskContainer.appendChild(titleP);
+
+    taskItem.appendChild(taskContainer);
+    taskItem.appendChild(taskContent);
+
     tasksList.appendChild(taskItem);
+
+    taskItem.addEventListener('click', () => {
+        console.log("clicked");
+        const isVisible = taskContent.classList.contains("show");
+
+        if (isVisible) {
+            taskContent.classList.remove("show");
+            return;
+        }
+
+        // If already loaded once, just show
+        if (taskItem.dataset.loaded === "true") {
+            taskContent.classList.add("show");
+            return;
+        }
+        taskContent.classList.add("show");
+        taskItem.dataset.loaded = "true";
+    });
 
     // Event: Mark task as completed
     statusButton.addEventListener('click', async () => {
-        if (statusButton.innerText === '⬜') {
-            try {
-                console.log(`Task "${task.title}" manually marked as completed.`);
+        try {
+            const isCompleted = statusButton.innerText === '✔️';
+            const newStatus = isCompleted ? 'pending' : 'completed';
+            statusButton.innerText = isCompleted ? '⬜' : '✔️';
 
-                // Update localTasks if present
-                const localTask = localTasks.find(t => t.id === taskId);
-                if (localTask) {
-                    localTask.status = 'completed';
-                }
+            // Update Firestore status
+            await getUserCollection("tasks").doc(taskId).update({
+                status: newStatus
+            });
 
-                statusButton.innerText = '✔️';
+            // Update localTasks
+            const localTaskIndex = localTasks.findIndex(t => t.id === taskId);
 
-                // Remove from localTasks
-                const indexToRemove = localTasks.findIndex(t => t.id === taskId);
-                if (indexToRemove !== -1) {
-                    localTasks.splice(indexToRemove, 1);
-                }
-
-                await getUserCollection("tasks").doc(taskId).update({
-                    status: 'completed'
-                });
-            } catch (error) {
-                console.error('Error updating task status:', error);
-                alert('Failed to update task status. Please try again.');
+            if (localTaskIndex !== -1) {
+                localTasks[localTaskIndex].status = newStatus;
+                console.log(localTasks[localTaskIndex].status = newStatus);
             }
+            console.log(`Task "${task.title}" marked as ${newStatus}.`);
+        } catch (error) {
+            console.error('Error toggling task status:', error);
+            alert('Failed to update task status. Please try again.');
         }
     });
 
-    // Event: Delete task
+    let touchStartX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    deleteTask.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        isDragging = true;
+        deleteTask.style.transition = 'none'; // disable transition during drag
+    });
+
+    deleteTask.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+
+        currentX = e.touches[0].clientX;
+        let deltaX = currentX - touchStartX;
+
+        // Only allow dragging to the left
+        if (deltaX < 0 && deltaX > -100) {
+            deleteTask.style.transform = `translateX(${deltaX}px)`;
+        }
+    });
+
+    deleteTask.addEventListener('touchend', async () => {
+        isDragging = false;
+
+        const swipeDistance = currentX - touchStartX;
+
+        // Set the threshold to -100px (you can adjust this)
+        if (swipeDistance < -100) {
+            deleteTask.style.transition = 'transform 0.3s ease';
+            deleteTask.style.transform = 'translateX(-100%)';
+
+            taskDelete();
+        } else {
+            // Not enough swipe distance, reset position
+            deleteTask.style.transition = 'transform 0.3s ease';
+            deleteTask.style.transform = 'translateX(0)';
+        }
+    });
     deleteTask.addEventListener('click', async () => {
+        taskDelete();
+    });
+
+    async function taskDelete() {
         try {
-            console.log(`Task "${task.title}" deleted successfully.`);
+            console.log('Task "${task.title}" deleted successfully.');
             tasksList.removeChild(taskItem);
 
             // Remove from localTasks
@@ -4104,7 +4201,8 @@ function renderTask(task, taskId) {
             console.error('Error deleting task:', error);
             alert('Failed to delete task. Please try again.');
         }
-    });
+    }
+
 }
 
 // TODO: add sound to remnders
@@ -5074,3 +5172,4 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: Change how store and pdf settings are rendered.
 // TODO: add expriry date to products and send a notification to the user when a product expires.
 // TODO: set a loading animation or something to when the application is loading.
+// TODO: offline usring sw.
