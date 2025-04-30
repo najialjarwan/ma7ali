@@ -48,6 +48,7 @@ async function initializeApp() {
             console.log("User logged in:", user.uid);
             await fetchTasks();
             startTaskNotifications();
+            initTasksAndReminders();
             loadUserProfile();
             initializeEventListeners();
         });
@@ -175,7 +176,6 @@ async function initializeEventListeners() {
     tasksLink.addEventListener('click', () => {
         const tasks = document.getElementById('tasks');
         tasks.classList.add('active');
-        initTasksAndReminders();
     });
 
     const addTaskBtn = document.getElementById('add-task-btn');
@@ -3932,19 +3932,15 @@ function startTaskNotifications() {
             if (timeDiffMinutes <= 0) {
                 // Final reminder
                 const notification = document.getElementById('notification');;
-                console.log(notification);
                 if (notification) {
                     notification.innerHTML = `
-                        <p>⏰Reminder: Dont't forget to ${task.title}</p>
-                        <button id="close-notification">Close</button>
+                        <img src="icons/bell-solid.svg" alt="alert">
+                        <p><strong>Reminder: </strong>Dont't forget to ${task.title}</p>
                     `;
                     notification.classList.add('active');
                     setTimeout(() => {
                         notification.classList.remove('active');
                     }, 7000);
-                    document.getElementById('close-notification').addEventListener('click', () => {
-                        notification.classList.remove('active');
-                    });
                 }
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
 
@@ -3958,86 +3954,37 @@ function startTaskNotifications() {
                     alert(`Failed to mark "${task.title}" as completed. Please try again.`);
                 }
 
-                // Also mark locally
                 task.alerted = true;
-
-                // Remove from localTasks for cleaner memory
                 tasksToRemove.push(index);
             }
         }
 
-        // Clean up tasks that completed
         tasksToRemove.reverse().forEach(index => {
             localTasks.splice(index, 1);
         });
 
-    }, 1000); // Check every 30 seconds
+    }, 5000);
 }
+
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
     console.log("attach event listener to done button");
     doneBtn.addEventListener('click', () => {
         tasks.classList.remove('active');
     });
-    // Hold a reference to the button
-    await tasksList();
+    tasksList();
 }
 async function tasksList() {
     const tasksList = document.getElementById('tasks-list');
+    tasksList.innerHTML = ''; // Clear existing tasks
     const tasksRef = getUserCollection("tasks");
-    tasksList.innerHTML = '';
 
     try {
         const snapshot = await tasksRef.get();
         snapshot.forEach((doc) => {
             const task = doc.data();
             const taskId = doc.id;
-
-            const taskItem = document.createElement('div');
-            taskItem.className = 'task-item';
-
-            const statusButton = document.createElement('button');
-            statusButton.className = 'status-button';
-
-            statusButton.innerText = task.status === "completed" ? '✔️' : '⬜';
-
-            statusButton.addEventListener('click', async () => {
-                if (statusButton.innerText === '⬜') {
-
-                    try {
-                        await getUserCollection("tasks").doc(taskId).update({
-                            status: 'completed'
-                        });
-                        console.log(`Task "${task.title}" manually marked as completed.`);
-
-                        // Update localTasks
-                        const localTask = localTasks.find(t => t.id === taskId);
-                        if (localTask) {
-                            localTask.status = 'completed';
-                        }
-
-                        // Update button UI
-                        statusButton.innerText = '✔️';
-
-                        // Remove from localTasks
-                        const indexToRemove = localTasks.findIndex(t => t.id === taskId);
-                        if (indexToRemove !== -1) {
-                            localTasks.splice(indexToRemove, 1);
-                        }
-
-                    } catch (error) {
-                        console.error('Error updating task status:', error);
-                        alert('Failed to update task status. Please try again.');
-                    }
-                }
-            });
-
-            const titleP = document.createElement('p');
-            titleP.textContent = task.title;
-
-            taskItem.appendChild(statusButton);
-            taskItem.appendChild(titleP);
-            tasksList.appendChild(taskItem);
+            renderTask(task, taskId);
         });
     } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -4073,18 +4020,93 @@ async function saveTask() {
     }
 
     try {
-        await getUserCollection("tasks").add(newTask);
+        const docRef = await getUserCollection("tasks").add(newTask);
         console.log('Task added successfully!');
-        //alert('Task added successfully!');
-        // NOTE: You can uncomment the following line if you want to refresh the tasks after adding a new one.
-        await fetchTasks(); // Refresh tasks after adding a new one
-        await tasksList();
-
+        renderTask(newTask, docRef.id);
+        await fetchTasks();
     } catch (error) {
         console.error('Error adding task: ', error);
         alert('Something went wrong. Try again.');
     }
 }
+function renderTask(task, taskId) {
+    const tasksList = document.getElementById('tasks-list');
+
+    const taskItem = document.createElement('div');
+    taskItem.className = 'task-item';
+
+    const statusButton = document.createElement('button');
+    statusButton.className = 'status-button';
+    statusButton.innerText = task.status === "completed" ? '✔️' : '⬜';
+
+    const titleP = document.createElement('p');
+    titleP.textContent = task.title;
+
+    const img = document.createElement('img');
+    img.src = "icons/trash-solid.svg";
+    img.alt = "delete";
+
+    const deleteTask = document.createElement('button');
+    deleteTask.type = "button";
+    deleteTask.className = "delete-task";
+    deleteTask.appendChild(img);
+
+    taskItem.appendChild(deleteTask);
+    taskItem.appendChild(statusButton);
+    taskItem.appendChild(titleP);
+    tasksList.appendChild(taskItem);
+
+    // Event: Mark task as completed
+    statusButton.addEventListener('click', async () => {
+        if (statusButton.innerText === '⬜') {
+            try {
+                console.log(`Task "${task.title}" manually marked as completed.`);
+
+                // Update localTasks if present
+                const localTask = localTasks.find(t => t.id === taskId);
+                if (localTask) {
+                    localTask.status = 'completed';
+                }
+
+                statusButton.innerText = '✔️';
+
+                // Remove from localTasks
+                const indexToRemove = localTasks.findIndex(t => t.id === taskId);
+                if (indexToRemove !== -1) {
+                    localTasks.splice(indexToRemove, 1);
+                }
+
+                await getUserCollection("tasks").doc(taskId).update({
+                    status: 'completed'
+                });
+            } catch (error) {
+                console.error('Error updating task status:', error);
+                alert('Failed to update task status. Please try again.');
+            }
+        }
+    });
+
+    // Event: Delete task
+    deleteTask.addEventListener('click', async () => {
+        try {
+            console.log(`Task "${task.title}" deleted successfully.`);
+            tasksList.removeChild(taskItem);
+
+            // Remove from localTasks
+            const indexToRemove = localTasks.findIndex(t => t.id === taskId);
+            if (indexToRemove !== -1) {
+                localTasks.splice(indexToRemove, 1);
+                console.log("task deleted from localTasks");
+            }
+
+            await getUserCollection("tasks").doc(taskId).delete();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            alert('Failed to delete task. Please try again.');
+        }
+    });
+}
+
 // TODO: add sound to remnders
 // #region PDF Layout {
 async function initpdfLayout() {
@@ -4118,18 +4140,6 @@ async function initpdfLayout() {
         oddRowColor: "#ffffff",
         oddRowTextColor: "#000000"
     };
-    const matchCombo = {
-        fillColor: "#ffffff",
-        titleTextColor: "#000000",
-        titleFontSize: 16,
-        titleAlign: "left",
-        headerColor: "#00B3FF",
-        headerTextColor: "#ffffff",
-        evenRowColor: "#BFE8FF",
-        evenRowTextColor: "#000000",
-        oddRowColor: "#ffffff",
-        oddRowTextColor: "#000000"
-    }
 
     document.body.innerHTML = `
     <div id="pdf-layout-controls" class="container">
@@ -5050,6 +5060,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// TODO: add refresh applicaton for somereason.
 // TODO: add confirmation and dont ask again to some actions.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
