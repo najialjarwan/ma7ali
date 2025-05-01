@@ -2137,7 +2137,6 @@ function initCartsAndSalesSection() {
     viewCartsBtn.addEventListener("click", async () => {
         setCurrencyUpdateCallback(() => {
             viewCartsBtn.click();
-
         });
         mainContent.innerHTML = `
             <div class="carts-container" id="carts-container">
@@ -2146,7 +2145,9 @@ function initCartsAndSalesSection() {
                     <input type="text" class="search-bar" id="search-cart" placeholder="Search Cart"/>
                     <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
                 </div>
-
+                <div class="carts-actions">
+                    <button type="button" class="func-btn" id="delete-carts-btn">Delete All Carts</button>
+                </div>
                 <div class="carts-table" id="carts-table"></div>
             </div>`;
 
@@ -2161,6 +2162,29 @@ function initCartsAndSalesSection() {
                 : cartsData.filter(cart => cart.name.toLowerCase().startsWith(searchValue));
             renderCartsTable(filteredCarts);
         });
+
+        const deleteAllCartsBtn = document.getElementById('delete-carts-btn');
+        deleteAllCartsBtn.addEventListener('click', async () => {
+            const confirmation = confirm("Are you sure you want to delete all carts? This action cannot be undone.");
+            if (confirmation) {
+                try {
+                    const cartsSnapshot = await getUserCollection("carts").get();
+                    if (cartsSnapshot.empty) {
+                        showModalMessage("No carts to delete.", false);
+                        return;
+                    }
+                    cartsSnapshot.forEach(doc => {
+                        doc.ref.delete();
+                    });
+                    initCartsAndSalesSection();
+                    showModalMessage("All carts deleted successfully!", true);
+                } catch (error) {
+                    console.error("Error deleting carts:", error);
+                    showModalMessage("Error deleting carts. Please try again.", false);
+                }
+            }
+        });
+
     });
 }
 // #region Carts Section {
@@ -2193,7 +2217,7 @@ function renderCartsTable(carts) {
     if (carts.length === 0) {
         cartsTable.innerHTML = `                
             <div class="no-products-message">
-                No Carts Found. Check Cart Name!
+                No Carts Found!
             </div>`;
         return;
     }
@@ -2210,12 +2234,32 @@ function renderCartsTable(carts) {
                 <p><strong>Name:</strong> ${cart.name}</p>
                 <p><strong>Total Cost:</strong> $${cart.totalCost}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
+                <button type="button" class="delete-cart-btn" data-cart-id="${cart.id}">
+                    <img src="icons/trash-solid.svg" width="24" height="24" alt="Delete Cart"/>
+                </button>
             </div>
             <div class="hidden-products" id="products-${cart.id}">
             </div>
         `;
 
-        // Later we’ll add click listeners to toggle product visibility and fetch
+        const deleteCartBtn = cartDiv.querySelector(".delete-cart-btn");
+        deleteCartBtn.addEventListener('click', async () => {
+            const cartId = deleteCartBtn.dataset.cartId;
+            const confirmation = confirm("Are you sure you want to delete this cart? This action cannot be undone.");
+            if (confirmation) {
+                try {
+                    await getUserCollection("carts").doc(cartId).delete();
+                    showModalMessage("Cart deleted successfully!", true);
+                    // TODO: continue from here
+                    const viewCartsBtn = document.querySelector(".view-carts-btn");
+                    viewCartsBtn.click();
+                } catch (error) {
+                    console.error("Error deleting cart:", error);
+                    showModalMessage("Error deleting cart. Please try again.", false);
+                }
+            }
+        });
+
         cartsTable.appendChild(cartDiv);
     });
     setupCartClickListeners();
@@ -3776,7 +3820,9 @@ function addEventListeners() {
                 return;
             }
 
-            const profileData = { storeName, exchangeRate, currency, combo, updatedAt: new Date() };
+            console.log(currentThemeIndex);
+            const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
+            console.log(profileData.currentThemeIndex);
             await saveUserProfile(profileData);
         });
 
@@ -3798,7 +3844,7 @@ function addEventListeners() {
                 console.error("Failed to save profile settings:", error);
             }
 
-            updateAccentColor(profileData.combo);
+            updateAccentColor(profileData.combo, profileData.currentThemeIndex);
         }
     }
 }
@@ -3827,13 +3873,21 @@ async function loadUserProfile() {
         if (data.exchangeRate) {
             EXCHANGE_RATE = data.exchangeRate;
         }
+
         if (data.currency) {
             updateCurrencySelection(data.currency);
         } else {
             updateCurrencySelection("LBP");
         }
+
+        if (data.currentThemeIndex) {
+            currentThemeIndex = data.currentThemeIndex;
+            console.log("currentThemeIndex: ", currentThemeIndex);
+        }
+
         updateComboSelection(data.combo);
-        updateAccentColor(data.combo);
+        updateAccentColor(data.combo, data.currentThemeIndex);
+
         if (data.storeName) {
             const sideBar = document.getElementById("sidebar");
             if (sideBar) {
@@ -3879,34 +3933,45 @@ function updateComboSelection(combo) {
         }
     });
 }
-function updateAccentColor(combo) {
+function updateAccentColor(combo, index) {
     currentComboColors = themeCombos[combo] || themeCombos.default;
-    initialBaseColor = currentComboColors[0];
-    currentThemeIndex = 0;
-
+    initialBaseColor = index === 0 ? currentComboColors[0] : currentComboColors[1];
+    console.log(index);
     const root = document.documentElement;
-    root.style.setProperty("--accent-color", currentComboColors[0]);
+    root.style.setProperty("--accent-color", initialBaseColor);
+
+    if (index === 1) {
+        console.log(document.getElementById('toggle-theme-btn'));
+        document.getElementById('toggle-theme-btn').checked = true;
+    }
 }
 
 async function toggleTheme() {
     const root = document.documentElement;
-
+    const profileRef = getUserCollection("profile").doc("storeSettings");
     if (!currentComboColors.length) {
-        const profileRef = getUserCollection("profile").doc("profileSettings");
+        console.log("toggleTheme: ");
         const doc = await profileRef.get();
         if (!doc.exists) return;
 
         const data = doc.data();
         currentComboColors = themeCombos[data.combo] || themeCombos.default;
-        initialBaseColor = currentComboColors[0];
-        currentThemeIndex = 0;
+        initialBaseColor = currentThemeIndex = 0 ? currentComboColors[0] : currentComboColors[1];
 
         root.style.setProperty("--accent-color", initialBaseColor);
         return;
     }
 
     currentThemeIndex = currentThemeIndex === 0 ? 1 : 0;
+    console.log("index: ", currentThemeIndex);
     root.style.setProperty("--accent-color", currentComboColors[currentThemeIndex]);
+
+    try {
+        await profileRef.update({ currentThemeIndex });
+        console.log("Theme index updated in Firestore:", currentThemeIndex);
+    } catch (error) {
+        console.error("Error updating theme index in Firestore:", error);
+    }
 }
 // #endregion }
 
@@ -4142,23 +4207,28 @@ function renderTask(task, taskId) {
         taskItem.dataset.loaded = "true";
     });
 
-    const checkSound = new Audio('sounds/Check-mark-ding-sound-effect.mp3');
     statusButton.addEventListener('click', async () => {
         try {
             const isCompleted = statusButton.innerText === '✔️';
             const newStatus = isCompleted ? 'pending' : 'completed';
             statusButton.innerText = isCompleted ? '⬜' : '✔️';
             if (statusButton.innerText === '✔️') {
-                checkSound.currentTime = 0; // Reset to start
-                checkSound.play();
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                fetch('sounds/Check-mark-ding-sound-effect.mp3')
+                    .then(res => res.arrayBuffer())
+                    .then(data => context.decodeAudioData(data))
+                    .then(buffer => {
+                        const source = context.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(context.destination);
+                        source.start(0, 0, 0.3); // Play from 0 to 1 second
+                    });
             }
 
-            // Update Firestore status
             await getUserCollection("tasks").doc(taskId).update({
                 status: newStatus
             });
 
-            // Update localTasks
             const localTaskIndex = localTasks.findIndex(t => t.id === taskId);
 
             if (localTaskIndex !== -1) {
@@ -5188,7 +5258,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// TODO: change how toggle theeme not saved in user settings.
+// TODO: add confirmations.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
 // TODO: add change email and password setting with phone number too.

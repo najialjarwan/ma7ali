@@ -21,7 +21,7 @@ html {
   color: var(--text-color) !important;
   text-align: center;
   overflow: hidden;
-  touch-action: none; 
+  touch-action: none;
   overscroll-behavior: none;
 }
 
@@ -40,7 +40,8 @@ body {
   background-position: center center;
   overflow: hidden;
   touch-action: manipulation;
-  touch-action: none; /* Prevent touch gestures from affecting the page */
+  touch-action: none;
+  /* Prevent touch gestures from affecting the page */
   user-select: none;
   overscroll-behavior: none;
 }
@@ -371,9 +372,11 @@ h5 {
   background-size: cover;
   padding-bottom: 200px;
 }
-.tasks.active{
+
+.tasks.active {
   bottom: 0;
 }
+
 .notification {
   position: fixed;
   top: -100%;
@@ -386,10 +389,12 @@ h5 {
   background-size: cover;
   touch-action: manipulation;
 }
-.notification.active{ 
+
+.notification.active {
   top: 0;
 }
-.notification img{
+
+.notification img {
   width: 24px;
   height: 24px;
   position: absolute;
@@ -397,6 +402,7 @@ h5 {
   left: 10px;
   filter: brightness(100%) invert(0.4);
 }
+
 .notification p {
   position: absolute;
   top: 10px;
@@ -405,45 +411,98 @@ h5 {
   color: var(--text-color);
   word-break: break-all;
 }
+
 .notification p strong {
   color: var(--accent-color);
 }
-.tasks .header-container{
+
+.tasks .header-container {
   padding: 20px;
   background-color: transparent;
 }
-.tasks .header-container button{
+
+.tasks .header-container button {
   top: 15px;
   right: 20px;
   width: 35%;
   height: 40px;
   font-size: large;
 }
+
 /* Modal overall */
 .task-modal {
   display: flex;
   border: 1px solid var(--text-color);
+  color: var(--accent-color);
+  background-color: var(--input-color);
   box-sizing: border-box;
   border-radius: 5px;
   margin: 20px;
 }
+
+.task-modal ::placeholder {
+  color: var(--accent-color);
+}
+
+#task-due-date {
+  width: 100%;
+  height: 44px;
+  padding: 0 15px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* For a more iOS 15+ look */
+@supports (-webkit-touch-callout: none) {
+  #task-due-date {
+    background-color: rgba(118, 118, 128, 0.12);
+    border-radius: 10px;
+    border: 1px solid var(--accent-color);
+    height: 40px;
+    padding: 0 10px;
+    color: var(--accent-color);
+  }
+}
+
 /* Modal content box */
 .task-modal-content {
-  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
   padding: 20px;
   border-radius: 8px;
 }
-.task-modal-content label{
+
+.task-modal-content label {
   display: flex;
   align-self: flex-start;
 }
-/* Form inputs inside modal */
-.task-modal-content input,
+
 .task-modal-content textarea {
   width: 100%;
   margin-bottom: 10px;
   padding: 8px;
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  color: var(--accent-color);
 }
+
+.task-modal-content input{
+  height: 40px;
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  padding: 10px;
+  color: var(--accent-color);
+}
+
 .tasks-list {
   width: 100%;
   display: flex;
@@ -451,10 +510,12 @@ h5 {
   padding: 20px;
   gap: 8px;
 }
-.task-item{
+
+.task-item {
   width: 100%;
 }
-.task-container{
+
+.task-container {
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -463,6 +524,7 @@ h5 {
   position: relative;
   border-bottom: 1px solid var(--input-color);
 }
+
 .status-button {
   border: none;
   background-color: transparent;
@@ -470,14 +532,16 @@ h5 {
   cursor: pointer;
   margin: 0 10px 0 10px;
 }
-.task-item p{
+
+.task-item p {
   font-size: 1rem;
   font-weight: bolder;
   color: var(--input-color);
   margin: 0;
   padding: 0;
 }
-.task-item .delete-task{
+
+.task-item .delete-task {
   position: absolute;
   right: 10px;
   border: none;
@@ -486,13 +550,15 @@ h5 {
   touch-action: pan-y;
   will-change: transform;
 }
-.task-item button img{
+
+.task-item button img {
   right: 10px;
   width: 20px;
   height: 20px;
   filter: brightness(100%) invert(1);
 }
-.task-content{
+
+.task-content {
   background-color: var(--accent-color);
   max-height: 0;
   overflow: hidden;
@@ -504,13 +570,15 @@ h5 {
   align-items: flex-start;
   padding: 0 10px 0 10px;
 }
-.task-content p{
+
+.task-content p {
   margin: 0;
   padding: 0;
   text-align: left;
   word-break: break-all;
   font-weight: 350;
 }
+
 .task-content.show {
   max-height: 300px;
 }
