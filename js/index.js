@@ -16,7 +16,10 @@ const storage = firebase.storage();
 
 window.db = db;
 window.auth = auth;
-
+function hideLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'none';
+}
 // Register correct service worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
@@ -36,7 +39,19 @@ let currentUser = null;
 let storeCurrency = "LBP";
 let allProducts = [];
 async function initializeApp() {
-    showLoadingOverlay(2000);
+    const connection = navigator.connection;
+    let delay = 2000;
+    if (connection && ['2g', 'slow-2g'].includes(connection.effectiveType)) {
+        delay = 3000;
+    }
+    console.log(delay);
+    showLoadingOverlay(delay);
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            hideLoadingOverlay();
+        }, delay);
+    });
     const firstInstall = localStorage.getItem('firstInstallDone');
     if (!firstInstall) {
         localStorage.setItem('firstInstallDone', 'true');
@@ -158,6 +173,7 @@ async function initializeEventListeners() {
     const pdfLayoutLink = document.getElementById('pdf-layout');
     const helpLink = document.getElementById('help');
     const profileLink = document.getElementById('profile');
+    const refreshLink = document.getElementById('refresh');
     const logoutBtn = document.getElementById("logout-btn");
 
     menuBtn.addEventListener('click', openSidebar);
@@ -206,6 +222,10 @@ async function initializeEventListeners() {
         loadContent("help");
     });
 
+    refreshLink.addEventListener('click', (e) => {
+        window.location.reload();
+    });
+
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
             e.preventDefault();
@@ -218,8 +238,10 @@ async function initializeEventListeners() {
         });
     }
 
+    const toggleSound = new Audio("sounds/light-switch-flip-272436.mp3");
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
-        // e.preventDefault(); // optionally remove this so checkbox toggle works visually
+        toggleSound.currentTime = 0;
+        toggleSound.play();
         toggleTheme();
     });
 
@@ -228,7 +250,7 @@ async function initializeEventListeners() {
         openFeedbackModal();
     });
     document.querySelector("#submit-feedback").addEventListener("click", submitFeedback);
-    document.querySelector(".close-modal").addEventListener("click", () => {
+    document.querySelector(".close-feedback-modal").addEventListener("click", () => {
         document.getElementById("feedback-modal").style.display = "none";
     });
 
@@ -1834,13 +1856,10 @@ async function displayProductForm(product) {
         removeProductFromFirebase(product.id);
     });
 }
-function removeProductFromFirebase(productId) {
-    getUserCollection("products").doc(productId).delete()
-        .then(() => {
-
-            showModalMessage("Product Removed Successfully!", true);
-            refreshProductList();
-            displayProducts(allProducts);
+async function removeProductFromFirebase(productId) {
+    await getUserCollection("products").doc(productId).delete()
+        .then(async () => {
+            window.location.reload();
         })
         .catch(error => {
             console.error("Error removing product:", error);
@@ -3924,18 +3943,24 @@ function startTaskNotifications() {
             const timeDiffMs = dueDate - now;
             const timeDiffMinutes = parseFloat(timeDiffMs / (1000 * 60));
 
-            console.log(`[Task Tracking] "${task.title}" - ${timeDiffMinutes} minutes left.`);
-
+            const notification = document.getElementById('notification');
+            const checkSound = new Audio('sounds/Alert-notification.mp3');
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
-                // 10-minute early alert
-                alert(`⏳Reminder: 10 minutes left for: "${task.title}"`);
-                console.log(`[Task Notification] 10-minute alert for "${task.title}"`);
+                notification.innerHTML = `
+                    <img src="icons/bell-solid.svg" alt="alert">
+                    <p><strong>Reminder: </strong>10 mins for ${task.title}</p>
+                `;
+                notification.classList.add('active');
+                setTimeout(() => {
+                    notification.classList.remove('active');
+                }, 7000);
                 task.alerted10Min = true;
+
+                checkSound.currentTime = 0;
+                checkSound.play();
             }
 
             if (timeDiffMinutes <= 0) {
-                // Final reminder
-                const notification = document.getElementById('notification');;
                 if (notification) {
                     notification.innerHTML = `
                         <img src="icons/bell-solid.svg" alt="alert">
@@ -3949,6 +3974,8 @@ function startTaskNotifications() {
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
                 let touchStartY = 0;
                 let touchEndY = 0;
+                checkSound.currentTime = 0;
+                checkSound.play();
 
                 notification.addEventListener('touchstart', (e) => {
                     touchStartY = e.changedTouches[0].screenY;
@@ -3980,6 +4007,7 @@ function startTaskNotifications() {
         tasksToRemove.reverse().forEach(index => {
             localTasks.splice(index, 1);
         });
+
 
     }, 5000);
 }
@@ -4120,7 +4148,7 @@ function renderTask(task, taskId) {
             const isCompleted = statusButton.innerText === '✔️';
             const newStatus = isCompleted ? 'pending' : 'completed';
             statusButton.innerText = isCompleted ? '⬜' : '✔️';
-            if(statusButton.innerText === '✔️'){
+            if (statusButton.innerText === '✔️') {
                 checkSound.currentTime = 0; // Reset to start
                 checkSound.play();
             }
@@ -4409,7 +4437,6 @@ async function saveLayout() {
 // #endregion }
 
 // #region Feedback {
-// TODO: add feedback collection with corresponding user and add a pic field for that.
 function openFeedbackModal() {
     document.getElementById("feedback-modal").style.display = "flex";
 }
@@ -5161,17 +5188,11 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// TODO: add refresh applicaton for somereason.
-// TODO: add confirmation and dont ask again to some actions.
+// TODO: change how toggle theeme not saved in user settings.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
-// TODO: implement Create note section.
 // TODO: add change email and password setting with phone number too.
 // TODO: add delete cart and all cart buttons.
-// BUG: fex walktrhgou links and styling.
-// TODO: change the loading overlay to be calaculated based on netwrok requests and others.
-// TODO: add headers to other sub pages/sections.
-// TODO: style the header container button done to bhe consistent across all pages.
 // TODO: Change how store and pdf settings are rendered.
 // TODO: add expriry date to products and send a notification to the user when a product expires.
 // TODO: set a loading animation or something to when the application is loading.
