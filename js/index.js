@@ -2251,8 +2251,7 @@ function renderCartsTable(carts) {
                     await getUserCollection("carts").doc(cartId).delete();
                     showModalMessage("Cart deleted successfully!", true);
                     // TODO: continue from here
-                    const viewCartsBtn = document.querySelector(".view-carts-btn");
-                    viewCartsBtn.click();
+                    cartsTable.removeChild(cartDiv);
                 } catch (error) {
                     console.error("Error deleting cart:", error);
                     showModalMessage("Error deleting cart. Please try again.", false);
@@ -2319,8 +2318,6 @@ function setupCartClickListeners() {
             }
         });
     });
-
-
 }
 // #endregion }
 
