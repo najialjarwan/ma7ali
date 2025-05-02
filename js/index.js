@@ -1853,6 +1853,8 @@ async function displayProductForm(product) {
         displayProducts(allProducts);
     });
     $("#remove-button").on("click", function () {
+        const confirmRemove = confirm("Are you sure you want to remove this product? This action cannot be undone.");
+        if (!confirmRemove) return;
         removeProductFromFirebase(product.id);
     });
 }
@@ -4034,6 +4036,8 @@ function startTaskNotifications() {
             const timeDiffMs = dueDate - now;
             const timeDiffMinutes = parseFloat(timeDiffMs / (1000 * 60));
 
+            console.log(timeDiffMinutes);
+
             const notification = document.getElementById('notification');
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
                 notification.innerHTML = `
@@ -5320,12 +5324,11 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// FIXME: fix togge sound.
 // TODO: add confirmations.
+// TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
 // TODO: add change email and password setting with phone number too.
-// TODO: add delete cart and all cart buttons.
 // TODO: Change how store and pdf settings are rendered.
 // TODO: add expriry date to products and send a notification to the user when a product expires.
 // TODO: set a loading animation or something to when the application is loading.
