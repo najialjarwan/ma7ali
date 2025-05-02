@@ -2513,7 +2513,7 @@ function populateDropdown(salesData) {
     if (!optGroup)
         return;
 
-    
+
     salesData.forEach(sale => {
         const option = document.createElement("option");
         option.value = sale.salesDate;
@@ -4035,7 +4035,6 @@ function startTaskNotifications() {
             const timeDiffMinutes = parseFloat(timeDiffMs / (1000 * 60));
 
             const notification = document.getElementById('notification');
-            const checkSound = new Audio('sounds/Alert-notification.mp3');
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
                 notification.innerHTML = `
                     <img src="icons/bell-solid.svg" alt="alert">
@@ -4047,8 +4046,16 @@ function startTaskNotifications() {
                 }, 7000);
                 task.alerted10Min = true;
 
-                checkSound.currentTime = 0;
-                checkSound.play();
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                fetch('sounds/Alert-notification.mp3')
+                    .then(res => res.arrayBuffer())
+                    .then(data => context.decodeAudioData(data))
+                    .then(buffer => {
+                        const source = context.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(context.destination);
+                        source.start(0, 0, 1);
+                    });
             }
 
             if (timeDiffMinutes <= 0) {
@@ -4065,8 +4072,16 @@ function startTaskNotifications() {
                 console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
                 let touchStartY = 0;
                 let touchEndY = 0;
-                checkSound.currentTime = 0;
-                checkSound.play();
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                fetch('sounds/Alert-notification.mp3')
+                    .then(res => res.arrayBuffer())
+                    .then(data => context.decodeAudioData(data))
+                    .then(buffer => {
+                        const source = context.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(context.destination);
+                        source.start(0, 0, 1);
+                    });
 
                 notification.addEventListener('touchstart', (e) => {
                     touchStartY = e.changedTouches[0].screenY;
@@ -4254,8 +4269,8 @@ function renderTask(task, taskId) {
             console.log("isCompleted: ", isCompleted);
             const newStatus = isCompleted ? 'pending' : 'completed';
             console.log("new status: ", newStatus);
-            statusButton.innerHTML = isCompleted 
-                ? '<img src="icons/circle-regular.svg" alt="check">' 
+            statusButton.innerHTML = isCompleted
+                ? '<img src="icons/circle-regular.svg" alt="check">'
                 : '<img src="icons/circle-check-regular.svg" alt="circle">';
             if (newStatus === 'completed') {
                 const context = new (window.AudioContext || window.webkitAudioContext)();
@@ -5305,6 +5320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// FIXME: fix togge sound.
 // TODO: add confirmations.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
