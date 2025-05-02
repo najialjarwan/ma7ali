@@ -1269,10 +1269,20 @@ footer {
   align-items: center;
   gap: 1px;
   transition: transform 0.1 ease-in-out;
+  position: relative;
 }
 
-.customers-card:active {
-  transform: scaleY(0.8);
+.customer-phone .customer-actions {
+  position: absolute;
+  top: 10px;
+  right: 0px;
+  background-color: transparent;
+  border: none;
+}
+
+.customer-actions img {
+  width: 25px;
+  height: 25px;
 }
 
 .customer-name,
@@ -1284,6 +1294,7 @@ footer {
   color: var(--input-color);
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .customer-table {

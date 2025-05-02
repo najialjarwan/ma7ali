@@ -1939,7 +1939,10 @@ async function fetchCustomers() {
 
     try {
         const customersSnapshot = await getUserCollection("customers").get();
+
         customersGrid.innerHTML = "";
+
+        if (customersSnapshot.empty) customersGrid.innerHTML = `<p>No Customers found.</p>`;
 
         customersSnapshot.forEach((doc) => {
             const customer = { id: doc.id, ...doc.data() };
@@ -1948,12 +1951,24 @@ async function fetchCustomers() {
             customerCard.classList.add("customers-card");
             customerCard.innerHTML = `
                 <div class="customer-name">${customer.name}</div>
-                <div class="customer-phone">${customer.phoneNumber}</div>
+                <div class="customer-phone">
+                    ${customer.phoneNumber}
+                    <button type="button" class="customer-actions" id="customer-actions">
+                        <img src="icons/ellipsis-vertical-solid.svg" alt="options">
+                    </button>
+                </div>
             `;
             customerCard.addEventListener("click", () => {
                 displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
             });
             customersGrid.appendChild(customerCard);
+
+            const cutsomerActions = document.getElementById("customer-actions");
+            cutsomerActions.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log("clicked");
+                
+            });
         });
     } catch (error) {
         customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
