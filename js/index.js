@@ -2330,20 +2330,38 @@ async function loadSalesData() {
     salesContainer.innerHTML = `
         <div id="filter-sales" class="filter-options"> 
             <div class="filter-group">
-                <label for="sales-date-select">Filter by Category:</label> 
-                <select id="sales-date-select">
+                <label>Filter Sales:</label>
+                <div id="filter-sales-buttons" class="button-group filter-buttons">
+                    <div class="group1">
+                        <button type="button" class="filter-btn" data-value="all">All Sales</button>
+                        <button type="button" class="filter-btn" data-value="today">Today</button>
+                        <button type="button" class="filter-btn" data-value="yesterday">Yesterday</button>
+                    </div>
+                    <div class="group2">
+                        <button type="button" class="filter-btn" data-value="thisWeek">This Week</button>
+                        <button type="button" class="filter-btn" data-value="thisMonth">This Month</button>
+                        <button type="button" class="filter-btn" data-value="thisYear">This Year</button>
+                    </div>
+                </div>
+
+                <select id="filter-sales-select" style="display:none;">
                     <option value="all">All Sales</option>
                     <option value="today">Today</option>
                     <option value="yesterday">Yesterday</option>
                     <option value="thisWeek">This Week</option>
                     <option value="thisMonth">This Month</option>
                     <option value="thisYear">This Year</option>
-                    <optgroup label="Choose a Specific Date" id="specific-dates-group"></optgroup>
+                </select>
+
+                <select id="sales-date-select" class="sales-date-select">
+                    <option value="">Specific Date</option>
                 </select>
             </div>
         </div>
         <div id="sales-table-container"></div>
     `;
+
+    initButtonSelect("filter-sales-select", "filter-sales-buttons");
 
     const salesData = await fetchSalesData();
     populateDropdown(salesData);
@@ -2354,6 +2372,14 @@ async function loadSalesData() {
         return;
 
     salesDateSelect.addEventListener("change", function () {
+        const filterValue = this.value;
+        const filteredData = filterSales(salesData, filterValue);
+        renderSalesTable(filteredData);
+    });
+
+    const filterButtons = document.getElementById("filter-sales-select");
+    filterButtons.addEventListener("change", function () {
+        document.getElementById("sales-date-select").value = "";
         const filterValue = this.value;
         const filteredData = filterSales(salesData, filterValue);
         renderSalesTable(filteredData);
@@ -2476,18 +2502,18 @@ function renderSalesTable(salesData) {
 
         container.appendChild(document.createElement("hr"));
         const header = document.createElement("h3");
-        header.textContent = `Sales on ${sale.salesDate}`;
+        header.textContent = `${sale.salesDate}`;
         container.appendChild(header);
         container.appendChild(table);
         container.appendChild(tableActions);
     });
 }
 function populateDropdown(salesData) {
-    const optGroup = document.getElementById("specific-dates-group");
+    const optGroup = document.getElementById("sales-date-select");
     if (!optGroup)
         return;
 
-    optGroup.innerHTML = "";
+    
     salesData.forEach(sale => {
         const option = document.createElement("option");
         option.value = sale.salesDate;
@@ -2502,6 +2528,7 @@ function filterSales(salesData, filterType) {
     const yesterdayDate = new Date(todayDate);
     yesterdayDate.setDate(todayDate.getDate() - 1);
     const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA');
+
 
     if (filterType === "today") {
         return salesData.filter(sale => sale.salesDate === todayStr);
@@ -2522,6 +2549,8 @@ function filterSales(salesData, filterType) {
         return salesData.filter(sale => sale.salesDate.startsWith(todayStr.slice(0, 4))); // Match YYYY
     }
     if (salesData.some(sale => sale.salesDate === filterType)) {
+        const buttons = document.querySelectorAll(`.filter-btn`);
+        buttons.forEach(btn => btn.classList.remove("selected"));
         return salesData.filter(sale => sale.salesDate === filterType);
     }
     return salesData;
@@ -4144,7 +4173,15 @@ function renderTask(task, taskId) {
 
     const statusButton = document.createElement('button');
     statusButton.className = 'status-button';
-    statusButton.innerText = task.status === "completed" ? '✔️' : '⬜';
+    statusButton.type = 'button';
+    statusButton.dataset.status = task.status;
+    console.log("statusButton.dataset.status: ", statusButton.dataset.status);
+    if (task.status === "pending") {
+        statusButton.innerHTML = '<img src="icons/circle-regular.svg" alt="circle">';
+    }
+    else {
+        statusButton.innerHTML = '<img src="icons/circle-check-regular.svg" alt="check">';
+    }
 
     const titleP = document.createElement('p');
     titleP.textContent = task.title;
@@ -4192,24 +4229,35 @@ function renderTask(task, taskId) {
 
         if (isVisible) {
             taskContent.classList.remove("show");
+            taskContainer.style.borderBottomRightRadius = '15px';
+            taskContainer.style.borderBottomLeftRadius = '15px';
             return;
         }
 
         // If already loaded once, just show
         if (taskItem.dataset.loaded === "true") {
             taskContent.classList.add("show");
+            taskContainer.style.borderBottomRightRadius = '0px';
+            taskContainer.style.borderBottomLeftRadius = '0px';
             return;
         }
+        taskContainer.style.borderBottomRightRadius = '0px';
+        taskContainer.style.borderBottomLeftRadius = '0px';
         taskContent.classList.add("show");
         taskItem.dataset.loaded = "true";
     });
 
-    statusButton.addEventListener('click', async () => {
+    statusButton.addEventListener('click', async (e) => {
+        e.stopPropagation();
         try {
-            const isCompleted = statusButton.innerText === '✔️';
+            const isCompleted = statusButton.dataset.status === 'completed';
+            console.log("isCompleted: ", isCompleted);
             const newStatus = isCompleted ? 'pending' : 'completed';
-            statusButton.innerText = isCompleted ? '⬜' : '✔️';
-            if (statusButton.innerText === '✔️') {
+            console.log("new status: ", newStatus);
+            statusButton.innerHTML = isCompleted 
+                ? '<img src="icons/circle-regular.svg" alt="check">' 
+                : '<img src="icons/circle-check-regular.svg" alt="circle">';
+            if (newStatus === 'completed') {
                 const context = new (window.AudioContext || window.webkitAudioContext)();
                 fetch('sounds/Check-mark-ding-sound-effect.mp3')
                     .then(res => res.arrayBuffer())
@@ -4218,9 +4266,11 @@ function renderTask(task, taskId) {
                         const source = context.createBufferSource();
                         source.buffer = buffer;
                         source.connect(context.destination);
-                        source.start(0, 0, 0.3); // Play from 0 to 1 second
+                        source.start(0, 0, 0.7);
                     });
             }
+
+            statusButton.dataset.status = newStatus;
 
             await getUserCollection("tasks").doc(taskId).update({
                 status: newStatus
@@ -5264,3 +5314,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // TODO: add expriry date to products and send a notification to the user when a product expires.
 // TODO: set a loading animation or something to when the application is loading.
 // TODO: offline usring sw.
+// TODO: add export to excel and csv later.
+// TODO: change text in the feedback to ever wished.....
+// TODO: Add predefined coll

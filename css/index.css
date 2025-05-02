@@ -34,14 +34,14 @@ body {
     "navbar"
     "main"
     "footer";
-  background: url("../images/background10.png");
+  background-image: url("../images/background10.png");
   background-size: cover;
   background-attachment: fixed;
   background-position: center center;
+  background-repeat: no-repeat;
   overflow: hidden;
   touch-action: manipulation;
   touch-action: none;
-  /* Prevent touch gestures from affecting the page */
   user-select: none;
   overscroll-behavior: none;
 }
@@ -522,7 +522,10 @@ h5 {
   background-color: var(--accent-color);
   height: 50px;
   position: relative;
-  border-bottom: 1px solid var(--input-color);
+  border-top-right-radius: 15px;
+  border-top-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  border-bottom-left-radius: 15px;
 }
 
 .status-button {
@@ -534,7 +537,7 @@ h5 {
 }
 
 .task-item p {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bolder;
   color: var(--input-color);
   margin: 0;
@@ -553,22 +556,22 @@ h5 {
 
 .task-item button img {
   right: 10px;
-  width: 20px;
-  height: 20px;
-  filter: brightness(100%) invert(1);
+  width: 30px;
+  height: 30px;
 }
 
 .task-content {
   background-color: var(--accent-color);
   max-height: 0;
   overflow: hidden;
-  transition: all 0.2s ease-in-out;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 0 10px 0 10px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
 }
 
 .task-content p {
@@ -1064,6 +1067,10 @@ footer {
   width: 100%;
 }
 
+.filter-options select{
+  height: 40px;
+}
+
 .filter-group {
   width: 100%;
 }
@@ -1082,9 +1089,8 @@ footer {
 }
 
 .filter-btn {
-  display: flex;
-  flex-grow: 1;
-  padding: 6px;
+  flex-basis: 50%;
+  padding: 1px;
   border: none;
   background-color: var(--accent-color);
   color: var(--text-color);
@@ -1364,15 +1370,47 @@ footer {
   font-size: 20px;
 }
 
-/* CartsAndSales Section */
+/* Carts And Sales Section */
 /* Sales Section */
 .sales-container {
   width: 100%;
   max-width: 100%;
 }
 
-.sales-table-container {
+.sales-container .filter-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: var(--text-color);
   width: 100%;
+}
+
+
+.filter-buttons{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.filter-buttons .group1, .filter-buttons .group2{
+  display: flex;
+  gap: 5px;
+  width: 100%;
+}
+
+.group1 button, .group2 button{
+  flex-grow: 0;
+  flex-basis: 50%;
+  padding: 10px;
+}
+
+#sales-table-container {
+  width: 100%;
+  text-align: left;
 }
 
 .sales-table {
