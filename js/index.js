@@ -176,16 +176,21 @@ async function initializeEventListeners() {
     const refreshLink = document.getElementById('refresh');
     const logoutBtn = document.getElementById("logout-btn");
 
+    sidebar.addEventListener('click', (e) => {
+        sidebar.classList.remove('active');
+        overlay.style.display = 'none';
+    });
+
     menuBtn.addEventListener('click', openSidebar);
     closeBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
     function openSidebar() {
         sidebar.classList.add('active');
-        overlay.classList.add('active');
+        overlay.style.display = 'block';
     }
     function closeSidebar() {
         sidebar.classList.remove('active');
-        overlay.classList.remove('active');
+        overlay.style.display = 'none';
     }
 
     profileLink.addEventListener('click', (e) => {
@@ -1903,7 +1908,7 @@ async function fetchCustomers() {
         customersSnapshot.forEach((doc) => {
             const customer = { id: doc.id, ...doc.data() };
             renderCustomerCard(customer);
-        });        
+        });
 
     } catch (error) {
         customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
@@ -2001,7 +2006,7 @@ function renderCustomerCard(customer) {
     const removeCustomerBtn = dropdown.querySelector("#remove-customer");
     removeCustomerBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const confirmRemove = confirm("Are you sure you want to remove this customer? This action cannot be undone.");
+        const confirmRemove = await showConfirmationModal("Delete Customer", "Are you sure you want to delete this customer?");
         if (!confirmRemove) return;
         dropdown.style.display = "none";
         overlay.style.display = "none";
@@ -2146,13 +2151,13 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
         const debtsSnapshot = await debtRef.get();
         let totalBalance = 0;
-    
+
         debtDetailsTable.innerHTML = '';
-    
+
         debtsSnapshot.forEach((doc) => {
             const debt = doc.data();
             const debtRow = document.createElement("tr");
-    
+
             debtRow.innerHTML = `
                 <td>${debt.details}</td>
                 <td>${displayCurrency(debt.balance)}</td>
@@ -2164,7 +2169,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
         const totalBalanceFormatted = displayCurrency(totalBalance);
         totalBalanceElement.textContent = totalBalanceFormatted;
-    
+
         document.querySelectorAll(".remove-debt-btn").forEach((button) => {
             button.addEventListener("click", async (event) => {
                 const debtId = event.target.getAttribute("data-debt-id");
@@ -5012,6 +5017,115 @@ function showModalMessage(message, isSuccess) {
     modalContainer.appendChild(modalBox);
     document.body.appendChild(modalContainer);
 }
+function showConfirmationModal(titleText, messageText) {
+    return new Promise((resolve) => {
+        // Modal backdrop
+        const modalContainer = document.createElement("div");
+        Object.assign(modalContainer.style, {
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-end",
+            zIndex: "9999",
+            padding: "20px",
+            boxSizing: "border-box",
+        });
+
+        // Modal box
+        const modalBox = document.createElement("div");
+        Object.assign(modalBox.style, {
+            backgroundColor: "#fff",
+            padding: "20px 24px",
+            borderRadius: "16px",
+            textAlign: "center",
+            width: "100%",
+            maxWidth: "380px",
+            boxShadow: "0 6px 18px rgba(0, 0, 0, 0.15)",
+            animation: "slideUp 0.3s ease-out",
+            fontFamily: "sans-serif",
+        });
+
+        // Title
+        const title = document.createElement("h2");
+        title.textContent = titleText;
+        Object.assign(title.style, {
+            fontSize: "18px",
+            fontWeight: "600",
+            marginBottom: "12px",
+            color: "#333",
+        });
+
+        // Message
+        const message = document.createElement("p");
+        message.textContent = messageText;
+        Object.assign(message.style, {
+            fontSize: "15px",
+            marginBottom: "20px",
+            color: "#555",
+        });
+
+        // Buttons container
+        const buttonGroup = document.createElement("div");
+        Object.assign(buttonGroup.style, {
+            display: "flex",
+            gap: "12px",
+            flexDirection: "column",
+        });
+
+        // Confirm button
+        const confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "Confirm";
+        Object.assign(confirmBtn.style, {
+            padding: "12px 0",
+            width: "100%",
+            backgroundColor: "#2ecc71",
+            color: "#fff",
+            border: "none",
+            borderRadius: "10px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+        });
+        confirmBtn.addEventListener("click", () => {
+            modalContainer.remove();
+            resolve(true);
+        });
+
+        // Cancel button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+        Object.assign(cancelBtn.style, {
+            padding: "12px 0",
+            width: "100%",
+            backgroundColor: "#e74c3c",
+            color: "#fff",
+            border: "none",
+            borderRadius: "10px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+        });
+        cancelBtn.addEventListener("click", () => {
+            modalContainer.remove();
+            resolve(false);
+        });
+
+        // Append
+        buttonGroup.appendChild(confirmBtn);
+        buttonGroup.appendChild(cancelBtn);
+        modalBox.appendChild(title);
+        modalBox.appendChild(message);
+        modalBox.appendChild(buttonGroup);
+        modalContainer.appendChild(modalBox);
+        document.body.appendChild(modalContainer);
+    });
+}
+
 
 // #endregion }
 
