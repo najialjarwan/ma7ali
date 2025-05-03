@@ -1387,6 +1387,10 @@ footer {
   filter: brightness(100%) invert(1);
 }
 
+.customer-debt-form{
+  display: none;
+}
+
 .customer-table {
   width: 100%;
   max-width: 100%;
@@ -1438,7 +1442,6 @@ footer {
 }
 
 #debt-details-table tr td:last-child {
-  background-color: lightgray;
   padding: 0;
   height: 40px;
   box-sizing: border-box;
@@ -1448,8 +1451,12 @@ footer {
   color: #e74c3c;
   width: 100%;
   height: 100%;
-  background-color: lightgray;
+  background-color: transparent;
   border: none;
+}
+.remove-debt-btn img{
+  width: 25px;
+  height: 25px;
 }
 
 .customer-table .remove-debt-btn:active {

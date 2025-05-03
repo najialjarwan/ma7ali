@@ -1980,7 +1980,7 @@ function renderCustomerCard(customer) {
 
         dropdown.style.display = "flex";
         overlay.style.display = "block";
-        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)";
     });
 
     document.addEventListener("click", () => {
@@ -2057,7 +2057,6 @@ async function editCustomer(customerId, customerName, customerPhone) {
         }
 
         try {
-            // Check for existing customer with same name or phone (excluding current customer)
             const customersRef = getUserCollection("customers");
             const duplicateQuerySnapshot = await customersRef
                 .where("name", "==", updatedName)
@@ -2112,8 +2111,9 @@ async function editCustomer(customerId, customerName, customerPhone) {
     });
 }
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
-    setCurrencyUpdateCallback(() => {
-        displayCustomerDetails(customerId, customerName, customerPhone);
+    setCurrencyUpdateCallback(async () => {
+        await loadDebts(customerId);
+        renderAddDebtForm(customerId);
     });
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -2127,7 +2127,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <thead>
                     <tr>
                         <th>Details</th>
-                        <th>Balance (${storeCurrency})</th>
+                        <th>Balance</th>
                         <th>Created At</th>
                         <th>Remove</th>
                     </tr>
@@ -2143,41 +2143,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         </div>
     `;
 
-    await loadDebts();
-
-    async function loadDebts() {
-        const debtDetailsTable = document.getElementById("debt-details-table");
-        const totalBalanceElement = document.getElementById("total-balance");
-        const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
-        const debtsSnapshot = await debtRef.get();
-        let totalBalance = 0;
-
-        debtDetailsTable.innerHTML = '';
-
-        debtsSnapshot.forEach((doc) => {
-            const debt = doc.data();
-            const debtRow = document.createElement("tr");
-
-            debtRow.innerHTML = `
-                <td>${debt.details}</td>
-                <td>${displayCurrency(debt.balance)}</td>
-                <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
-                <td><button class="remove-debt-btn" data-debt-id="${doc.id}">Remove</button></td>
-            `;
-            debtDetailsTable.appendChild(debtRow);
-            totalBalance += debt.balance;
-        });
-        const totalBalanceFormatted = displayCurrency(totalBalance);
-        totalBalanceElement.textContent = totalBalanceFormatted;
-
-        document.querySelectorAll(".remove-debt-btn").forEach((button) => {
-            button.addEventListener("click", async (event) => {
-                const debtId = event.target.getAttribute("data-debt-id");
-                await getUserCollection("customers").doc(customerId).collection("debts").doc(debtId).delete();
-                loadDebts();
-            });
-        });
-    }
+    await loadDebts(customerId);
 
     document.getElementById("export").addEventListener("click", async () => {
         try {
@@ -2187,35 +2153,76 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             console.error("Error exporting debt details:", error);
         }
     });
+
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
         initCustomersPage();
     });
-    document.getElementById("add-debt").addEventListener("click", () => {
-        renderAddDebtForm(customerId);
-        document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-            displayCustomerDetails(customerId, customerName, customerPhone);
-        });
-        setCurrencyUpdateCallback(() => {
-            renderAddDebtForm(customerId);
-            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
 
-                displayCustomerDetails(customerId, customerName, customerPhone);
-            });
+    document.getElementById("add-debt").addEventListener("click", (e) => {
+        e.stopPropagation();
+        renderAddDebtForm(customerId);
+    });
+}
+async function loadDebts(customerId) {
+    const debtDetailsTable = document.getElementById("debt-details-table");
+    const totalBalanceElement = document.getElementById("total-balance");
+    const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
+    const debtsSnapshot = await debtRef.get();
+    let totalBalance = 0;
+
+    debtDetailsTable.innerHTML = '';
+
+    debtsSnapshot.forEach((doc) => {
+        const debt = doc.data();
+        const debtRow = document.createElement("tr");
+
+        debtRow.innerHTML = `
+            <td>${debt.details}</td>
+            <td>${displayCurrency(debt.balance)}</td>
+            <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
+            <td><button class="remove-debt-btn" data-debt-id="${doc.id}"><img src="icons/trash-solid.svg" alt"trash"></button></td>
+        `;
+        debtDetailsTable.appendChild(debtRow);
+        totalBalance += debt.balance;
+    });
+    const totalBalanceFormatted = displayCurrency(totalBalance);
+    totalBalanceElement.textContent = totalBalanceFormatted;
+
+    document.querySelectorAll(".remove-debt-btn").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+            const debtId = event.target.getAttribute("data-debt-id");
+            await getUserCollection("customers").doc(customerId).collection("debts").doc(debtId).delete();
+            loadDebts(customerId);
         });
     });
 }
 function renderAddDebtForm(customerId) {
-    const mainContent = document.querySelector(".main-content");
-    mainContent.innerHTML = `
-    <form id="customer-debt" class="product-form">
-        <label for="debt-details">Details:</label>
-        <input type="text" id="debt-details" required />
-        <label for="debt-balance">Balance (${storeCurrency}):</label>
-        <input type="text" id="debt-balance" required />
-        <button type="submit" class="action-btn">Add</button>
-        <button type="button" style="margin-top: 10px;" class="func-btn" id="cancel-debt-btn">Go Back</button>
-    </form>
-`;
+    const customerDebtForm = document.getElementById("customer-debt-form");
+    customerDebtForm.innerHTML = `
+        <button type="button" id="close-form-btn">
+            <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
+        </button>
+        <form id="customer-debt" class="product-form">
+            <label for="debt-details">Details:</label>
+            <input type="text" id="debt-details" />
+            <label for="debt-balance">Balance (${storeCurrency}):</label>
+            <input type="text" id="debt-balance" />
+            <button type="submit" class="action-btn">Add</button>
+        </form>
+    `;
+    customerDebtForm.style.display = "block";
+    customerDebtForm.addEventListener('click', (e) => {
+        e.stopPropagation();
+    })
+
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = 'block';
+    overlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        overlay.style.display = 'none';
+        customerDebtForm.style.display = "none";
+    });
+
     document.getElementById("customer-debt").addEventListener("submit", async (event) => {
         event.preventDefault();
         const details = document.getElementById("debt-details").value.trim();
@@ -2235,9 +2242,15 @@ function renderAddDebtForm(customerId) {
             });
             showModalMessage("Debt added successfully!", true);
             document.getElementById("customer-debt").reset();
+            await loadDebts(customerId);
         } catch (error) {
             showModalMessage(`Error adding debt: ${error.message}`, false);
         }
+    });
+
+    document.getElementById("close-form-btn").addEventListener("click", () => {
+        overlay.style.display = 'none';
+        customerDebtForm.style.display = "none";
     });
 }
 // #endregion }
@@ -5373,8 +5386,6 @@ async function exportDebtDetailsToPDF(debtDetails, customerName, customerPhone, 
             },
             ...styles
         });
-
-
 
         pdf.autoTable({
             head: [columns],
