@@ -986,8 +986,6 @@ async function displayProductToAdd(product, productId) {
     const productCardContainer = document.getElementById("cart-products-container");
     productCardContainer.innerHTML = ``;
 
-
-    const actionText = showSales ? "Add to Sales" : "Add to Cart";
     const actionFunction = showSales ? addToSales : addToCart;
 
     const productCard = document.createElement("div");
@@ -997,8 +995,8 @@ async function displayProductToAdd(product, productId) {
             <img src="${product.img}" alt="${product.label}" width="100" height="100">
         </div>
         <div class="right">
-            <button type="submit" class="add-to-cart-btn">${actionText}</button>
-            ${showSales ? `<button type="button" class="cancel-sale-btn">Cancel Sale</button>` : ""}
+            <button type="submit" class="add-to-cart-btn"><img src="icons/plus-solid.svg" alt="add"></button>
+            ${showSales ? `<button type="button" class="cancel-sale-btn"><img src="icons/minus-solid.svg" alt="remove"></button>` : ""}
         </div>
     `;
 
@@ -1964,6 +1962,7 @@ function renderCustomerCard(customer) {
     dropdown.innerHTML = `
         <button type="button" class="dropdown-option" id="edit-customer">Edit</button>
         <button type="button" class="dropdown-option" id="view-debt">View Debt</button>
+        <button type="button" class="dropdown-option" id="add-debt">Add Debt</button>
         <button type="button" class="dropdown-option" id="remove-customer">Delete</button>
     `;
 
@@ -1983,7 +1982,7 @@ function renderCustomerCard(customer) {
         overlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)";
     });
 
-    document.addEventListener("click", () => {
+    overlay.addEventListener("click", () => {
         dropdown.style.display = "none";
         overlay.style.display = "none";
     });
@@ -2003,10 +2002,17 @@ function renderCustomerCard(customer) {
         displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
     });
 
+    const addDebt = dropdown.querySelector('#add-debt');
+    addDebt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = "none";
+        renderAddDebtForm(customer.id);
+    });
+
     const removeCustomerBtn = dropdown.querySelector("#remove-customer");
     removeCustomerBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const confirmRemove = await showConfirmationModal("Delete Customer", "Are you sure you want to delete this customer?");
+        const confirmRemove = await showConfirmationModal("Are you sure you want to delete this customer?");
         if (!confirmRemove) return;
         dropdown.style.display = "none";
         overlay.style.display = "none";
@@ -2014,7 +2020,7 @@ function renderCustomerCard(customer) {
             await getUserCollection("customers").doc(customer.id).delete();
             customersGrid.removeChild(customerCard);
         } catch (error) {
-            showModalMessage(`Error removing customer: ${error.message}`, false);
+            console.log(error);
         }
     });
 
@@ -2113,7 +2119,6 @@ async function editCustomer(customerId, customerName, customerPhone) {
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
     setCurrencyUpdateCallback(async () => {
         await loadDebts(customerId);
-        renderAddDebtForm(customerId);
     });
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
@@ -2158,12 +2163,19 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         initCustomersPage();
     });
 
-    document.getElementById("add-debt").addEventListener("click", (e) => {
+
+    document.getElementById("add-debt").addEventListener("click", async (e) => {
         e.stopPropagation();
-        renderAddDebtForm(customerId);
+        try {
+            await renderAddDebtForm(customerId);
+            await loadDebts(customerId); // ✅ Only after form is submitted or closed
+        } catch (error) {
+            console.error("Debt form failed:", error);
+        }
     });
 }
 async function loadDebts(customerId) {
+    console.log("called load debts");
     const debtDetailsTable = document.getElementById("debt-details-table");
     const totalBalanceElement = document.getElementById("total-balance");
     const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
@@ -2180,7 +2192,7 @@ async function loadDebts(customerId) {
             <td>${debt.details}</td>
             <td>${displayCurrency(debt.balance)}</td>
             <td>${new Date(debt.createdAt.seconds * 1000).toLocaleString()}</td>
-            <td><button class="remove-debt-btn" data-debt-id="${doc.id}"><img src="icons/trash-solid.svg" alt"trash"></button></td>
+            <td><button class="remove-debt-btn" data-debt-id="${doc.id}"><img src="icons/circle-minus-solid.svg" alt="trash"></button></td>
         `;
         debtDetailsTable.appendChild(debtRow);
         totalBalance += debt.balance;
@@ -2190,69 +2202,74 @@ async function loadDebts(customerId) {
 
     document.querySelectorAll(".remove-debt-btn").forEach((button) => {
         button.addEventListener("click", async (event) => {
-            const debtId = event.target.getAttribute("data-debt-id");
+            const debtId = event.currentTarget.getAttribute("data-debt-id");
             await getUserCollection("customers").doc(customerId).collection("debts").doc(debtId).delete();
             loadDebts(customerId);
         });
     });
 }
-function renderAddDebtForm(customerId) {
-    const customerDebtForm = document.getElementById("customer-debt-form");
-    customerDebtForm.innerHTML = `
-        <button type="button" id="close-form-btn">
-            <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
-        </button>
-        <form id="customer-debt" class="product-form">
-            <label for="debt-details">Details:</label>
-            <input type="text" id="debt-details" />
-            <label for="debt-balance">Balance (${storeCurrency}):</label>
-            <input type="text" id="debt-balance" />
-            <button type="submit" class="action-btn">Add</button>
-        </form>
-    `;
-    customerDebtForm.style.display = "block";
-    customerDebtForm.addEventListener('click', (e) => {
-        e.stopPropagation();
-    })
+async function renderAddDebtForm(customerId) {
+    return new Promise((resolve, reject) => {
+        const customerDebtForm = document.getElementById("customer-debt-form");
+        customerDebtForm.innerHTML = `
+            <button type="button" id="close-form-btn">
+                <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
+            </button>
+            <form id="customer-debt" class="product-form">
+                <label for="debt-details">Details:</label>
+                <input type="text" id="debt-details" />
+                <label for="debt-balance">Balance (${storeCurrency}):</label>
+                <input type="text" id="debt-balance" />
+                <button type="submit" class="action-btn">Add</button>
+            </form>
+        `;
 
-    const overlay = document.getElementById('overlay');
-    overlay.style.display = 'block';
-    overlay.addEventListener('click', (e) => {
-        e.stopPropagation();
-        overlay.style.display = 'none';
-        customerDebtForm.style.display = "none";
-    });
+        customerDebtForm.style.display = "block";
+        customerDebtForm.addEventListener("click", (e) => e.stopPropagation());
 
-    document.getElementById("customer-debt").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const details = document.getElementById("debt-details").value.trim();
-        const balance = parseFloat(document.getElementById("debt-balance").value.trim());
-        const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
+        const overlay = document.getElementById("overlay");
+        overlay.style.display = "block";
+        overlay.addEventListener("click", (e) => {
+            e.stopPropagation();
+            overlay.style.display = "none";
+            customerDebtForm.style.display = "none";
+            resolve(); // Even resolve here in case user closes without submitting
+        });
 
-        if (!details || isNaN(balance) || balance <= 0) {
-            showModalMessage("Invalid input. Please enter valid details and balance!", false);
-            return;
-        }
+        document.getElementById("close-form-btn").addEventListener("click", () => {
+            overlay.style.display = "none";
+            customerDebtForm.style.display = "none";
+            resolve(); // Same as above
+        });
 
-        try {
-            await getUserCollection("customers").doc(customerId).collection("debts").add({
-                details,
-                balance: balanceConverted,
-                createdAt: firebase.firestore.Timestamp.now(),
-            });
-            showModalMessage("Debt added successfully!", true);
-            document.getElementById("customer-debt").reset();
-            await loadDebts(customerId);
-        } catch (error) {
-            showModalMessage(`Error adding debt: ${error.message}`, false);
-        }
-    });
+        document.getElementById("customer-debt").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const details = document.getElementById("debt-details").value.trim();
+            const balance = parseFloat(document.getElementById("debt-balance").value.trim());
+            const balanceConverted = storeCurrency === "LBP" ? convertCurrency(balance, "LBP", "$") : balance;
 
-    document.getElementById("close-form-btn").addEventListener("click", () => {
-        overlay.style.display = 'none';
-        customerDebtForm.style.display = "none";
+            if (!details || isNaN(balance) || balance <= 0) {
+                showModalMessage("Invalid input. Please enter valid details and balance!", false);
+                return;
+            }
+
+            try {
+                await getUserCollection("customers").doc(customerId).collection("debts").add({
+                    details,
+                    balance: balanceConverted,
+                    createdAt: firebase.firestore.Timestamp.now(),
+                });
+                showModalMessage("Debt added successfully!", true);
+                document.getElementById("customer-debt").reset();
+                resolve(); // ✅ Only resolve here after successful add
+            } catch (error) {
+                console.log(error);
+                reject(error); // You can also handle errors
+            }
+        });
     });
 }
+
 // #endregion }
 
 // #region 3️⃣ Cart And Sales Section {
@@ -4253,7 +4270,6 @@ function startTaskNotifications() {
 }
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
-    console.log("attach event listener to done button");
     doneBtn.addEventListener('click', () => {
         tasks.classList.remove('active');
     });
@@ -4261,7 +4277,7 @@ async function initTasksAndReminders() {
 }
 async function tasksList() {
     const tasksList = document.getElementById('tasks-list');
-    tasksList.innerHTML = ''; // Clear existing tasks
+    tasksList.innerHTML = '';
     const tasksRef = getUserCollection("tasks");
 
     try {
@@ -4336,7 +4352,7 @@ function renderTask(task, taskId) {
     titleP.textContent = task.title;
 
     const img = document.createElement('img');
-    img.src = "icons/trash-solid.svg";
+    img.src = "icons/circle-minus-solid.svg";
     img.alt = "delete";
 
     const deleteTask = document.createElement('button');
@@ -5020,7 +5036,8 @@ function showModalMessage(message, isSuccess) {
         transition: "background-color 0.2s ease",
     });
 
-    okButton.addEventListener("click", () => {
+    okButton.addEventListener("click", (e) => {
+        e.stopPropagation();
         modalContainer.remove();
     });
 
@@ -5030,7 +5047,7 @@ function showModalMessage(message, isSuccess) {
     modalContainer.appendChild(modalBox);
     document.body.appendChild(modalContainer);
 }
-function showConfirmationModal(titleText, messageText) {
+function showConfirmationModal(messageText) {
     return new Promise((resolve) => {
         // Modal backdrop
         const modalContainer = document.createElement("div");
@@ -5063,21 +5080,11 @@ function showConfirmationModal(titleText, messageText) {
             fontFamily: "sans-serif",
         });
 
-        // Title
-        const title = document.createElement("h2");
-        title.textContent = titleText;
-        Object.assign(title.style, {
-            fontSize: "18px",
-            fontWeight: "600",
-            marginBottom: "12px",
-            color: "#333",
-        });
-
         // Message
         const message = document.createElement("p");
         message.textContent = messageText;
         Object.assign(message.style, {
-            fontSize: "15px",
+            fontSize: "25px",
             marginBottom: "20px",
             color: "#555",
         });
@@ -5131,7 +5138,6 @@ function showConfirmationModal(titleText, messageText) {
         // Append
         buttonGroup.appendChild(confirmBtn);
         buttonGroup.appendChild(cancelBtn);
-        modalBox.appendChild(title);
         modalBox.appendChild(message);
         modalBox.appendChild(buttonGroup);
         modalContainer.appendChild(modalBox);

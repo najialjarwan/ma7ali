@@ -257,6 +257,11 @@ h5 {
   background-color: transparent;
 }
 
+.header-container button img{
+  width: 25px;
+  height: 25px;
+}
+
 .main-content .header-container {
   padding: 20px 0;
 }
@@ -750,7 +755,7 @@ nav {
   flex-direction: row;
   align-items: center;
   gap: 5px;
-  z-index: 10;
+  z-index: 1000;
   padding: 5px;
   border-bottom: 1px solid var(--input-color);
 }
@@ -764,6 +769,7 @@ nav {
   border-radius: 5px;
   height: 50px;
   width: 100%;
+  z-index: 1000;
 }
 
 .search-container {
@@ -822,7 +828,6 @@ nav {
 }
 
 .currency-toggle-btn {
-
   width: 100%;
   height: 100%;
   border: none;
@@ -830,6 +835,8 @@ nav {
   background-color: var(--input-color);
   color: var(--accent-color);
   text-align: center;
+  font-size: 20px;
+  z-index: 9998;
 }
 
 .theme-switch-wrapper {
@@ -1319,7 +1326,7 @@ footer {
 }
 
 .dropdown-option:hover {
-  background-color: var(--accent-color);
+  background-color: #ccc;
   color: var(--input-color);
   cursor: pointer;
 }
@@ -1869,8 +1876,8 @@ footer {
 
 .left img {
   display: block;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
 }
@@ -1900,15 +1907,23 @@ footer {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: lightgreen;
-
+  background-color: #77f0a965;
+}
+.add-to-cart-btn img{
+  width: 30px;
+  height: 30px;
 }
 
 .cancel-sale-btn {
   border: none;
   height: 50%;
   width: 100%;
-  background-color: rgb(252, 47, 47);
+  background-color: #e74d3c65;
+}
+
+.cancel-sale-btn img{
+  width: 30px;
+  height: 30px;
 }
 
 .cart-display-container {
