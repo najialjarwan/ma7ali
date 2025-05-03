@@ -1889,16 +1889,31 @@ async function fetchCustomers() {
     const searchInput = document.getElementById("search-customers");
     const customersGrid = document.getElementById("customers-grid");
 
+    try {
+        const customersSnapshot = await getUserCollection("customers").get();
+
+        customersGrid.innerHTML = "";
+        if (customersSnapshot.empty) {
+            customersGrid.innerHTML = `                    
+            <div class="no-products-message">
+                No Customers Found. Add your first customer!
+            </div>`;
+            return;
+        }
+        customersSnapshot.forEach((doc) => {
+            const customer = { id: doc.id, ...doc.data() };
+            renderCustomerCard(customer);
+        });        
+
+    } catch (error) {
+        customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
+    }
 
     searchInput.addEventListener("input", async () => {
         const searchValue = searchInput.value.trim().toLowerCase();
 
-
         try {
-
             const customersSnapshot = await getUserCollection("customers").get();
-
-
             const filteredCustomers = [];
             customersSnapshot.forEach((doc) => {
                 const customer = { id: doc.id, ...doc.data() };
@@ -1911,7 +1926,6 @@ async function fetchCustomers() {
             });
 
             customersGrid.innerHTML = "";
-
             if (filteredCustomers.length > 0) {
                 filteredCustomers.forEach(renderCustomerCard);
             } else {
@@ -1924,22 +1938,6 @@ async function fetchCustomers() {
             customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
         }
     });
-
-    try {
-        const customersSnapshot = await getUserCollection("customers").get();
-
-        customersGrid.innerHTML = "";
-
-        if (customersSnapshot.empty) customersGrid.innerHTML = `<p>No Customers found.</p>`;
-
-        customersSnapshot.forEach((doc) => {
-            const customer = { id: doc.id, ...doc.data() };
-            renderCustomerCard(customer);
-        });        
-
-    } catch (error) {
-        customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
-    }
 }
 function renderCustomerCard(customer) {
     const customersGrid = document.getElementById("customers-grid");
@@ -2132,48 +2130,29 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                 <tbody id="debt-details-table"></tbody>
             </table>
             <p><strong>Total Balance: <span id="total-balance">0</span></strong></p>
-            <div class="debt-actions" id="debt-actions">
-                <button type="button" class="add-debt" id="add-debt">Add</button>
-                <button type="button" class="export" id="export">Export</button>
-            </div>
+        </div>
+
+        <div class="debt-actions" id="debt-actions">
+            <button type="button" class="func-btn" id="add-debt">Add</button>
+            <button type="button" class="export-btn" id="export">Export</button>
         </div>
     `;
 
-    document.getElementById("export").addEventListener("click", async () => {
-        try {
-            const { debts, total } = await fetchDebtDetailsForExport(customerId);
-            exportDebtDetailsToPDF(debts, customerName, customerPhone, total);
-        } catch (error) {
-            console.error("Error exporting debt details:", error);
-        }
-    });
-    document.getElementById("add-debt").addEventListener("click", () => {
-        renderAddDebtForm(customerId);
-        document.getElementById("cancel-debt-btn").addEventListener("click", () => {
+    await loadDebts();
 
-            displayCustomerDetails(customerId, customerName, customerPhone);
-        });
-        setCurrencyUpdateCallback(() => {
-            renderAddDebtForm(customerId);
-            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-
-                displayCustomerDetails(customerId, customerName, customerPhone);
-            });
-        });
-    });
     async function loadDebts() {
         const debtDetailsTable = document.getElementById("debt-details-table");
         const totalBalanceElement = document.getElementById("total-balance");
         const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
         const debtsSnapshot = await debtRef.get();
         let totalBalance = 0;
-
+    
         debtDetailsTable.innerHTML = '';
-
+    
         debtsSnapshot.forEach((doc) => {
             const debt = doc.data();
             const debtRow = document.createElement("tr");
-
+    
             debtRow.innerHTML = `
                 <td>${debt.details}</td>
                 <td>${displayCurrency(debt.balance)}</td>
@@ -2185,7 +2164,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         });
         const totalBalanceFormatted = displayCurrency(totalBalance);
         totalBalanceElement.textContent = totalBalanceFormatted;
-
+    
         document.querySelectorAll(".remove-debt-btn").forEach((button) => {
             button.addEventListener("click", async (event) => {
                 const debtId = event.target.getAttribute("data-debt-id");
@@ -2194,10 +2173,30 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             });
         });
     }
-    await loadDebts();
 
+    document.getElementById("export").addEventListener("click", async () => {
+        try {
+            const { debts, total } = await fetchDebtDetailsForExport(customerId);
+            exportDebtDetailsToPDF(debts, customerName, customerPhone, total);
+        } catch (error) {
+            console.error("Error exporting debt details:", error);
+        }
+    });
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
         initCustomersPage();
+    });
+    document.getElementById("add-debt").addEventListener("click", () => {
+        renderAddDebtForm(customerId);
+        document.getElementById("cancel-debt-btn").addEventListener("click", () => {
+            displayCustomerDetails(customerId, customerName, customerPhone);
+        });
+        setCurrencyUpdateCallback(() => {
+            renderAddDebtForm(customerId);
+            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
+
+                displayCustomerDetails(customerId, customerName, customerPhone);
+            });
+        });
     });
 }
 function renderAddDebtForm(customerId) {

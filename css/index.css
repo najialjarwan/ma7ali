@@ -250,7 +250,7 @@ h5 {
 .header-container button {
   position: absolute;
   top: 15px;
-  right: 20px;
+  right: 0px;
   width: 35%;
   height: 40px;
   font-size: large;
@@ -1456,24 +1456,21 @@ footer {
   transform: scaleY(0.8);
 }
 
-.customer-table .debt-actions {
-  background-color: var(--accent-color);
+.debt-actions {
+  background-color: transparent;
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  gap: 5px;
 }
 
-.customer-table .debt-actions button {
-  width: 90%;
-  background-color: var(--accent-color);
-  border: none;
-  border: 1px solid var(--text-color);
-  color: var(--btnText-color);
-  font-weight: bolder;
-  font-size: 20px;
+.debt-actions button {
+  width: 50%;
+  padding: 5px;
+  font-size: 1.1rem;
+  transition: transform 0.1 ease-in-out;
 }
 
 /* Carts And Sales Section */
