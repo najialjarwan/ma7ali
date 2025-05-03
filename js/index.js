@@ -1949,27 +1949,85 @@ async function fetchCustomers() {
 
             const customerCard = document.createElement("div");
             customerCard.classList.add("customers-card");
+
             customerCard.innerHTML = `
                 <div class="customer-name">${customer.name}</div>
                 <div class="customer-phone">
                     ${customer.phoneNumber}
-                    <button type="button" class="customer-actions" id="customer-actions">
+                    <button type="button" class="customer-actions">
                         <img src="icons/ellipsis-vertical-solid.svg" alt="options">
                     </button>
                 </div>
             `;
-            customerCard.addEventListener("click", () => {
+
+            // Dropdown element (initially hidden)
+            const dropdown = document.createElement("div");
+            dropdown.classList.add("customer-dropdown");
+            dropdown.style.display = "none"; // Initially hidden
+            dropdown.innerHTML = `
+                <button type="button" class="dropdown-option" id="edit-customer">Edit</button>
+                <button type="button" class="dropdown-option" id="view-debt">View Debt</button>
+                <button type="button" class="dropdown-option" id="remove-customer">Delete</button>
+            `;
+
+            customerCard.appendChild(dropdown);
+
+            const overlay = document.getElementById('overlay');
+            const customerActions = customerCard.querySelector(".customer-actions");
+            customerActions.addEventListener("click", (e) => {
+                e.stopPropagation();
+
+                const rect = customerActions.getBoundingClientRect();
+
+                dropdown.style.position = "fixed";
+                dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+                dropdown.style.left = `${rect.left + window.scrollX - 190}px`;
+
+                dropdown.style.display = "flex";
+                overlay.style.display = "block";
+                overlay.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+            });
+
+            document.addEventListener("click", () => {
+                dropdown.style.display = "none";
+                overlay.style.display = "none";
+            });
+
+            const editCustomerBtn = dropdown.querySelector("#edit-customer");
+            editCustomerBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                overlay.style.display = "none";
+                dropdown.style.display = "none";
+                editCustomer(customer.id, customer.name, customer.phoneNumber);
+            });
+
+            const viewDebtBtn = dropdown.querySelector("#view-debt");
+            viewDebtBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                overlay.style.display = "none";
                 displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
             });
-            customersGrid.appendChild(customerCard);
 
-            const cutsomerActions = document.getElementById("customer-actions");
-            cutsomerActions.addEventListener('click', (e) => {
+            const removeCustomerBtn = dropdown.querySelector("#remove-customer");
+            removeCustomerBtn.addEventListener("click", async (e) => {
                 e.stopPropagation();
-                console.log("clicked");
-                
+                const confirmRemove = confirm("Are you sure you want to remove this customer? This action cannot be undone.");
+                if (!confirmRemove) return;
+
+                dropdown.style.display = "none";
+                overlay.style.display = "none";
+
+                try {
+                    await getUserCollection("customers").doc(customer.id).delete();
+                    customersGrid.removeChild(customerCard);
+                } catch (error) {
+                    showModalMessage(`Error removing customer: ${error.message}`, false);
+                }
             });
+
+            customersGrid.appendChild(customerCard);
         });
+
     } catch (error) {
         customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
     }
@@ -1981,22 +2039,11 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     const mainContent = document.querySelector(".main-content");
     mainContent.innerHTML = `
         <div class="header-container">
-            <h5 style="font-weight: bolder">Customer Info</h5>
+            <h5 style="font-weight: bolder">${customerName}'s Debt</h5>
             <button type="button" id="cancel-customer-btn">Done</button>
         </div>
-        <form id="customer-form" class="product-form">
-            <label for="customer-name">Name:</label>
-            <input type="text" id="customer-name" value="${customerName}" required />
-
-            <label for="customer-phone">Phone Number:</label>
-            <input type="text" id="customer-phone" value="${customerPhone}" required />
-
-            <button type="button" class="action-btn" id="edit-customer-btn">Edit Customer</button>
-            <button type="button" class="action-btn" id="remove-customer-btn">Remove Customer</button>
-        </form>
 
         <div id="customer-table" class="customer-table">
-            <p>Customer's Debt</p>
             <table>
                 <thead>
                     <tr>
@@ -2024,8 +2071,20 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             console.error("Error exporting debt details:", error);
         }
     });
+    document.getElementById("add-debt").addEventListener("click", () => {
+        renderAddDebtForm(customerId);
+        document.getElementById("cancel-debt-btn").addEventListener("click", () => {
 
+            displayCustomerDetails(customerId, customerName, customerPhone);
+        });
+        setCurrencyUpdateCallback(() => {
+            renderAddDebtForm(customerId);
+            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
 
+                displayCustomerDetails(customerId, customerName, customerPhone);
+            });
+        });
+    });
     async function loadDebts() {
         const debtDetailsTable = document.getElementById("debt-details-table");
         const totalBalanceElement = document.getElementById("total-balance");
@@ -2059,9 +2118,38 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
             });
         });
     }
-
     await loadDebts();
 
+    document.getElementById("cancel-customer-btn").addEventListener("click", () => {
+        initCustomersPage();
+    });
+}
+async function editCustomer(customerId, customerName, customerPhone) {
+    const editCustomerForm = document.getElementById("edit-customer-form");
+    if (editCustomerForm) {
+        editCustomerForm.style.display = "flex";
+    }
+    editCustomerForm.innerHTML = `
+        <button type="button" id="close-form-btn">
+            <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
+        </button>
+        <form id="customer-form" class="product-form">
+            <label for="customer-name">Name:</label>
+            <input type="text" id="customer-name" value="${customerName}" required />
+
+            <label for="customer-phone">Phone Number:</label>
+            <input type="text" id="customer-phone" value="${customerPhone}" required />
+
+            <button type="button" class="action-btn" id="edit-customer-btn">Save</button>
+        </form>
+    `;
+
+    editCustomerForm.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+    });
+
+    const overlay = document.getElementById('overlay');
     document.getElementById("edit-customer-btn").addEventListener("click", async () => {
         const updatedName = document.getElementById("customer-name").value.trim();
         const updatedPhone = document.getElementById("customer-phone").value.trim();
@@ -2069,37 +2157,24 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         try {
             await getUserCollection("customers").doc(customerId).update({ name: updatedName, phoneNumber: updatedPhone });
             showModalMessage("Customer Edited Successfully!", true);
+            editCustomerForm.style.display = "none";
+            overlay.style.display = "none";
+            initCustomersPage();
         } catch (error) {
             showModalMessage(`Error updating customer: ${error.message}`, false);
         }
     });
 
-    document.getElementById("remove-customer-btn").addEventListener("click", async () => {
-        try {
-            setTimeout(() => initCustomersPage(), 10);
-            await getUserCollection("customers").doc(customerId).delete();
-        } catch (error) {
-            showModalMessage(`Error removing customer: ${error.message}`, false);
-        }
+    overlay.style.display = "block";
+    overlay.addEventListener("click", () => {
+        editCustomerForm.style.display = "none";
+        overlay.style.display = "none";
     });
 
-    document.getElementById("cancel-customer-btn").addEventListener("click", () => {
-        initCustomersPage();
-    });
-
-    document.getElementById("add-debt").addEventListener("click", () => {
-        renderAddDebtForm(customerId);
-        document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-
-            displayCustomerDetails(customerId, customerName, customerPhone);
-        });
-        setCurrencyUpdateCallback(() => {
-            renderAddDebtForm(customerId);
-            document.getElementById("cancel-debt-btn").addEventListener("click", () => {
-
-                displayCustomerDetails(customerId, customerName, customerPhone);
-            });
-        });
+    const closeFormBtn = document.getElementById("close-form-btn");
+    closeFormBtn.addEventListener("click", () => {
+        editCustomerForm.style.display = "none";
+        overlay.style.display = "none";
     });
 }
 function renderAddDebtForm(customerId) {
@@ -4846,46 +4921,63 @@ function initHelp() {
 
 // #region Modal {
 function showModalMessage(message, isSuccess) {
-    // Create modal container
+    // Create modal container (backdrop)
     const modalContainer = document.createElement("div");
-    modalContainer.style.position = "fixed";
-    modalContainer.style.top = "0";
-    modalContainer.style.left = "0";
-    modalContainer.style.width = "100%";
-    modalContainer.style.height = "100%";
-    modalContainer.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-    modalContainer.style.display = "flex";
-    modalContainer.style.justifyContent = "center";
-    modalContainer.style.alignItems = "center";
-    modalContainer.style.zIndex = "1000";
+    Object.assign(modalContainer.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-end",
+        zIndex: "9999",
+        padding: "20px",
+        boxSizing: "border-box",
+        transition: "opacity 0.3s ease-in-out",
+    });
 
     // Create modal box
     const modalBox = document.createElement("div");
-    modalBox.style.backgroundColor = "#fff";
-    modalBox.style.padding = "20px";
-    modalBox.style.borderRadius = "10px";
-    modalBox.style.textAlign = "center";
-    modalBox.style.width = "80%";
-    modalBox.style.maxWidth = "400px";
+    Object.assign(modalBox.style, {
+        backgroundColor: "#fff",
+        padding: "20px 24px",
+        borderRadius: "16px",
+        textAlign: "center",
+        width: "100%",
+        maxWidth: "380px",
+        boxShadow: "0 6px 18px rgba(0, 0, 0, 0.15)",
+        animation: "slideUp 0.3s ease-out",
+        fontFamily: "sans-serif",
+    });
 
-    // Add message text
+    // Create message
     const messageText = document.createElement("p");
-    messageText.innerHTML = message;
-    messageText.style.color = isSuccess ? "green" : "red";
-    messageText.style.fontSize = "16px";
-    messageText.style.fontWeight = "bold";
-    messageText.style.marginBottom = "20px";
+    messageText.textContent = message;
+    Object.assign(messageText.style, {
+        color: isSuccess ? "#2ecc71" : "#e74c3c",
+        fontSize: "16px",
+        fontWeight: "500",
+        marginBottom: "20px",
+    });
 
-    // Add OK button
+    // OK button
     const okButton = document.createElement("button");
     okButton.textContent = "OK";
-    okButton.style.padding = "10px 70px";
-    okButton.style.backgroundColor = isSuccess ? "green" : "red";
-    okButton.style.color = "#fff";
-    okButton.style.border = "none";
-    okButton.style.borderRadius = "5px";
-    okButton.style.cursor = "pointer";
-    okButton.style.fontSize = "20px";
+    Object.assign(okButton.style, {
+        padding: "12px 0",
+        width: "100%",
+        backgroundColor: isSuccess ? "#2ecc71" : "#e74c3c",
+        color: "#fff",
+        border: "none",
+        borderRadius: "10px",
+        fontSize: "16px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        transition: "background-color 0.2s ease",
+    });
 
     okButton.addEventListener("click", () => {
         modalContainer.remove();
@@ -4895,10 +4987,9 @@ function showModalMessage(message, isSuccess) {
     modalBox.appendChild(messageText);
     modalBox.appendChild(okButton);
     modalContainer.appendChild(modalBox);
-
-    // Append modal to the body
     document.body.appendChild(modalContainer);
 }
+
 // #endregion }
 
 // #endregion ]
