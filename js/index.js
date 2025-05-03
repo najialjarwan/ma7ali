@@ -1949,7 +1949,6 @@ async function fetchCustomers() {
 
             const customerCard = document.createElement("div");
             customerCard.classList.add("customers-card");
-
             customerCard.innerHTML = `
                 <div class="customer-name">${customer.name}</div>
                 <div class="customer-phone">
@@ -2125,6 +2124,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 }
 async function editCustomer(customerId, customerName, customerPhone) {
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = "block";
     const editCustomerForm = document.getElementById("edit-customer-form");
     if (editCustomerForm) {
         editCustomerForm.style.display = "flex";
@@ -2146,26 +2147,62 @@ async function editCustomer(customerId, customerName, customerPhone) {
 
     editCustomerForm.addEventListener("click", (event) => {
         event.stopPropagation();
-
     });
 
-    const overlay = document.getElementById('overlay');
     document.getElementById("edit-customer-btn").addEventListener("click", async () => {
+        overlay.style.display = "none";
         const updatedName = document.getElementById("customer-name").value.trim();
         const updatedPhone = document.getElementById("customer-phone").value.trim();
 
+        if (!updatedName || !updatedPhone) {
+            showModalMessage("Please fill in all fields!", false);
+            return;
+        }
+
         try {
-            await getUserCollection("customers").doc(customerId).update({ name: updatedName, phoneNumber: updatedPhone });
+            // Check for existing customer with same name or phone (excluding current customer)
+            const customersRef = getUserCollection("customers");
+            const duplicateQuerySnapshot = await customersRef
+                .where("name", "==", updatedName)
+                .get();
+
+            const phoneQuerySnapshot = await customersRef
+                .where("phoneNumber", "==", updatedPhone)
+                .get();
+
+            let duplicateExists = false;
+
+            duplicateQuerySnapshot.forEach(doc => {
+                if (doc.id !== customerId) {
+                    duplicateExists = true;
+                    showModalMessage("A customer with the same name already exists!", false);
+                }
+            });
+
+            phoneQuerySnapshot.forEach(doc => {
+                if (doc.id !== customerId) {
+                    duplicateExists = true;
+                    showModalMessage("A customer with the same phone number already exists!", false);
+                }
+            });
+
+            if (duplicateExists) return;
+
+            await customersRef.doc(customerId).update({
+                name: updatedName,
+                phoneNumber: updatedPhone
+            });
+
             showModalMessage("Customer Edited Successfully!", true);
             editCustomerForm.style.display = "none";
             overlay.style.display = "none";
             initCustomersPage();
+
         } catch (error) {
             showModalMessage(`Error updating customer: ${error.message}`, false);
         }
     });
 
-    overlay.style.display = "block";
     overlay.addEventListener("click", () => {
         editCustomerForm.style.display = "none";
         overlay.style.display = "none";
@@ -4920,6 +4957,7 @@ function initHelp() {
 // #endregion }
 
 // #region Modal {
+// TODO: Continue from here.
 function showModalMessage(message, isSuccess) {
     // Create modal container (backdrop)
     const modalContainer = document.createElement("div");
