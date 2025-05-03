@@ -1913,19 +1913,7 @@ async function fetchCustomers() {
             customersGrid.innerHTML = "";
 
             if (filteredCustomers.length > 0) {
-                filteredCustomers.forEach((customer) => {
-
-                    const customerCard = document.createElement("div");
-                    customerCard.classList.add("customers-card");
-                    customerCard.innerHTML = `
-                        <div class="customer-name">${customer.name}</div>
-                        <div class="customer-phone">${customer.phoneNumber}</div>
-                    `;
-                    customerCard.addEventListener("click", () => {
-                        displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
-                    });
-                    customersGrid.appendChild(customerCard);
-                });
+                filteredCustomers.forEach(renderCustomerCard);
             } else {
                 customersGrid.innerHTML = `                
                     <div class="no-products-message">
@@ -1946,90 +1934,179 @@ async function fetchCustomers() {
 
         customersSnapshot.forEach((doc) => {
             const customer = { id: doc.id, ...doc.data() };
-
-            const customerCard = document.createElement("div");
-            customerCard.classList.add("customers-card");
-            customerCard.innerHTML = `
-                <div class="customer-name">${customer.name}</div>
-                <div class="customer-phone">
-                    ${customer.phoneNumber}
-                    <button type="button" class="customer-actions">
-                        <img src="icons/ellipsis-vertical-solid.svg" alt="options">
-                    </button>
-                </div>
-            `;
-
-            // Dropdown element (initially hidden)
-            const dropdown = document.createElement("div");
-            dropdown.classList.add("customer-dropdown");
-            dropdown.style.display = "none"; // Initially hidden
-            dropdown.innerHTML = `
-                <button type="button" class="dropdown-option" id="edit-customer">Edit</button>
-                <button type="button" class="dropdown-option" id="view-debt">View Debt</button>
-                <button type="button" class="dropdown-option" id="remove-customer">Delete</button>
-            `;
-
-            customerCard.appendChild(dropdown);
-
-            const overlay = document.getElementById('overlay');
-            const customerActions = customerCard.querySelector(".customer-actions");
-            customerActions.addEventListener("click", (e) => {
-                e.stopPropagation();
-
-                const rect = customerActions.getBoundingClientRect();
-
-                dropdown.style.position = "fixed";
-                dropdown.style.top = `${rect.bottom + window.scrollY}px`;
-                dropdown.style.left = `${rect.left + window.scrollX - 190}px`;
-
-                dropdown.style.display = "flex";
-                overlay.style.display = "block";
-                overlay.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
-            });
-
-            document.addEventListener("click", () => {
-                dropdown.style.display = "none";
-                overlay.style.display = "none";
-            });
-
-            const editCustomerBtn = dropdown.querySelector("#edit-customer");
-            editCustomerBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                overlay.style.display = "none";
-                dropdown.style.display = "none";
-                editCustomer(customer.id, customer.name, customer.phoneNumber);
-            });
-
-            const viewDebtBtn = dropdown.querySelector("#view-debt");
-            viewDebtBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                overlay.style.display = "none";
-                displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
-            });
-
-            const removeCustomerBtn = dropdown.querySelector("#remove-customer");
-            removeCustomerBtn.addEventListener("click", async (e) => {
-                e.stopPropagation();
-                const confirmRemove = confirm("Are you sure you want to remove this customer? This action cannot be undone.");
-                if (!confirmRemove) return;
-
-                dropdown.style.display = "none";
-                overlay.style.display = "none";
-
-                try {
-                    await getUserCollection("customers").doc(customer.id).delete();
-                    customersGrid.removeChild(customerCard);
-                } catch (error) {
-                    showModalMessage(`Error removing customer: ${error.message}`, false);
-                }
-            });
-
-            customersGrid.appendChild(customerCard);
-        });
+            renderCustomerCard(customer);
+        });        
 
     } catch (error) {
         customersGrid.innerHTML = `<p>Error fetching customers: ${error.message}</p>`;
     }
+}
+function renderCustomerCard(customer) {
+    const customersGrid = document.getElementById("customers-grid");
+    const customerCard = document.createElement("div");
+    customerCard.classList.add("customers-card");
+    customerCard.innerHTML = `
+        <div class="customer-name">${customer.name}</div>
+        <div class="customer-phone">
+            ${customer.phoneNumber}
+            <button type="button" class="customer-actions">
+                <img src="icons/ellipsis-vertical-solid.svg" alt="options">
+            </button>
+        </div>
+    `;
+
+    const dropdown = document.createElement("div");
+    dropdown.classList.add("customer-dropdown");
+    dropdown.style.display = "none";
+    dropdown.innerHTML = `
+        <button type="button" class="dropdown-option" id="edit-customer">Edit</button>
+        <button type="button" class="dropdown-option" id="view-debt">View Debt</button>
+        <button type="button" class="dropdown-option" id="remove-customer">Delete</button>
+    `;
+
+    customerCard.appendChild(dropdown);
+
+    const overlay = document.getElementById('overlay');
+    const customerActions = customerCard.querySelector(".customer-actions");
+    customerActions.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const rect = customerActions.getBoundingClientRect();
+        dropdown.style.position = "fixed";
+        dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+        dropdown.style.left = `${rect.left + window.scrollX - 190}px`;
+
+        dropdown.style.display = "flex";
+        overlay.style.display = "block";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+    });
+
+    document.addEventListener("click", () => {
+        dropdown.style.display = "none";
+        overlay.style.display = "none";
+    });
+
+    const editCustomerBtn = dropdown.querySelector("#edit-customer");
+    editCustomerBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        overlay.style.display = "none";
+        dropdown.style.display = "none";
+        editCustomer(customer.id, customer.name, customer.phoneNumber);
+    });
+
+    const viewDebtBtn = dropdown.querySelector("#view-debt");
+    viewDebtBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        overlay.style.display = "none";
+        displayCustomerDetails(customer.id, customer.name, customer.phoneNumber);
+    });
+
+    const removeCustomerBtn = dropdown.querySelector("#remove-customer");
+    removeCustomerBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const confirmRemove = confirm("Are you sure you want to remove this customer? This action cannot be undone.");
+        if (!confirmRemove) return;
+        dropdown.style.display = "none";
+        overlay.style.display = "none";
+        try {
+            await getUserCollection("customers").doc(customer.id).delete();
+            customersGrid.removeChild(customerCard);
+        } catch (error) {
+            showModalMessage(`Error removing customer: ${error.message}`, false);
+        }
+    });
+
+    customersGrid.appendChild(customerCard);
+}
+async function editCustomer(customerId, customerName, customerPhone) {
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = "block";
+    const editCustomerForm = document.getElementById("edit-customer-form");
+    if (editCustomerForm) {
+        editCustomerForm.style.display = "flex";
+    }
+    editCustomerForm.innerHTML = `
+        <button type="button" id="close-form-btn">
+            <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
+        </button>
+        <form id="customer-form" class="product-form">
+            <label for="customer-name">Name:</label>
+            <input type="text" id="customer-name" value="${customerName}" required />
+
+            <label for="customer-phone">Phone Number:</label>
+            <input type="text" id="customer-phone" value="${customerPhone}" required />
+
+            <button type="button" class="action-btn" id="edit-customer-btn">Save</button>
+        </form>
+    `;
+
+    editCustomerForm.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+
+    document.getElementById("edit-customer-btn").addEventListener("click", async () => {
+        overlay.style.display = "none";
+        const updatedName = document.getElementById("customer-name").value.trim();
+        const updatedPhone = document.getElementById("customer-phone").value.trim();
+
+        if (!updatedName || !updatedPhone) {
+            showModalMessage("Please fill in all fields!", false);
+            return;
+        }
+
+        try {
+            // Check for existing customer with same name or phone (excluding current customer)
+            const customersRef = getUserCollection("customers");
+            const duplicateQuerySnapshot = await customersRef
+                .where("name", "==", updatedName)
+                .get();
+
+            const phoneQuerySnapshot = await customersRef
+                .where("phoneNumber", "==", updatedPhone)
+                .get();
+
+            let duplicateExists = false;
+
+            duplicateQuerySnapshot.forEach(doc => {
+                if (doc.id !== customerId) {
+                    duplicateExists = true;
+                    showModalMessage("A customer with the same name already exists!", false);
+                }
+            });
+
+            phoneQuerySnapshot.forEach(doc => {
+                if (doc.id !== customerId) {
+                    duplicateExists = true;
+                    showModalMessage("A customer with the same phone number already exists!", false);
+                }
+            });
+
+            if (duplicateExists) return;
+
+            await customersRef.doc(customerId).update({
+                name: updatedName,
+                phoneNumber: updatedPhone
+            });
+
+            showModalMessage("Customer Edited Successfully!", true);
+            editCustomerForm.style.display = "none";
+            overlay.style.display = "none";
+            initCustomersPage();
+
+        } catch (error) {
+            showModalMessage(`Error updating customer: ${error.message}`, false);
+        }
+    });
+
+    overlay.addEventListener("click", () => {
+        editCustomerForm.style.display = "none";
+        overlay.style.display = "none";
+    });
+
+    const closeFormBtn = document.getElementById("close-form-btn");
+    closeFormBtn.addEventListener("click", () => {
+        editCustomerForm.style.display = "none";
+        overlay.style.display = "none";
+    });
 }
 async function displayCustomerDetails(customerId, customerName, customerPhone) {
     setCurrencyUpdateCallback(() => {
@@ -2121,97 +2198,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
 
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
         initCustomersPage();
-    });
-}
-async function editCustomer(customerId, customerName, customerPhone) {
-    const overlay = document.getElementById('overlay');
-    overlay.style.display = "block";
-    const editCustomerForm = document.getElementById("edit-customer-form");
-    if (editCustomerForm) {
-        editCustomerForm.style.display = "flex";
-    }
-    editCustomerForm.innerHTML = `
-        <button type="button" id="close-form-btn">
-            <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
-        </button>
-        <form id="customer-form" class="product-form">
-            <label for="customer-name">Name:</label>
-            <input type="text" id="customer-name" value="${customerName}" required />
-
-            <label for="customer-phone">Phone Number:</label>
-            <input type="text" id="customer-phone" value="${customerPhone}" required />
-
-            <button type="button" class="action-btn" id="edit-customer-btn">Save</button>
-        </form>
-    `;
-
-    editCustomerForm.addEventListener("click", (event) => {
-        event.stopPropagation();
-    });
-
-    document.getElementById("edit-customer-btn").addEventListener("click", async () => {
-        overlay.style.display = "none";
-        const updatedName = document.getElementById("customer-name").value.trim();
-        const updatedPhone = document.getElementById("customer-phone").value.trim();
-
-        if (!updatedName || !updatedPhone) {
-            showModalMessage("Please fill in all fields!", false);
-            return;
-        }
-
-        try {
-            // Check for existing customer with same name or phone (excluding current customer)
-            const customersRef = getUserCollection("customers");
-            const duplicateQuerySnapshot = await customersRef
-                .where("name", "==", updatedName)
-                .get();
-
-            const phoneQuerySnapshot = await customersRef
-                .where("phoneNumber", "==", updatedPhone)
-                .get();
-
-            let duplicateExists = false;
-
-            duplicateQuerySnapshot.forEach(doc => {
-                if (doc.id !== customerId) {
-                    duplicateExists = true;
-                    showModalMessage("A customer with the same name already exists!", false);
-                }
-            });
-
-            phoneQuerySnapshot.forEach(doc => {
-                if (doc.id !== customerId) {
-                    duplicateExists = true;
-                    showModalMessage("A customer with the same phone number already exists!", false);
-                }
-            });
-
-            if (duplicateExists) return;
-
-            await customersRef.doc(customerId).update({
-                name: updatedName,
-                phoneNumber: updatedPhone
-            });
-
-            showModalMessage("Customer Edited Successfully!", true);
-            editCustomerForm.style.display = "none";
-            overlay.style.display = "none";
-            initCustomersPage();
-
-        } catch (error) {
-            showModalMessage(`Error updating customer: ${error.message}`, false);
-        }
-    });
-
-    overlay.addEventListener("click", () => {
-        editCustomerForm.style.display = "none";
-        overlay.style.display = "none";
-    });
-
-    const closeFormBtn = document.getElementById("close-form-btn");
-    closeFormBtn.addEventListener("click", () => {
-        editCustomerForm.style.display = "none";
-        overlay.style.display = "none";
     });
 }
 function renderAddDebtForm(customerId) {
