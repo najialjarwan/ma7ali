@@ -1651,7 +1651,7 @@ function renderFilters() {
                   <button class="filter-btn" data-value="medium-profit">
                   ${storeCurrency === "$" ? '0. 1- 1' : centProfitFormatted + ' - ' + oneCostPriceFormatted}</button>
                   <button class="filter-btn" data-value="high-profit">
-                  ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
+                  ${storeCurrency === "$" ? '(1+)' : oneCostPriceFormatted}</button>
                 </div>
             </div>
 
@@ -2135,8 +2135,8 @@ async function editCustomer(customerId, customerName, customerPhone) {
         event.stopPropagation();
     });
 
-    document.getElementById("edit-customer-btn").addEventListener("click", async () => {
-        overlay.style.display = "none";
+    document.getElementById("edit-customer-btn").addEventListener("click", async (e) => {
+        e.stopPropagation();
         const updatedName = document.getElementById("customer-name").value.trim();
         const updatedPhone = document.getElementById("customer-phone").value.trim();
 
@@ -2164,6 +2164,8 @@ async function editCustomer(customerId, customerName, customerPhone) {
                 }
             });
 
+            if(duplicateExists) return;
+
             phoneQuerySnapshot.forEach(doc => {
                 if (doc.id !== customerId) {
                     duplicateExists = true;
@@ -2172,6 +2174,8 @@ async function editCustomer(customerId, customerName, customerPhone) {
             });
 
             if (duplicateExists) return;
+
+            overlay.style.display = "none";
 
             await customersRef.doc(customerId).update({
                 name: updatedName,
