@@ -64,7 +64,10 @@ h5 {
   transition: background-color 0.3s ease, transform 0.2s ease;
   width: 100%;
   height: 50px;
-  margin-top: 10px;
+  margin-top: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Button Styling */
@@ -84,6 +87,26 @@ h5 {
 .action-btn:active {
   transform: scaleY(0.8);
 }
+
+.action-btn img, .func-btn img{
+  width: 30px;
+  height: 30px;
+}
+
+form input:focus{
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  color: var(--text-color) !important;
+  border: 2px solid var(--text-color) !important;
+}
+
+hr{
+  opacity: 1 !important;
+}
+
+
 
 @keyframes slideUp {
   from {
@@ -252,11 +275,11 @@ h5 {
   font-size: large;
   font-weight: bolder;
   border-radius: 10px;
-  border: 4px groove var(--input-color);
+  border: none;
   color: var(--accent-color);
   background-color: transparent;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
 }
 
@@ -284,13 +307,6 @@ h5 {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   font-family: sans-serif;
-}
-
-.container hr {
-  margin: 20px 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--accent-color);
 }
 
 .container form {
@@ -377,7 +393,7 @@ h5 {
 }
 
 /* Tasks Section */
-.tasks {
+.tasks{
   display: none;
   position: fixed;
   bottom: -100%;
@@ -470,7 +486,7 @@ h5 {
   height: 44px;
   padding: 0 15px;
   border: none;
-  border-radius: 0;
+  border-radius: 10px;
   background-color: transparent;
   border: 1px solid var(--accent-color);
   -webkit-appearance: none;
@@ -1392,17 +1408,12 @@ footer {
   color: var(--text-color);
 }
 
-#close-form-btn {
+#close-form-btn , #close-debt-btn{
   position: absolute;
   top: 10px;
   right: 10px;
   background-color: transparent;
   border: none;
-}
-.edit-customer-form button img{
-  width: 30px;
-  height: 30px;
-  filter: brightness(100%) invert(1);
 }
 
 .customer-debt-form{
@@ -1541,13 +1552,13 @@ footer {
 
 #sales-table-container {
   width: 100%;
-  text-align: left;
 }
 
 .sales-table {
   width: 100%;
   max-width: 100%;
   border-collapse: collapse;
+  text-align: left;
 }
 
 .sales-table th {
@@ -1752,12 +1763,11 @@ footer {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
   width: 100%;
-  margin-bottom: 20px;
 }
 
 #customFileButton img{
-  width: 25px;
-  height: 25px;
+  width: 30px;
+  height: 30px;
 }
 
 #customerFileButton:active {
@@ -1802,8 +1812,7 @@ footer {
   color: #e74c3c;
   font-size: 12px;
   margin-left: 5px;
-  
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .input-warning {
@@ -1921,8 +1930,6 @@ footer {
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
   margin-top: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
-  border: 1px solid var(--text-color);
 }
 
 .add-to-cart-btn {
@@ -1996,12 +2003,6 @@ footer {
 /* Dashboard Section */
 .inventory-analytics {
   width: 100%;
-}
-
-.inventory-analytics hr {
-  width: 100%;
-  opacity: 1;
-  margin: 30px 0;
 }
 
 .inventory-analytics h2 {
@@ -2097,6 +2098,11 @@ canvas {
   border: 5px groove var(--input-color);
   font-weight: bolder;
   transition: transform 0.1s ease-in-out;
+}
+
+.export-btn img{
+  width: 30px;
+  height: 30px;
 }
 
 .export-btn:active {

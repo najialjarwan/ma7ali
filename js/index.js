@@ -327,10 +327,6 @@ function showProductForm() {
             <label for="label">Product Label: </label>
             <input type="text" id="label" name="label" >
 
-            <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
-            <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
-            <button type="button" id="customFileButton"><img src="icons/cloud-arrow-up-solid.svg" alt="upload"></button>
-
             <label for="costPrice">Cost Price (${storeCurrency}): </label>
             <input type="text" id="costPrice" name="costPrice">
 
@@ -343,7 +339,13 @@ function showProductForm() {
             <label for="stock">Stock Quantity: </label>
             <input type="text" id="stock" name="stock">
 
-            <button type="submit" class="action-btn">Add</button>
+            <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
+            <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
+            <button type="button" id="customFileButton"><img src="icons/cloud-arrow-up-solid.svg" alt="upload"></button>
+
+            <hr>
+
+            <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
         </form>
     `;
     addProduct();
@@ -419,12 +421,11 @@ function addProduct() {
 
         if (hasError) {
             for (let fieldId in errors) {
-                setFieldError(fieldId, errors[fieldId]);
+                setFieldError(fieldId, errors[fieldId], "error", "icons/circle-exclamation-solid.svg");
             }
             showModalMessage(`Failed to add the product!</br>Check ALL input fields.`);
             return;
         }
-        console.log(values);
 
         const {
             rawBarcode,
@@ -616,44 +617,44 @@ function validateProductForm(formData) {
 
     if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 8 || rawBarcode.length > 10) {
         errors.barcode = !rawBarcode
-            ? "BARCODE is required AND must be a 8-10 digit number!"
+            ? "Barcode is required and must be a 8-10 digit number"
             : isNaN(rawBarcode)
                 ? "Barcode must be a number!"
                 : rawBarcode.length < 8
-                    ? "BARCODE must be at least 8 digits!"
-                    : "BARCODE must be less then 10 digits!";
+                    ? "Barcode must be at least 8 digits"
+                    : "Barcode must be less then 10 digits";
         hasError = true;
     }
 
-    if (!rawLabel || rawLabel.length > 15) {
-        errors.label = !rawLabel ? "PRODUCT LABEL is REQUIRED!" : "PRODUCT LABEL is too long!";
+    if (!rawLabel || rawLabel.length > 20) {
+        errors.label = !rawLabel ? "Label is required" : "Label is too long!";
         hasError = true;
     }
 
     if (!isUpdate) {
         if (!imageFile || !imageFile.name || imageFile.size === 0) {
-            errors.img = "IMAGE is REQUIRED";
+            errors.img = "Image is required";
             hasError = true;
         }
     }
 
     if (!rawCostPrice || isNaN(rawCostPrice)) {
-        errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
+        errors.costPrice = !rawCostPrice ? "Cost Price is required!" : "Cost Price must be a number";
         hasError = true;
     }
 
     if (!rawProfit || isNaN(rawProfit)) {
-        errors.profit = !rawProfit ? "PRODUCT PROFIT is REQUIRED!" : "PRODUCT PROFIT must be a NUMBER!";
+        errors.profit = !rawProfit ? "Profit is required!" : "Profit must be a number";
         hasError = true;
     }
 
     if (!rawCategory) {
-        errors.category = "PRODUCT CATEGORY is REQUIRED";
+        errors.category = "Category is required";
         hasError = true;
     }
 
     if (!rawStock || isNaN(rawStock)) {
-        errors.stock = !rawStock ? "PRODUCT STOCK is REQUIRED!" : "PRODUCT STOCK must be a NUMBER!";
+        errors.stock = !rawStock ? "Stock is required!" : "Stock must be a number";
         hasError = true;
     }
 
@@ -686,7 +687,7 @@ function showCustomerForm() {
                 <label for="phoneNumber">Phone Number: </label>
                 <input type="number" id="phoneNumber" name="phoneNumber" required>
 
-                <button type="submit" class="action-btn">Add</button>
+                <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
             </form>
         `;
 
@@ -1438,7 +1439,11 @@ async function fetchProducts() {
         const snapshot = await getUserCollection("products").get();
 
         if (snapshot.empty) {
-            productsGrid.innerHTML = "<p>No products available.</p>";
+            productsGrid.innerHTML = `
+                <div class = "no-products-message">
+                    <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Products Found. Add Your First Product
+                </div>
+            `;
             return;
         }
 
@@ -1668,8 +1673,8 @@ function renderFilters() {
             </div>
 
             <div class="products-actions">
-                <button id="reset-filters" type="button" class="func-btn">Reset Filters</button>    
-                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn">EXPORT</button>
+                <button id="reset-filters" type="button" class="func-btn"><img src="icons/rotate-left-solid.svg" alt"add debt"></button>    
+                <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn"><img src="icons/file-pdf-solid.svg" alt"add debt"></button>
             </div>
         </div>
         <div id="products-grid" class="products-grid"></div>
@@ -1728,7 +1733,10 @@ function displayProducts(filteredProducts) {
         </div>
     `;
 
-    $(".main-content").html(productCardsHTML ? productsGridHTML : "<p>No products found. Add your first products.</p>");
+    $(".main-content").html(productCardsHTML ? productsGridHTML : `
+        <div class = "no-products-message">
+            <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Products Found. Add Your First Product
+        </div>`);
 
     if (productCardsHTML) {
         $(".product-card").on("click", function () {
@@ -1750,7 +1758,7 @@ async function displayProductForm(product) {
     const formHtml = `
         <div class = "header-container">
             <h5 style="font-weight: bolder">Update Product</h5>
-            <button type="button" id="done-btn"><img src="icons/circle-check-solid.svg" alt="done"></button>
+            <button type="button" id="done-btn"><img src="icons/arrow-right-solid.svg" alt="done"></button>
         </div>
         <form id="product-form" class="product-form">
 
@@ -1761,12 +1769,6 @@ async function displayProductForm(product) {
 
             <label for="label">Label:</label>
             <input type="text" id="label" name="label" value="${product.label}">
-            
-            <div class="file-container">
-                <label for="img">Image: <span id="fileName">No file selected!</span> </label>
-                <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
-                <button type="button" id="customFileButton">Update Image:</button>
-            </div>
             
             <label for="costPrice">Cost Price (${storeCurrency}):</label>
             <input type="text" id="costPrice" name="costPrice" 
@@ -1781,9 +1783,15 @@ async function displayProductForm(product) {
             
             <label for="stock">Stock:</label>
             <input type="text" id="stock" name="stock" value="${product.stock}">
+
+            <label for="img">Image: <span id="fileName">No file selected!</span> </label>
+            <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
+            <button type="button" id="customFileButton"><img src="icons/cloud-arrow-up-solid.svg" alt="upload"></button>
+
+            <hr>
             
-            <button type="submit" class="action-btn" id="update-button">Update</button>
-            <button type="button" class="action-btn" id="remove-button">Remove Product</button>
+            <button type="submit" class="action-btn" id="update-button"><img src="icons/upload-solid.svg" alt="update"></button>
+            <button type="button" class="action-btn" id="remove-button"><img src="icons/trash-solid.svg" alt="delete"></button>
         </form>
     `;
 
@@ -1974,7 +1982,7 @@ async function fetchCustomers() {
         if (customersSnapshot.empty) {
             customersGrid.innerHTML = `                    
             <div class="no-products-message">
-                No Customers Found. Add your first customer!
+                <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Customers Found. Add your first customer!
             </div>`;
             return;
         }
@@ -2009,7 +2017,7 @@ async function fetchCustomers() {
             } else {
                 customersGrid.innerHTML = `                
                     <div class="no-products-message">
-                        No Customers Found. Check Customer Name!
+                        <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Customers Found. Check Customer Name!
                     </div>`;
             }
         } catch (error) {
@@ -2119,7 +2127,7 @@ async function editCustomer(customerId, customerName, customerPhone) {
             <label for="customer-phone">Phone Number:</label>
             <input type="text" id="customer-phone" value="${customerPhone}" required />
 
-            <button type="button" class="action-btn" id="edit-customer-btn">Save</button>
+            <button type="button" class="action-btn" id="edit-customer-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
         </form>
     `;
 
@@ -2199,7 +2207,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     mainContent.innerHTML = `
         <div class="header-container">
             <h5 style="font-weight: bolder">${customerName}'s Debt</h5>
-            <button type="button" id="cancel-customer-btn"><img src="icons/circle-check-solid.svg" alt="done"></button>
+            <button type="button" id="cancel-customer-btn"><img src="icons/arrow-right-solid.svg" alt="done"></button>
         </div>
 
         <div id="customer-table" class="customer-table">
@@ -2218,8 +2226,8 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         </div>
 
         <div class="debt-actions" id="debt-actions">
-            <button type="button" class="func-btn" id="add-debt">Add</button>
-            <button type="button" class="export-btn" id="export">Export</button>
+            <button type="button" class="func-btn" id="add-debt"><img src="icons/plus-solid.svg" alt"add debt"></button>
+            <button type="button" class="export-btn" id="export"><img src="icons/file-pdf-solid.svg" alt"Export Debt"></button>
         </div>
     `;
 
@@ -2287,7 +2295,7 @@ async function renderAddDebtForm(customerId) {
     return new Promise((resolve, reject) => {
         const customerDebtForm = document.getElementById("customer-debt-form");
         customerDebtForm.innerHTML = `
-            <button type="button" id="close-form-btn">
+            <button type="button" id="close-debt-btn">
                 <img src="icons/xmark-solid.svg" width="24" height="24" alt="Close" />
             </button>
             <form id="customer-debt" class="product-form">
@@ -2295,7 +2303,7 @@ async function renderAddDebtForm(customerId) {
                 <input type="text" id="debt-details" />
                 <label for="debt-balance">Balance (${storeCurrency}):</label>
                 <input type="text" id="debt-balance" />
-                <button type="submit" class="action-btn">Add</button>
+                <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
             </form>
         `;
 
@@ -2311,7 +2319,7 @@ async function renderAddDebtForm(customerId) {
             resolve(); // Even resolve here in case user closes without submitting
         });
 
-        document.getElementById("close-form-btn").addEventListener("click", () => {
+        document.getElementById("close-debt-btn").addEventListener("click", () => {
             overlay.style.display = "none";
             customerDebtForm.style.display = "none";
             resolve(); // Same as above
@@ -2441,7 +2449,7 @@ function renderCartsTable(carts) {
     if (carts.length === 0) {
         cartsTable.innerHTML = `                
             <div class="no-products-message">
-                No Carts Found!
+                <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Carts Found!
             </div>`;
         return;
     }
@@ -2657,7 +2665,10 @@ function renderSalesTable(salesData) {
     container.innerHTML = "";
 
     if (salesData.length === 0) {
-        container.innerHTML = "<p>No sales data available.</p>";
+        container.innerHTML = `
+            <div class = "no-products-message">
+                <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No sales data available.
+            </div>`;
         return;
     }
 
@@ -3982,7 +3993,7 @@ function renderProfileForm() {
         <div class="container">
             <div class="header-container">
                 <h5>Store Settings</h5>
-                <button type="button" id="done-btn">Done</button>
+                <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
             </div>
             <form class="product-form">
                 <label>Store Name</label>
@@ -4021,7 +4032,7 @@ function renderProfileForm() {
                     </div>
                 </div>
 
-                <button type="submit" class="action-btn">Save Settings</button>
+                <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
             </form>
         </div>
     `;
@@ -4631,7 +4642,7 @@ async function initpdfLayout() {
     <div id="pdf-layout-controls" class="container">
         <div class = "header-container">
             <h5>Change PDF Layout</h5>
-            <button type="button" id="done-btn">done</button>
+            <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
         </div>
         <form id="pdf-layout-form" class="produc-form">
             <label>Background Color:</label>
@@ -5061,7 +5072,7 @@ function showModalMessage(message, isSuccess) {
         left: "0",
         width: "100vw",
         height: "100vh",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(0, 0, 0, 0.2)",
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-end",
@@ -5680,6 +5691,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // FIXME: edit customer displays two warning and check if add debt also does that.
 // TODO: add exclamations to set field warning and confirm modal and to content messeages.
+// TODO: removee no product message border.
 // TODO: add infincity spinning animation with background image.
 // TODO: add confirmations.
 // TODO: change modal style.
