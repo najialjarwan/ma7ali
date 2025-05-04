@@ -347,6 +347,52 @@ function showProductForm() {
         </form>
     `;
     addProduct();
+
+    const costPriceInput = document.getElementById("costPrice");
+
+    costPriceInput.addEventListener("input", () => {
+        const rawValue = costPriceInput.value.trim();
+        const rawCostPrice = parseFloat(rawValue);
+
+        clearFieldErrors("costPrice");
+
+        if (isNaN(rawCostPrice)) return;
+
+        if (storeCurrency === "$" && rawCostPrice >= 500) {
+            setFieldError("costPrice", "Cost Price is too large!", "warning");
+        } else if (storeCurrency === "LBP" && rawCostPrice <= 1000) {
+            setFieldError("costPrice", "Cost Price is too small!", "warning");
+        }
+        else if (rawCostPrice >= 50000000) setFieldError("costPrice", "Cost Price is way too large!", "warning");
+    });
+
+    document.getElementById("profit").addEventListener("input", () => {
+        const profitInput = document.getElementById("profit");
+        const costPriceInput = document.getElementById("costPrice");
+
+        const rawProfit = parseFloat(profitInput.value);
+        const rawCostPrice = parseFloat(costPriceInput.value);
+
+        profitInput.classList.remove("input-warning");
+        const existingMsg = profitInput.parentNode.querySelector(`.error-text[data-for="profit"]`);
+        if (existingMsg) existingMsg.remove();
+
+        initWarnings(rawProfit, rawCostPrice);
+    });
+
+    function initWarnings(rawProfit, rawCostPrice) {
+        if (!isNaN(rawProfit)) {
+            if (rawProfit <= 1000 && storeCurrency === "LBP") {
+                setFieldError("profit", "Profit is too small!", "warning");
+            } //TODO: continue from here.
+            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice && storeCurrency === "$") {
+                setFieldError("profit", "Profit is way too large for this price!", "warning");
+            } else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9) && storeCurrency === "$") {
+                setFieldError("profit", "Profit is too large! for this price", "warning");
+            } else if (rawProfit >= 500 && storeCurrency === "$") setFieldError("profit", "Profit is too large!", "warning");
+        }
+    }
+
     document.getElementById("customFileButton").addEventListener("click", () => {
         document.getElementById("img").click();
     });
@@ -372,6 +418,7 @@ function addProduct() {
             showModalMessage(`Failed to add the product!</br>Check ALL input fields.`);
             return;
         }
+        console.log(values);
 
         const {
             rawBarcode,
@@ -382,6 +429,7 @@ function addProduct() {
             rawStock,
             imageFile
         } = values;
+        console.log("rawBarCode: ", rawBarcode);
 
         const rawCostPriceToUSD = storeCurrency === "LBP" ? convertCurrency(rawCostPrice, "LBP", "$") : rawCostPrice;
         const rawProfitToUSD = storeCurrency === "LBP" ? convertCurrency(rawProfit, "LBP", "$") : rawProfit;
@@ -473,9 +521,9 @@ function addProduct() {
 
             if (!snapshot.empty || !labelSnapshot.empty) {
                 setTimeout(() => {
-                    !snapshot.empty 
-                    ? showModalMessage(`Item with the enterd <strong>Barcode</strong> already exists. Update or change product barcode.`, false)
-                    : showModalMessage(`Item with the enterd <strong>Label</strong> already exists. Update or change product label.`, false);
+                    !snapshot.empty
+                        ? showModalMessage(`Item with the enterd <strong>Barcode</strong> already exists. Update or change product barcode.`, false)
+                        : showModalMessage(`Item with the enterd <strong>Label</strong> already exists. Update or change product label.`, false);
                 }, 1500);
                 return;
             }
@@ -515,9 +563,19 @@ function addProduct() {
         }
     });
 }
-function setFieldError(fieldId, message) {
+function setFieldError(fieldId, message, type = "error") {
     const input = document.getElementById(fieldId);
-    input.classList.add("input-error");
+
+    // Clear any previous error/warning classes
+    input.classList.remove("input-error", "input-warning");
+
+    // Add appropriate class
+    if (type === "warning") {
+        input.classList.add("input-warning");
+    } else {
+        input.classList.add("input-error");
+    }
+
     let errorMsg = input.parentNode.querySelector(`.error-text[data-for="${fieldId}"]`);
     if (!errorMsg) {
         errorMsg = document.createElement("span");
@@ -525,13 +583,18 @@ function setFieldError(fieldId, message) {
         errorMsg.dataset.for = fieldId;
         input.insertAdjacentElement("afterend", errorMsg);
     }
+
+    // You can also change the color directly here if preferred
     errorMsg.textContent = message;
+    errorMsg.style.color = type === "warning" ? "#f5a623" : "#e74c3c"; // yellow vs red
 }
 function clearFieldErrors() {
-    document.querySelectorAll(".input-error").forEach((el) => el.classList.remove("input-error"));
+    document.querySelectorAll(".input-error, .input-warning").forEach((el) => {
+        el.classList.remove("input-error", "input-warning");
+    });
     document.querySelectorAll(".error-text").forEach((el) => el.remove());
 }
-async function validateProductForm(formData) {
+function validateProductForm(formData) {
     let hasError = false;
     const errors = {};
 
@@ -5607,6 +5670,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// FIXME: edit customer displays two warning and check if add debt also does that.
 // TODO: add infincity spinning animation with background image.
 // TODO: add confirmations.
 // TODO: change modal style.

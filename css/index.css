@@ -1804,6 +1804,10 @@ footer {
   margin-left: 5px;
 }
 
+.input-warning {
+  border: 2px solid #f5a623 !important;
+}
+
 /* Adder Section */
 /* addCart - addSales*/
 #cartName:disabled {
