@@ -679,7 +679,7 @@ function validateProductForm(formData) {
 function showCustomerForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
-            <h1>Add Customer</h1>
+            <h2>Add New Customer</h2>
             <form id="customer-form" class="product-form">
                 <label for="name">Name: </label>
                 <input type="text" id="name" name="name" required>
@@ -1757,7 +1757,7 @@ async function displayProductForm(product) {
     });
     const formHtml = `
         <div class = "header-container">
-            <h5 style="font-weight: bolder">Update Product</h5>
+            <h5>Update Product</h5>
             <button type="button" id="done-btn"><img src="icons/arrow-right-solid.svg" alt="done"></button>
         </div>
         <form id="product-form" class="product-form">
@@ -1961,7 +1961,7 @@ function initCustomersPage() {
         initCustomersPage();
     });
     const mainContent = document.querySelector(".main-content");
-
+    mainContent.style.display = "flex";
     mainContent.innerHTML = `
             <div class="search-customer-container search-container-main">
                 <input type="text" class="search-bar" id="search-customers" placeholder="Search Customer"/>
@@ -2203,10 +2203,11 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     setCurrencyUpdateCallback(async () => {
         await loadDebts(customerId);
     });
-    const mainContent = document.querySelector(".main-content");
+
+    const mainContent = document.querySelector('.main-content');
     mainContent.innerHTML = `
         <div class="header-container">
-            <h5 style="font-weight: bolder">${customerName}'s Debt</h5>
+            <h2>${customerName}'s Debt</h2>
             <button type="button" id="cancel-customer-btn"><img src="icons/arrow-right-solid.svg" alt="done"></button>
         </div>
 
