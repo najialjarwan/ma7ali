@@ -349,21 +349,27 @@ function showProductForm() {
     addProduct();
 
     const costPriceInput = document.getElementById("costPrice");
+    const imgSrc = "icons/triangle-exclamation-solid.svg"
 
     costPriceInput.addEventListener("input", () => {
-        const rawValue = costPriceInput.value.trim();
-        const rawCostPrice = parseFloat(rawValue);
+        const profitInput = document.getElementById("profit");
+        const costPriceInput = document.getElementById("costPrice");
+
+        const rawProfit = parseFloat(profitInput.value);
+        const rawCostPrice = parseFloat(costPriceInput.value);
 
         clearFieldErrors("costPrice");
 
         if (isNaN(rawCostPrice)) return;
 
-        if (storeCurrency === "$" && rawCostPrice >= 500) {
-            setFieldError("costPrice", "Cost Price is too large!", "warning");
-        } else if (storeCurrency === "LBP" && rawCostPrice <= 1000) {
-            setFieldError("costPrice", "Cost Price is too small!", "warning");
-        }
-        else if (rawCostPrice >= 50000000) setFieldError("costPrice", "Cost Price is way too large!", "warning");
+        if (storeCurrency === "$" && rawCostPrice > 100)
+            setFieldError("costPrice", "Cost Price is too large", "warning", imgSrc);
+        else if (storeCurrency === "LBP" && rawCostPrice < 5000)
+            setFieldError("costPrice", "Cost Price is too small", "warning", imgSrc);
+        else if (rawCostPrice >= 10000000)
+            setFieldError("costPrice", "Cost Price is way too large", "warning", imgSrc);
+
+        initWarnings(rawProfit, rawCostPrice);
     });
 
     document.getElementById("profit").addEventListener("input", () => {
@@ -382,14 +388,14 @@ function showProductForm() {
 
     function initWarnings(rawProfit, rawCostPrice) {
         if (!isNaN(rawProfit)) {
-            if (rawProfit <= 1000 && storeCurrency === "LBP") {
-                setFieldError("profit", "Profit is too small!", "warning");
-            } //TODO: continue from here.
-            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice && storeCurrency === "$") {
-                setFieldError("profit", "Profit is way too large for this price!", "warning");
-            } else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9) && storeCurrency === "$") {
-                setFieldError("profit", "Profit is too large! for this price", "warning");
-            } else if (rawProfit >= 500 && storeCurrency === "$") setFieldError("profit", "Profit is too large!", "warning");
+            if (rawProfit < 1000 && storeCurrency === "LBP") 
+                setFieldError("profit", "Profit is too small !", "warning", imgSrc);
+            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice) 
+                setFieldError("profit", "Profit is way too large for this price", "warning", imgSrc); 
+            else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9)) 
+                setFieldError("profit", "Profit is too large for this price", "warning", imgSrc);
+            else if (rawProfit >= 90 && storeCurrency === "$" || rawProfit >= 900000 && storeCurrency === "LBP") 
+                setFieldError("profit", "Profit is too large", "warning", imgSrc);
         }
     }
 
@@ -563,13 +569,12 @@ function addProduct() {
         }
     });
 }
-function setFieldError(fieldId, message, type = "error") {
+function setFieldError(fieldId, message, type = "error", iconSrc = null) {
+    console.log(iconSrc);
     const input = document.getElementById(fieldId);
 
-    // Clear any previous error/warning classes
     input.classList.remove("input-error", "input-warning");
 
-    // Add appropriate class
     if (type === "warning") {
         input.classList.add("input-warning");
     } else {
@@ -584,9 +589,11 @@ function setFieldError(fieldId, message, type = "error") {
         input.insertAdjacentElement("afterend", errorMsg);
     }
 
-    // You can also change the color directly here if preferred
-    errorMsg.textContent = message;
-    errorMsg.style.color = type === "warning" ? "#f5a623" : "#e74c3c"; // yellow vs red
+    errorMsg.style.color = type === "warning" ? "#f5a623" : "#e74c3c";
+
+    errorMsg.innerHTML = iconSrc 
+        ? `<img src="${iconSrc}" alt="${type}" style="width: 14px;"> ${message}`
+        : message;
 }
 function clearFieldErrors() {
     document.querySelectorAll(".input-error, .input-warning").forEach((el) => {
@@ -4818,7 +4825,8 @@ function initHelp() {
                 <header class="app-header">
                   <h2 class="app-title">Your All-in-One Mobile POS Solution – Simple, Smart, and Built for Your Business</h2>
                   <p class="app-subtitle">
-                    This application is a complete Point of Sale (POS) and inventory management system designed specifically for small to medium-sized businesses that want speed, simplicity, and full control—all from a mobile or tablet device.
+                    This application is a complete Point of Sale (POS) and inventory management system designed specifically for small to medium-sized businesses that want speed, 
+                    simplicity, and full control—all from a mobile or tablet device.
                   </p>
                 </header>
 
@@ -5671,6 +5679,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // FIXME: edit customer displays two warning and check if add debt also does that.
+// TODO: add exclamations to set field warning and confirm modal and to content messeages.
 // TODO: add infincity spinning animation with background image.
 // TODO: add confirmations.
 // TODO: change modal style.

@@ -1802,6 +1802,8 @@ footer {
   color: #e74c3c;
   font-size: 12px;
   margin-left: 5px;
+  
+  font-weight: 900;
 }
 
 .input-warning {
