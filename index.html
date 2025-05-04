@@ -53,38 +53,6 @@
     </div>
   </aside>
 
-  <div class="tasks" id="tasks">
-    <div class="header-container">
-      <h5 style="font-weight: bolder">Tasks & Reminders</h5>
-      <button type="button" id="done-btn"><img src="icons/check-solid.svg" alt="done"></button>
-    </div>
-
-    <!-- Add/Edit Task Modal -->
-    <div id="task-modal" class="task-modal">
-      <div class="task-modal-content">
-        <h2 id="modal-title">Add New Task</h2>
-        <input type="text" id="task-title" placeholder="Task title">
-        <textarea id="task-content" placeholder="Task details (optional)"></textarea>
-
-        <label for="task-due-date">Due Date & Time (optional):</label>
-        <input type="datetime-local" id="task-due-date">
-
-        <button type="button" class="action-btn" id="add-task-btn">Add Task</button>
-      </div>
-    </div>
-
-    <h2>Your Tasks</h2>
-    <div class="tasks-list" id="tasks-list"></div>
-  </div>
-
-  <div class="notification" id="notification">
-  </div>
-
-  <div id="overlay"></div>
-
-  <div class="edit-customer-form" id="edit-customer-form"></div>
-  <div class="edit-customer-form" id="customer-debt-form"></div>
-  <img src="icons/cir" alt="">
   <main>
     <div class="main-content" id="main-content">
     </div>
@@ -131,6 +99,37 @@
       <span class="active-indicator" id="active-indicator"></span>
     </div>
   </footer>
+
+  <div class="tasks" id="tasks">
+    <div class="header-container">
+      <h5 style="font-weight: bolder">Tasks & Reminders</h5>
+      <button type="button" id="done-btn"><img src="icons/circle-check-solid.svg" alt="done"></button>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="task-modal">
+      <div class="task-modal-content">
+        <h2 id="modal-title">Add New Task</h2>
+        <input type="text" id="task-title" placeholder="Task title">
+        <textarea id="task-content" placeholder="Task details (optional)"></textarea>
+
+        <label for="task-due-date">Due Date & Time (optional):</label>
+        <input type="datetime-local" id="task-due-date">
+
+        <button type="button" class="action-btn" id="add-task-btn">Add Task</button>
+      </div>
+    </div>
+
+    <h2>Your Tasks</h2>
+    <div class="tasks-list" id="tasks-list"></div>
+  </div>
+
+  <div class="notification" id="notification"></div>
+
+  <div id="overlay"></div>
+
+  <div class="edit-customer-form" id="edit-customer-form"></div>
+  <div class="edit-customer-form" id="customer-debt-form"></div>
 
   <div id="feedback-modal" class="feedback-modal">
     <div class="feedback-modal-content">

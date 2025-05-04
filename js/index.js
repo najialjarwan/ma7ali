@@ -329,7 +329,7 @@ function showProductForm() {
 
             <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
             <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
-            <button type="button" id="customFileButton">Choose File</button>
+            <button type="button" id="customFileButton"><img src="icons/cloud-arrow-up-solid.svg" alt="upload"></button>
 
             <label for="costPrice">Cost Price (${storeCurrency}): </label>
             <input type="text" id="costPrice" name="costPrice">
@@ -369,7 +369,7 @@ function addProduct() {
             for (let fieldId in errors) {
                 setFieldError(fieldId, errors[fieldId]);
             }
-            showModalMessage(`<p>Failed to add the product!</p><p>Check ALL input fields.</p>`);
+            showModalMessage(`Failed to add the product!</br>Check ALL input fields.`);
             return;
         }
 
@@ -473,7 +473,9 @@ function addProduct() {
 
             if (!snapshot.empty || !labelSnapshot.empty) {
                 setTimeout(() => {
-                    showModalMessage("Item with the enterd label already exists. Update or change product label and barcode.", false);
+                    !snapshot.empty 
+                    ? showModalMessage(`Item with the enterd <strong>Barcode</strong> already exists. Update or change product barcode.`, false)
+                    : showModalMessage(`Item with the enterd <strong>Label</strong> already exists. Update or change product label.`, false);
                 }, 1500);
                 return;
             }
@@ -504,7 +506,7 @@ function addProduct() {
                 });
 
             } catch (error) {
-                console.error("Error adding product:", error);
+                showModalMessage("Failed To Add Product. Try Again later", false);
             }
 
         } catch (error) {
@@ -529,7 +531,7 @@ function clearFieldErrors() {
     document.querySelectorAll(".input-error").forEach((el) => el.classList.remove("input-error"));
     document.querySelectorAll(".error-text").forEach((el) => el.remove());
 }
-function validateProductForm(formData) {
+async function validateProductForm(formData) {
     let hasError = false;
     const errors = {};
 
@@ -569,17 +571,9 @@ function validateProductForm(formData) {
         errors.costPrice = !rawCostPrice ? "PRODUCT COST PRICE is REQUIRED!" : "PRODUCT COST PRICE must be a NUMBER!";
         hasError = true;
     }
-    else if ((storeCurrency === "$" && rawCostPrice > 500) || (storeCurrency === "LBP" && rawCostPrice < 5000)) {
-        errors.costPrice = (storeCurrency === "$" && rawCostPrice > 500) ? "COST PRICE amount is too large!" : "COST PRICE amount is too small!";
-        hasError = true;
-    }
 
     if (!rawProfit || isNaN(rawProfit)) {
         errors.profit = !rawProfit ? "PRODUCT PROFIT is REQUIRED!" : "PRODUCT PROFIT must be a NUMBER!";
-        hasError = true;
-    }
-    else if ((storeCurrency === "$" && rawProfit > 100) || (storeCurrency === "LBP" && rawProfit < 1000)) {
-        errors.profit = (storeCurrency === "$" && rawProfit > 100) ? "PROFIT amount is too large!" : "PROFIT amount is too small!";
         hasError = true;
     }
 
@@ -710,7 +704,7 @@ function showCartForm() {
         </form>
         <div class="search-container-main" >
             <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
-            <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+            <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
                     <div id="cart-icon">
             <span id="cart-quantity" class="cart-badge">0</span>
             <img src="icons/cart-shopping-solid.svg" alt="Cart" width="30" height="30">
@@ -1088,7 +1082,7 @@ function showSalesForm() {
     mainContent.innerHTML = `
         <div class="search-customer-container search-container-main" >
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product To Add"/>
-            <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
+            <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
     `;
@@ -1348,14 +1342,12 @@ function initButtonSelect(selectId, buttonContainerId) {
         }
 
         btn.addEventListener("click", () => {
-            // Update UI
+
             buttons.forEach(b => b.classList.remove("selected"));
             btn.classList.add("selected");
 
-            // Update select value
             select.value = btn.dataset.value;
 
-            // Trigger any existing change listeners
             const event = new Event("change", { bubbles: true });
             select.dispatchEvent(event);
         });
@@ -1485,6 +1477,17 @@ async function fetchProducts() {
                 document.getElementById("stock-select").value = "";
                 document.getElementById("profit-select").value = "";
                 document.getElementById("sort-by-price-stock-profit").value = "";
+
+                const filterBtns = document.querySelectorAll('button.filter-btn');
+                filterBtns.forEach((btn) => {
+                    btn.classList.remove('selected');
+                })
+
+                const buttons = document.querySelectorAll('button.filter-btn[data-value=""]');
+                buttons.forEach((btn) => {
+                    btn.classList.add('selected');
+                });
+
                 applyFilters();
             });
         }
@@ -1547,13 +1550,13 @@ function renderFilters() {
                 </select>
 
                 <div id="price-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Prices</button>
+                  <button class="filter-btn" data-value=""><img src="icons/ban-solid.svg" alt="none"></button>
                   <button class="filter-btn" data-value="low-price">
-                  Low Price ${storeCurrency === "$" ? '(0-1)' : '(0-' + oneCostPriceFormatted + ')'}</button>
+                  ${storeCurrency === "$" ? '0 - 1' : '0 - ' + oneCostPriceFormatted}</button>
                   <button class="filter-btn" data-value="medium-price">
-                  Medium Price ${storeCurrency === "$" ? '(1-5)' : '(' + oneCostPriceFormatted + '-' + fiveCostPriceFormatted + ')'}</button>
+                  ${storeCurrency === "$" ? '1 - 5' : oneCostPriceFormatted + ' - ' + fiveCostPriceFormatted}</button>
                   <button class="filter-btn" data-value="high-price">
-                  High Price ${storeCurrency === "$" ? '(5+)' : '(' + fiveCostPriceFormatted + '+)'}</button>
+                  ${storeCurrency === "$" ? '5+' : fiveCostPriceFormatted}</button>
                 </div>
             </div>
 
@@ -1567,13 +1570,13 @@ function renderFilters() {
                 </select>
 
                 <div id="profit-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Profits</button>
+                  <button class="filter-btn" data-value=""><img src="icons/ban-solid.svg" alt="none"></button>
                   <button class="filter-btn" data-value="low-profit">
-                  Low profit ${storeCurrency === "$" ? '(0-0.1)' : '(0-' + centProfitFormatted + ')'}</button>
+                  ${storeCurrency === "$" ? '0 - 0.1' : '0 - ' + centProfitFormatted}</button>
                   <button class="filter-btn" data-value="medium-profit">
-                  Medium Profit ${storeCurrency === "$" ? '(0.1-1)' : '(' + centProfitFormatted + '-' + oneCostPriceFormatted + ')'}</button>
+                  ${storeCurrency === "$" ? '0. 1- 1' : centProfitFormatted + ' - ' + oneCostPriceFormatted}</button>
                   <button class="filter-btn" data-value="high-profit">
-                  High Profit ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
+                  ${storeCurrency === "$" ? '(1+)' : '(' + oneCostPriceFormatted + '+)'}</button>
                 </div>
             </div>
 
@@ -1587,10 +1590,10 @@ function renderFilters() {
                 </select>
 
                 <div id="stock-buttons" class="button-group">
-                  <button class="filter-btn" data-value="">All Stocks</button>
-                  <button class="filter-btn" data-value="low-stock">Low Stock (0-5)</button>
-                  <button class="filter-btn" data-value="medium-stock">Medium Stock (6-30)</button>
-                  <button class="filter-btn" data-value="high-stock">High Stock (30+)</button>
+                  <button class="filter-btn" data-value=""><img src="icons/ban-solid.svg" alt="none"></button>
+                  <button class="filter-btn" data-value="low-stock">0 - 5</button>
+                  <button class="filter-btn" data-value="medium-stock">6 - 30</button>
+                  <button class="filter-btn" data-value="high-stock">30+</button>
                 </div>
             </div>
 
@@ -1609,8 +1612,8 @@ function productCard(product) {
                 <img src="${product.img}" alt="${product.label}">
             </div>
             <div class="product-details">
-                <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Barcode:</strong> ${product.barcode}</p>
+                <p><strong>Label:</strong> ${product.label}</p>
                 <p><strong>Cost Price:</strong> ${displayCurrency(product.costPrice)}</p>
                 <p><strong>Profit:</strong> ${displayCurrency(product.profit)}</p>
                 <p><strong>Category:</strong> ${product.category}</p>
@@ -1677,7 +1680,7 @@ async function displayProductForm(product) {
     const formHtml = `
         <div class = "header-container">
             <h5 style="font-weight: bolder">Update Product</h5>
-            <button type="button" id="done-btn">Done</button>
+            <button type="button" id="done-btn"><img src="icons/circle-check-solid.svg" alt="done"></button>
         </div>
         <form id="product-form" class="product-form">
 
@@ -1855,16 +1858,18 @@ async function displayProductForm(product) {
     $("#done-btn").on("click", function () {
         displayProducts(allProducts);
     });
-    $("#remove-button").on("click", function () {
-        const confirmRemove = confirm("Are you sure you want to remove this product? This action cannot be undone.");
+    $("#remove-button").on("click", async function () {
+        const confirmRemove = await showConfirmationModal("Are you sure you want to remove this product?", true);
         if (!confirmRemove) return;
         removeProductFromFirebase(product.id);
     });
 }
 async function removeProductFromFirebase(productId) {
+    refreshProductList();
     await getUserCollection("products").doc(productId).delete()
         .then(async () => {
-            window.location.reload();
+            showModalMessage("Product Removed Successfully.");
+            displayProducts(allProducts);
         })
         .catch(error => {
             console.error("Error removing product:", error);
@@ -2124,7 +2129,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     mainContent.innerHTML = `
         <div class="header-container">
             <h5 style="font-weight: bolder">${customerName}'s Debt</h5>
-            <button type="button" id="cancel-customer-btn">Done</button>
+            <button type="button" id="cancel-customer-btn"><img src="icons/circle-check-solid.svg" alt="done"></button>
         </div>
 
         <div id="customer-table" class="customer-table">
@@ -4978,7 +4983,6 @@ function initHelp() {
 // #region Modal {
 // TODO: Continue from here.
 function showModalMessage(message, isSuccess) {
-    // Create modal container (backdrop)
     const modalContainer = document.createElement("div");
     Object.assign(modalContainer.style, {
         position: "fixed",
@@ -4996,7 +5000,6 @@ function showModalMessage(message, isSuccess) {
         transition: "opacity 0.3s ease-in-out",
     });
 
-    // Create modal box
     const modalBox = document.createElement("div");
     Object.assign(modalBox.style, {
         backgroundColor: "#fff",
@@ -5008,21 +5011,32 @@ function showModalMessage(message, isSuccess) {
         boxShadow: "0 6px 18px rgba(0, 0, 0, 0.15)",
         animation: "slideUp 0.3s ease-out",
         fontFamily: "sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        gap: "10px",
     });
 
-    // Create message
+    const messageTextImg = document.createElement("img");
+    messageTextImg.src = isSuccess ? "icons/circle-check-solid.svg" : "icons/circle-exclamation-solid.svg";
+    messageTextImg.alt = "result";
+    Object.assign(messageTextImg.style, {
+        width: "40px",
+        height: "40px",
+        marginBottom: "5px",
+    });
+
     const messageText = document.createElement("p");
-    messageText.textContent = message;
+    messageText.innerHTML = message;
     Object.assign(messageText.style, {
         color: isSuccess ? "#2ecc71" : "#e74c3c",
         fontSize: "16px",
         fontWeight: "500",
-        marginBottom: "20px",
+        marginBottom: "10px",
     });
 
-    // OK button
     const okButton = document.createElement("button");
-    okButton.textContent = "OK";
     Object.assign(okButton.style, {
         padding: "12px 0",
         width: "100%",
@@ -5036,13 +5050,22 @@ function showModalMessage(message, isSuccess) {
         transition: "background-color 0.2s ease",
     });
 
+    const buttonImg = document.createElement("img");
+    buttonImg.src = "icons/check-solid2.svg";
+    buttonImg.alt = "failed";
+    Object.assign(buttonImg.style, {
+        width: "20px",
+        height: "20px",
+    });
+
     okButton.addEventListener("click", (e) => {
         e.stopPropagation();
         modalContainer.remove();
     });
 
-    // Append elements
+    modalBox.appendChild(messageTextImg);
     modalBox.appendChild(messageText);
+    okButton.appendChild(buttonImg);
     modalBox.appendChild(okButton);
     modalContainer.appendChild(modalBox);
     document.body.appendChild(modalContainer);
@@ -5082,7 +5105,7 @@ function showConfirmationModal(messageText) {
 
         // Message
         const message = document.createElement("p");
-        message.textContent = messageText;
+        message.innerHTML = messageText;
         Object.assign(message.style, {
             fontSize: "25px",
             marginBottom: "20px",
@@ -5584,6 +5607,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// TODO: add infincity spinning animation with background image.
 // TODO: add confirmations.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.

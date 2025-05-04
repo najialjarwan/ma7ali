@@ -255,11 +255,14 @@ h5 {
   border: 4px groove var(--input-color);
   color: var(--accent-color);
   background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .header-container button img{
-  width: 25px;
-  height: 25px;
+  width: 30px;
+  height: 30px;
 }
 
 .main-content .header-container {
@@ -1105,24 +1108,32 @@ footer {
 
 .button-group {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .filter-btn {
   flex-basis: 50%;
-  padding: 1px;
+  padding: 5px;
   border: none;
   background-color: var(--accent-color);
-  color: var(--text-color);
+  color: var(--input-color);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .filter-btn.selected {
-  background-color: var(--accent-color);
+  border: 2px double var(--text-color);
   color: var(--input-color);
-  font-weight: 900;
+  font-weight: 800;
+}
+
+.filter-btn img{
+  width: 20px;
+  height: 20px;
 }
 
 .filter-group select {
@@ -1286,6 +1297,7 @@ footer {
   gap: 1px;
   transition: transform 0.1 ease-in-out;
   position: relative;
+  border-radius: 5px;
 }
 
 .customer-phone .customer-actions {
@@ -1327,7 +1339,6 @@ footer {
 
 .dropdown-option:hover {
   background-color: #ccc;
-  color: var(--input-color);
   cursor: pointer;
 }
 
@@ -1742,6 +1753,11 @@ footer {
   transition: background-color 0.3s ease, transform 0.2s ease;
   width: 100%;
   margin-bottom: 20px;
+}
+
+#customFileButton img{
+  width: 25px;
+  height: 25px;
 }
 
 #customerFileButton:active {
