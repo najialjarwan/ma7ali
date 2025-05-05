@@ -810,6 +810,7 @@ nav {
   margin-left: 20px;
   padding: 5px;
   font-weight: bold;
+  padding-left: 45px;
 }
 
 .search-icon {
@@ -1284,7 +1285,6 @@ footer {
   text-align: left;
   background-color: var(--accent-color);
   color: var(--input-color);
-  padding-left: 30px;
   width: 100%;
 }
 
@@ -1527,7 +1527,6 @@ footer {
   width: 100%;
 }
 
-
 .filter-buttons {
   display: flex;
   flex-direction: column;
@@ -1621,6 +1620,21 @@ footer {
   flex-direction: column;
   justify-content: center;
   gap: 10px;
+}
+
+#cartName::placeholder{
+  font-size: 15px;
+  color: #f5a623;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cartName{
+  background-repeat: no-repeat;
+  background-position: 5px center;
+  background-size: 24px;
+  padding-left: 35px;
 }
 
 .carts-actions button {
@@ -1813,6 +1827,7 @@ footer {
   font-size: 12px;
   margin-left: 5px;
   font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .input-warning {

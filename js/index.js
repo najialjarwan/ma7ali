@@ -351,7 +351,7 @@ function showProductForm() {
     addProduct();
 
     const costPriceInput = document.getElementById("costPrice");
-    const imgSrc = "icons/triangle-exclamation-solid.svg"
+    const imgSrc = "icons/triangle-exclamation-solid.svg";
 
     costPriceInput.addEventListener("input", () => {
         const profitInput = document.getElementById("profit");
@@ -360,7 +360,9 @@ function showProductForm() {
         const rawProfit = parseFloat(profitInput.value);
         const rawCostPrice = parseFloat(costPriceInput.value);
 
-        clearFieldErrors("costPrice");
+        costPriceInput.classList.remove("input-warning");
+        const existingMsg = costPriceInput.parentNode.querySelector(`.error-text[data-for="costPrice"]`);
+        if (existingMsg) existingMsg.remove();
 
         if (isNaN(rawCostPrice)) return;
 
@@ -390,13 +392,13 @@ function showProductForm() {
 
     function initWarnings(rawProfit, rawCostPrice) {
         if (!isNaN(rawProfit)) {
-            if (rawProfit < 1000 && storeCurrency === "LBP") 
+            if (rawProfit < 1000 && storeCurrency === "LBP")
                 setFieldError("profit", "Profit is too small !", "warning", imgSrc);
-            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice) 
-                setFieldError("profit", "Profit is way too large for this price", "warning", imgSrc); 
-            else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9)) 
+            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice)
+                setFieldError("profit", "Profit is way too large for this price", "warning", imgSrc);
+            else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9))
                 setFieldError("profit", "Profit is too large for this price", "warning", imgSrc);
-            else if (rawProfit >= 90 && storeCurrency === "$" || rawProfit >= 900000 && storeCurrency === "LBP") 
+            else if (rawProfit >= 90 && storeCurrency === "$" || rawProfit >= 900000 && storeCurrency === "LBP")
                 setFieldError("profit", "Profit is too large", "warning", imgSrc);
         }
     }
@@ -592,7 +594,7 @@ function setFieldError(fieldId, message, type = "error", iconSrc = null) {
 
     errorMsg.style.color = type === "warning" ? "#f5a623" : "#e74c3c";
 
-    errorMsg.innerHTML = iconSrc 
+    errorMsg.innerHTML = iconSrc
         ? `<img src="${iconSrc}" alt="${type}" style="width: 14px;"> ${message}`
         : message;
 }
@@ -697,7 +699,6 @@ function showCustomerForm() {
         event.preventDefault();
         addCustomer();
     });
-
 }
 async function addCustomer() {
     const name = document.getElementById("name").value.trim().toLowerCase();
@@ -767,14 +768,15 @@ function showCartForm() {
     localSale = {};
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
+        <h2>Create New Cart</h2>
         <form id="cart-form" class="product-form">
             <label for="cartName">Cart Name: (required)</label>
-            <input type="text" id="cartName" name="cartName" required>
-            <button type="submit" class="action-btn" id="save-cart-btn">Create Cart</button>
-            <button type="button" class="action-btn" id="cancel-cart-btn" style="display: none;">Cancel Cart</button>
+            <input type="text" class="cartName" id="cartName" placeholder="" required>
+            <button type="submit" class="action-btn" id="save-cart-btn"><img src="icons/cart-plus-solid.svg" alt="submit"></button>
+            <button type="button" class="action-btn" id="cancel-cart-btn" style="display: none;">Cancel</button>
         </form>
         <div class="search-container-main" >
-            <input type="text" class="search-bar" id="search-customers" disabled placeholder="Search Product to add"/>
+            <input type="text" class="search-bar" id="search-customers" placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
                     <div id="cart-icon">
             <span id="cart-quantity" class="cart-badge">0</span>
@@ -797,7 +799,7 @@ function showCartForm() {
 
         saveCartBtn.remove();
         cancelCartBtn.style.display = "inline-block";
-        cancelCartBtn.style.color = "red";
+        cancelCartBtn.style.color = "#e74c3c";
         cartName.disabled = true;
 
         try {
@@ -807,8 +809,25 @@ function showCartForm() {
         } catch (error) {
             console.error("Error adding cart:", error);
             cancelCartBtn.style.display = "none";
-            cartName.disabled = false;
         }
+    });
+
+    const searchCustomer = document.getElementById('search-customers');
+    searchCustomer.addEventListener('click', () => {
+        if (cartName.disabled === false) {
+            showModalMessage("You need to create a cart before searching for products");
+            searchCustomer.disabled = true;
+            cartName.placeholder = "Please create or enter a cart name first";
+            cartName.disabled = false;
+            cartName.style.backgroundImage = "url('../icons/triangle-exclamation-solid.svg')";
+        }
+    });
+
+    const cartName = document.getElementById('cartName');
+    cartName.addEventListener("input", () => {
+        cartName.placeholder = "";
+        cartName.classList.remove('cartName');
+        cartName.style.backgroundImage = "";
     });
 
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
@@ -2164,7 +2183,7 @@ async function editCustomer(customerId, customerName, customerPhone) {
                 }
             });
 
-            if(duplicateExists) return;
+            if (duplicateExists) return;
 
             phoneQuerySnapshot.forEach(doc => {
                 if (doc.id !== customerId) {
@@ -5694,9 +5713,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// FIXME: edit customer displays two warning and check if add debt also does that.
-// TODO: add exclamations to set field warning and confirm modal and to content messeages.
-// TODO: removee no product message border.
 // TODO: add infincity spinning animation with background image.
 // TODO: add confirmations.
 // TODO: change modal style.
