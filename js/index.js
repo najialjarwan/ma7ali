@@ -1680,9 +1680,9 @@ function renderFilters() {
                   <button class="filter-btn" data-value="low-profit">
                   ${storeCurrency === "$" ? '0 - 0.1' : '0 - ' + centProfitFormatted}</button>
                   <button class="filter-btn" data-value="medium-profit">
-                  ${storeCurrency === "$" ? '0. 1- 1' : centProfitFormatted + ' - ' + oneCostPriceFormatted}</button>
+                  ${storeCurrency === "$" ? '0.1 - 1' : centProfitFormatted + ' - ' + oneCostPriceFormatted}</button>
                   <button class="filter-btn" data-value="high-profit">
-                  ${storeCurrency === "$" ? '(1+)' : oneCostPriceFormatted}</button>
+                  ${storeCurrency === "$" ? '1+' : oneCostPriceFormatted}</button>
                 </div>
             </div>
 
@@ -1766,7 +1766,7 @@ function displayProducts(filteredProducts) {
 
     $(".main-content").html(productCardsHTML ? productsGridHTML : `
         <div class = "no-products-message">
-            <img src="icons/triangle-exclamation-solid.svg" alt="no customer" width=30px height=30px>No Products Found. Add Your First Product
+            <img src="icons/triangle-exclamation-solid.svg" alt="no product" width=30px height=30px>No Products Found.
         </div>`);
 
     if (productCardsHTML) {
@@ -1955,7 +1955,6 @@ async function displayProductForm(product) {
             getUserCollection("products").doc(product.id).update(updatedProduct)
                 .then(() => {
                     showModalMessage("Product Updated Successfully!", true);
-
                     displayProducts(allProducts);
                 })
                 .catch(error => {

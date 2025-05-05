@@ -1273,9 +1273,13 @@ footer {
 .customers-card p {
   font-size: 12px;
   color: var(--accent-color);
-  height: 20px;
+  height: 15px;
   margin-bottom: 0px;
   font-weight: 900;
+}
+
+.product-card p{
+  font-size: 0.6rem;
 }
 
 .product-card p strong,
