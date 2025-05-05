@@ -367,11 +367,11 @@ function showProductForm() {
         if (isNaN(rawCostPrice)) return;
 
         if (storeCurrency === "$" && rawCostPrice > 100)
-            setFieldError("costPrice", "Cost Price is too large", "warning", imgSrc);
+            setFieldError("costPrice", "Cost Price is too high", "warning", imgSrc);
         else if (storeCurrency === "LBP" && rawCostPrice < 5000)
-            setFieldError("costPrice", "Cost Price is too small", "warning", imgSrc);
+            setFieldError("costPrice", "Cost Price is too low", "warning", imgSrc);
         else if (rawCostPrice >= 10000000)
-            setFieldError("costPrice", "Cost Price is way too large", "warning", imgSrc);
+            setFieldError("costPrice", "Cost Price is way too high", "warning", imgSrc);
 
         initWarnings(rawProfit, rawCostPrice);
     });
@@ -393,13 +393,13 @@ function showProductForm() {
     function initWarnings(rawProfit, rawCostPrice) {
         if (!isNaN(rawProfit)) {
             if (rawProfit < 1000 && storeCurrency === "LBP")
-                setFieldError("profit", "Profit is too small !", "warning", imgSrc);
+                setFieldError("profit", "Profit is too low !", "warning", imgSrc);
             else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice)
-                setFieldError("profit", "Profit is way too large for this price", "warning", imgSrc);
+                setFieldError("profit", "Profit is way too high for this price", "warning", imgSrc);
             else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9))
-                setFieldError("profit", "Profit is too large for this price", "warning", imgSrc);
+                setFieldError("profit", "Profit is too high for this price", "warning", imgSrc);
             else if (rawProfit >= 90 && storeCurrency === "$" || rawProfit >= 900000 && storeCurrency === "LBP")
-                setFieldError("profit", "Profit is too large", "warning", imgSrc);
+                setFieldError("profit", "Profit is too high", "warning", imgSrc);
         }
     }
 
@@ -658,6 +658,18 @@ function validateProductForm(formData) {
     if (!rawStock || isNaN(rawStock)) {
         errors.stock = !rawStock ? "Stock is required!" : "Stock must be a number";
         hasError = true;
+    }
+
+    if (hasError) {
+        document.querySelectorAll("input").forEach(input => {
+            input.addEventListener("input", () => {
+                input.classList.remove("input-error");
+                
+                const existingMsg = input.parentNode.querySelector(`.error-text[data-for="${input.name}"]`);
+                console.log(existingMsg);
+                if (existingMsg) existingMsg.remove();
+            }, { once: true }); // Listener triggers once and then removes itself
+        });
     }
 
     return {
