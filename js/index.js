@@ -487,7 +487,7 @@ function addProduct() {
                         canvas.toBlob(
                             (blob) => resolve(blob),
                             "image/jpeg", // Convert to JPEG for smaller file size
-                            0.3 // Adjust quality for faster uploads
+                            0.9 // Adjust quality for faster uploads
                         );
                     };
                     img.src = event.target.result;
@@ -617,9 +617,9 @@ function validateProductForm(formData) {
     const imageFile = formData.get("img");
     const isUpdate = formData.get("formType") === "update";
 
-    if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length < 8 || rawBarcode.length > 10) {
+    if (!rawBarcode || isNaN(rawBarcode) || rawBarcode.length > 30) {
         errors.barcode = !rawBarcode
-            ? "Barcode is required and must be a 8-10 digit number"
+            ? "Barcode is required and must be a 13 digit number"
             : isNaN(rawBarcode)
                 ? "Barcode must be a number!"
                 : rawBarcode.length < 8
