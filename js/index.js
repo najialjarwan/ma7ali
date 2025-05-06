@@ -1094,7 +1094,7 @@ async function displayProductToAdd(product, productId) {
             <img src="${product.img}" alt="${product.label}" width="100" height="100">
         </div>
         <div class="right">
-            <button type="submit" class="add-to-cart-btn"><img src="icons/plus-solid.svg" alt="add"></button>
+            <button type="submit" class="add-to-cart-btn"><img src="icons/plus2-solid.svg" alt="add"></button>
             ${showSales ? `<button type="button" class="cancel-sale-btn"><img src="icons/minus-solid.svg" alt="remove"></button>` : ""}
         </div>
     `;
@@ -1165,7 +1165,6 @@ async function displayProductToAdd(product, productId) {
 
     if (showSales) {
         cancelBtn.addEventListener("click", async function () {
-            showLoadingOverlay(1000);
             await cancelSale(productId);
             currentStock += 1;
         });
@@ -1269,27 +1268,24 @@ async function cancelSale(productId) {
     const productInSale = localSale[productId];
     if (!productInSale || productInSale.quantity <= 0) {
         showModalMessage(`
-            <p>Product sold quantity is 0!</p>
-            <p style="color: yellow; font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);"></p>
+            <p>Product is not in today's sale to cancel</p>
         `, false);
         return;
     }
 
+    showLoadingOverlay(1000);
     const saleDocRef = getUserCollection("sales").doc(currentSaleId);
     const productRef = getUserCollection("products").doc(productId);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
 
-    // Step 1: Decrease the quantity in localSale
     productInSale.quantity -= 1;
     productInSale.total = productInSale.quantity * productInSale.costPrice;
     productInSale.totalProfit = productInSale.quantity * productInSale.profit;
 
-    // If quantity reaches zero, remove the product from localSale and delete from productsSold
     if (productInSale.quantity === 0) {
         delete localSale[productId];
-        await productSoldRef.delete(); // Remove product from Firestore
+        await productSoldRef.delete();
     } else {
-        // Update Firestore productSold collection
         await productSoldRef.set({
             name: productInSale.name,
             quantity: productInSale.quantity,
@@ -1300,13 +1296,14 @@ async function cancelSale(productId) {
         }, { merge: true });
     }
 
-    // Step 2: Restore stock in the products collection
     await productRef.update({
         stock: firebase.firestore.FieldValue.increment(1)
     });
     refreshProductList();
 
-    // Step 3: Recalculate the totals of all sales
+    recalcuateTotals(saleDocRef);
+}
+async function recalcuateTotals(saleDocRef){
     let totalProductsSold = 0;
     let totalRevenue = 0;
     let totalProfit = 0;
@@ -1325,6 +1322,7 @@ async function cancelSale(productId) {
     }, { merge: true });
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
+    console.log(quantityToCancel);
     const today = new Date().toLocaleDateString('en-CA');
     const saleDocRef = getUserCollection("sales").doc(today);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
@@ -1355,8 +1353,8 @@ async function cancelProductQuantity(productId, quantityToCancel) {
     });
 
     await loadTodaySaleToLocal();
-
-
+    refreshProductList();
+    recalcuateTotals(saleDocRef);
 }
 async function loadTodaySaleToLocal() {
     const today = new Date().toLocaleDateString('en-CA');
