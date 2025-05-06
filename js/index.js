@@ -1182,6 +1182,7 @@ function showSalesForm() {
     localSale = {};
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
+        <h2>Add & Cancel Sales</h2>
         <div class="search-customer-container search-container-main" >
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product To Add"/>
             <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>

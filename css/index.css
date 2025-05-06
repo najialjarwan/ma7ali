@@ -2031,7 +2031,11 @@ footer {
   width: 100%;
 }
 
-.inventory-analytics h2 {
+.inventory-analytics hr{
+  opacity: 0 !important;
+}
+
+.inventory-analytics h2, h2 {
   color: var(--accent-color);
   width: 100%;
   padding: 1rem;
