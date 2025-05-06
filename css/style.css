@@ -36,6 +36,10 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   touch-action: none; /* Prevent touch gestures from affecting the page */
   user-select: none;
+  background: url("../images/background10.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center center;
 }
 .walkthrough {
   position: relative;
@@ -140,10 +144,6 @@ body {
 
 .wrapper {
   box-sizing: border-box;
-  background: url("../images/background10.png");
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center center;
   overflow: hidden;
   touch-action: manipulation;
   height: 100vh;

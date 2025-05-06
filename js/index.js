@@ -20,7 +20,7 @@ function hideLoadingOverlay() {
     const overlay = document.getElementById('loading-overlay');
     overlay.style.display = 'none';
 }
-// Register correct service worker
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
@@ -31,7 +31,7 @@ if ('serviceWorker' in navigator) {
         });
 }
 window.addEventListener('resize', (e) => {
-    e.preventDefault(); // Prevent resizing effects
+    e.preventDefault();
 });
 document.addEventListener('gesturestart', e => e.preventDefault());
 
