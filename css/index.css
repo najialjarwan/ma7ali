@@ -50,7 +50,6 @@ h2,
 h5 {
   color: var(--accent-color) !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
-
 }
 
 .action-btn {
@@ -278,7 +277,7 @@ hr{
 .header-container button {
   position: absolute;
   top: 15px;
-  right: 0px;
+  right: 20px;
   width: 35%;
   height: 40px;
   font-size: large;
@@ -299,14 +298,6 @@ hr{
 
 .main-content .header-container {
   padding: 20px 0;
-}
-
-.container #done-btn {
-  top: 15px;
-  right: 60px;
-  width: 35%;
-  height: 40px;
-  font-size: large;
 }
 
 .container h2 {
@@ -401,8 +392,9 @@ hr{
   height: 50px;
 }
 
+
 /* Tasks Section */
-.tasks{
+.tasks, .store-settings{
   display: none;
   position: fixed;
   bottom: -100%;
@@ -418,7 +410,11 @@ hr{
   padding-bottom: 200px;
 }
 
-.tasks.active {
+.store-settings .product-form{
+  padding: 20px;
+}
+
+.tasks.active, .store-settings.active {
   display: block;
   bottom: 0;
 }
@@ -465,14 +461,6 @@ hr{
 .tasks .header-container {
   padding: 20px;
   background-color: transparent;
-}
-
-.tasks .header-container button {
-  top: 15px;
-  right: 20px;
-  width: 35%;
-  height: 40px;
-  font-size: large;
 }
 
 /* Modal overall */

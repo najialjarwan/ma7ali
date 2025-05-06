@@ -195,7 +195,12 @@ async function initializeEventListeners() {
 
     profileLink.addEventListener('click', (e) => {
         e.preventDefault();
-        loadContent("profile");
+        const storeSettings = document.getElementById('store-settings');
+        storeSettings.classList.add('active');
+        initProfile();
+        document.getElementById('store-done-btn').addEventListener('click', () => {
+            storeSettings.classList.remove('active');
+        });
     });
 
     tasksLink.addEventListener('click', () => {
@@ -2242,7 +2247,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     const mainContent = document.querySelector('.main-content');
     mainContent.innerHTML = `
         <div class="header-container">
-            <h2>${customerName}'s Debt</h2>
+            <h5>${customerName}'s Debt</h5>
             <button type="button" id="cancel-customer-btn"><img src="icons/arrow-right-solid.svg" alt="done"></button>
         </div>
 
@@ -4020,63 +4025,10 @@ const themeCombos = {
     combo3: ["#6F91CC", "#97B8FF"]
 };
 function initProfile() {
-    renderProfileForm();
     addEventListeners();
     loadUserProfile();
 }
-function renderProfileForm() {
-    document.body.innerHTML = `
-        <div class="container">
-            <div class="header-container">
-                <h5>Store Settings</h5>
-                <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
-            </div>
-            <form class="product-form">
-                <label>Store Name</label>
-                <input type="text" id="storeName" placeholder="Enter your store name" />
-                               
-                <label>Exchange Rate (1$ = LBP)</label>
-                <input type="text" id="exchangeRate" placeholder="1500" />
-
-                <label>Currency</label>
-                <div id="currencyOptions" class="button-selector">
-                    <button type="button" class="currency-btn selected" data-value="$">$</button>
-                    <button type="button" class="currency-btn" data-value="LBP">LBP</button>
-                </div>
-
-                <label>Themes Combos</label>
-                <div class="themes-combos" id="comboOptions">
-                    <strong>Default:</strong>
-                    <div class="combo-btn selected" data-value="default">
-                        <div style="background-color: #00EEff"></div>
-                        <div style="background-color: #00CCEE;"></div>
-                    </div>
-                    <strong>Combo 1:</strong>
-                    <div class="combo-btn" data-value="combo1">
-                        <div style="background-color: #808090;"></div>
-                        <div style="background-color: #909090;"></div>
-                    </div>
-                    <strong>Combo 2:</strong>
-                    <div class="combo-btn" data-value="combo2">
-                        <div style="background-color: #00CCCC;"></div>
-                        <div style="background-color: #00DDAA;"></div>
-                    </div>
-                    <strong>Combo 3:</strong>
-                    <div class="combo-btn" data-value="combo3">
-                        <div style="background-color:  #6F91CC;"></div>
-                        <div style="background-color:  #97B8FF;"></div>
-                    </div>
-                </div>
-
-                <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
-            </form>
-        </div>
-    `;
-}
 function addEventListeners() {
-    document.getElementById("done-btn").addEventListener("click", () => {
-        window.location.reload();
-    });
     setupCurrencySelector();
     setupComboSelector();
     setupProfileFormSubmit();

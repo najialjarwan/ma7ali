@@ -43,14 +43,21 @@
     </button>
 
     <div class="side-links-container">
-      <a href="#" class="sidebar-link" data-section="profile" id="profile"><img src="icons/store-solid.svg" alt="store">Store</a>
-      <a href="#" class="sidebar-link" data-section="account" id="account"><img src="icons/user-solid.svg" alt="account">My Account</a>
-      <a href="#" class="sidebar-link" id="tasksLink"><img src="icons/list-check-solid.svg" alt="tasks">Tasks & Reminders</a>
-      <a href="#" class="sidebar-link" data-section="pdflayout" id="pdf-layout"><img src="icons/file-lines-solid.svg" alt="pdf-layout">PDF Layout</a>
-      <a href="#" class="sidebar-link" id="feedback-btn"><img src="icons/comment-dots-solid.svg" alt="feedback">Feedback</a>
-      <a href="#" class="sidebar-link" data-section="help" id="help"><img src="icons/circle-question-solid.svg" alt="help">Help Center</a>
+      <a href="#" class="sidebar-link" data-section="profile" id="profile"><img src="icons/store-solid.svg"
+          alt="store">Store</a>
+      <a href="#" class="sidebar-link" data-section="account" id="account"><img src="icons/user-solid.svg"
+          alt="account">My Account</a>
+      <a href="#" class="sidebar-link" id="tasksLink"><img src="icons/list-check-solid.svg" alt="tasks">Tasks &
+        Reminders</a>
+      <a href="#" class="sidebar-link" data-section="pdflayout" id="pdf-layout"><img src="icons/file-lines-solid.svg"
+          alt="pdf-layout">PDF Layout</a>
+      <a href="#" class="sidebar-link" id="feedback-btn"><img src="icons/comment-dots-solid.svg"
+          alt="feedback">Feedback</a>
+      <a href="#" class="sidebar-link" data-section="help" id="help"><img src="icons/circle-question-solid.svg"
+          alt="help">Help Center</a>
       <a href="#" class="sidebar-link" id="refresh"><img src="icons/spinner-solid.svg" alt="refresh">Refresh</a>
-      <a href="#" class="sidebar-link logout-btn" id="logout-btn"><img src="icons/door-open-solid.svg" alt="account">Logout</a>
+      <a href="#" class="sidebar-link logout-btn" id="logout-btn"><img src="icons/door-open-solid.svg"
+          alt="account">Logout</a>
     </div>
   </aside>
 
@@ -58,7 +65,7 @@
     <div class="main-content" id="main-content">
     </div>
   </main>
-  
+
   <footer>
     <div class="bottom-nav">
       <button class="nav-btn" data-section="dashboard">
@@ -123,6 +130,52 @@
 
     <h2>Your Tasks</h2>
     <div class="tasks-list" id="tasks-list"></div>
+  </div>
+
+  <div class="store-settings" id="store-settings">
+    <div class="header-container">
+      <h5>Store Settings</h5>
+      <button type="button" class="done-btn" id="store-done-btn"><img src="icons/arrow-down-solid.svg" alt="done"></button>
+    </div>
+    <form class="product-form">
+      <label>Store Name</label>
+      <input type="text" id="storeName" placeholder="Enter your store name" />
+
+      <label>Exchange Rate (1$ = LBP)</label>
+      <input type="text" id="exchangeRate" placeholder="1500" />
+
+      <label>Currency</label>
+      <div id="currencyOptions" class="button-selector">
+        <button type="button" class="currency-btn selected" data-value="$">$</button>
+        <button type="button" class="currency-btn" data-value="LBP">LBP</button>
+      </div>
+
+      <label>Themes Combos</label>
+      <div class="themes-combos" id="comboOptions">
+        <strong>Default:</strong>
+        <div class="combo-btn selected" data-value="default">
+          <div style="background-color: #00EEff"></div>
+          <div style="background-color: #00CCEE;"></div>
+        </div>
+        <strong>Combo 1:</strong>
+        <div class="combo-btn" data-value="combo1">
+          <div style="background-color: #808090;"></div>
+          <div style="background-color: #909090;"></div>
+        </div>
+        <strong>Combo 2:</strong>
+        <div class="combo-btn" data-value="combo2">
+          <div style="background-color: #00CCCC;"></div>
+          <div style="background-color: #00DDAA;"></div>
+        </div>
+        <strong>Combo 3:</strong>
+        <div class="combo-btn" data-value="combo3">
+          <div style="background-color:  #6F91CC;"></div>
+          <div style="background-color:  #97B8FF;"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
+    </form>
   </div>
 
   <div class="notification" id="notification"></div>
