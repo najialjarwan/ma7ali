@@ -170,7 +170,7 @@ async function initializeEventListeners() {
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('close-btn');
     const tasksLink = document.getElementById('tasksLink');
-    const pdfLayoutLink = document.getElementById('pdf-layout');
+    const pdfLayoutLink = document.getElementById('pdf-layout-link');
     const helpLink = document.getElementById('help');
     const profileLink = document.getElementById('profile');
     const refreshLink = document.getElementById('refresh');
@@ -224,7 +224,9 @@ async function initializeEventListeners() {
 
     pdfLayoutLink.addEventListener('click', (e) => {
         e.preventDefault();
-        loadContent("pdflayout");
+        const pdfLayout = document.getElementById('pdf-layout');
+        pdfLayout.classList.add('active');
+        initpdfLayout();
     });
 
     helpLink.addEventListener('click', (e) => {
@@ -304,10 +306,6 @@ async function loadContent(section) {
             showSalesForm();
         //
 
-        if (section === "profile")
-            initProfile();
-        if (section === "pdflayout")
-            initpdfLayout();
         if (section === "help")
             initHelp();
     } catch (error) {
@@ -4626,13 +4624,13 @@ async function initpdfLayout() {
         oddRowTextColor: "#000000"
     };
 
-    document.body.innerHTML = `
-    <div id="pdf-layout-controls" class="container">
+    const pdfLayoutContainer = document.getElementById('pdf-layout');
+    pdfLayoutContainer.innerHTML = `
         <div class = "header-container">
             <h5>Change PDF Layout</h5>
-            <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
+            <button type="button" id="pdf-done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
         </div>
-        <form id="pdf-layout-form" class="produc-form">
+        <form id="pdf-layout-form" class="product-form">
             <label>Background Color:</label>
             <input type="color" id="fillColorPicker" value="${originalSettings.fillColor}" />
     
@@ -4670,7 +4668,6 @@ async function initpdfLayout() {
             <button id="reset-layout-default" type="button" class="action-btn" style="color: red;">Reset to Default</button>
 
         </form>
-    </div>
     `;
 
     const buttons = document.querySelectorAll('.align-btn');
@@ -4742,9 +4739,9 @@ async function initpdfLayout() {
         });
     });
 
-    const exitBtn = document.getElementById("done-btn");
+    const exitBtn = document.getElementById("pdf-done-btn");
     exitBtn.addEventListener("click", () => {
-        window.location.reload();
+        pdfLayoutContainer.classList.remove('active');
     });
 }
 async function saveLayout() {

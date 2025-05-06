@@ -394,8 +394,7 @@ hr{
 
 
 /* Tasks Section */
-.tasks, .store-settings{
-  display: none;
+.tasks, .store-settings, .pdf-layout{
   position: fixed;
   bottom: -100%;
   height: 100vh;
@@ -410,12 +409,11 @@ hr{
   padding-bottom: 200px;
 }
 
-.store-settings .product-form{
+.store-settings .product-form, .pdf-layout .product-form{
   padding: 20px;
 }
 
-.tasks.active, .store-settings.active {
-  display: block;
+.tasks.active, .store-settings.active , .pdf-layout.active{
   bottom: 0;
 }
 
@@ -537,11 +535,18 @@ hr{
   color: var(--accent-color);
 }
 
+.taskListContainer{
+  padding: 20px;
+}
+
+.taskListContainer h2{
+  margin-bottom: 20px;
+}
+
 .tasks-list {
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
   gap: 8px;
 }
 

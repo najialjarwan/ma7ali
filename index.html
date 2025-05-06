@@ -43,14 +43,14 @@
     </button>
 
     <div class="side-links-container">
-      <a href="#" class="sidebar-link" data-section="profile" id="profile"><img src="icons/store-solid.svg"
+      <a href="#" class="sidebar-link" id="profile"><img src="icons/store-solid.svg"
           alt="store">Store</a>
-      <a href="#" class="sidebar-link" data-section="account" id="account"><img src="icons/user-solid.svg"
-          alt="account">My Account</a>
       <a href="#" class="sidebar-link" id="tasksLink"><img src="icons/list-check-solid.svg" alt="tasks">Tasks &
         Reminders</a>
-      <a href="#" class="sidebar-link" data-section="pdflayout" id="pdf-layout"><img src="icons/file-lines-solid.svg"
+      <a href="#" class="sidebar-link" id="pdf-layout-link"><img src="icons/file-lines-solid.svg"
           alt="pdf-layout">PDF Layout</a>
+      <a href="#" class="sidebar-link" id="account"><img src="icons/user-solid.svg"
+          alt="account">Account</a>
       <a href="#" class="sidebar-link" id="feedback-btn"><img src="icons/comment-dots-solid.svg"
           alt="feedback">Feedback</a>
       <a href="#" class="sidebar-link" data-section="help" id="help"><img src="icons/circle-question-solid.svg"
@@ -128,14 +128,18 @@
       </div>
     </div>
 
-    <h2>Your Tasks</h2>
-    <div class="tasks-list" id="tasks-list"></div>
+    <div class="taskListContainer">
+      <h2>Your Tasks</h2>
+      <div class="tasks-list" id="tasks-list"></div>
+    </div>
+
   </div>
 
   <div class="store-settings" id="store-settings">
     <div class="header-container">
       <h5>Store Settings</h5>
-      <button type="button" class="done-btn" id="store-done-btn"><img src="icons/arrow-down-solid.svg" alt="done"></button>
+      <button type="button" class="done-btn" id="store-done-btn"><img src="icons/arrow-down-solid.svg"
+          alt="done"></button>
     </div>
     <form class="product-form">
       <label>Store Name</label>
@@ -177,6 +181,8 @@
       <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
     </form>
   </div>
+
+  <div class="pdf-layout" id="pdf-layout"></div>
 
   <div class="notification" id="notification"></div>
 
