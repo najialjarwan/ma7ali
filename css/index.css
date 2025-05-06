@@ -1861,11 +1861,8 @@ footer {
   justify-content: center;
   align-items: center;
   position: relative;
-  filter: invert(86%) sepia(10%) saturate(300%) hue-rotate(210deg);
-}
-
-#cart-icon img {
-  filter: brightness(100) invert(1);
+  top: 0;
+  right: 10px;
 }
 
 .cart-badge {
@@ -1877,6 +1874,7 @@ footer {
   font-size: 10px;
   padding: 2px 2px;
   border-radius: 50%;
+  width: 20px;
   transform: translate(50%, -50%);
   z-index: 1;
 }

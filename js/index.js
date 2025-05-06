@@ -790,10 +790,10 @@ function showCartForm() {
         <div class="search-container-main" >
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product to add"/>
             <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
-                    <div id="cart-icon">
-            <span id="cart-quantity" class="cart-badge">0</span>
-            <img src="icons/cart-shopping-solid.svg" alt="Cart" width="30" height="30">
-        </div>
+            <div id="cart-icon">
+                <span id="cart-quantity" class="cart-badge">0</span>
+                <img src="icons/cart-shopping2-solid.svg" alt="Cart" width="35" height="35">
+            </div>
         </div>
         <div class="cart-products-container" id="cart-products-container"></div>
         <div class="cart-display-container" id="cart-display-container" style="display: none">
@@ -5725,7 +5725,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // TODO: add infincity spinning animation with background image.
-// TODO: add confirmations.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
