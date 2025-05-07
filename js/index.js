@@ -714,11 +714,23 @@ function showCustomerForm() {
     const customerForm = document.getElementById("customer-form");
 
     customerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        addCustomer();
+        try{
+            event.preventDefault();
+            event.stopPropagation();
+            await addCustomer();
+            console.log("add customer finsished");
+            customerForm.disabled = true;
+        }
+        catch(error){
+            console.error(error);
+        }
+        finally{
+            customerForm.disabled = false;
+        }
     });
 }
 async function addCustomer() {
+    console.log("called add customer");
     const name = document.getElementById("name").value.trim().toLowerCase();
     const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
 
@@ -836,7 +848,10 @@ function showCartForm() {
     const searchCustomer = document.getElementById('search-customers');
     searchCustomer.addEventListener('click', () => {
         if (cartName.disabled === false) {
-            showModalMessage("You need to create a cart before searching for products");
+            renderNotification(`
+                <img src="icons/triangle-exclamation-solid.svg" alt="alert">
+                <p>You need to create a cart before searching for products.</p>
+            `);
             searchCustomer.disabled = true;
             cartName.placeholder = "Please create or enter a cart name first";
             cartName.disabled = false;
@@ -2014,7 +2029,10 @@ async function removeProductFromFirebase(productId) {
     refreshProductList();
     await getUserCollection("products").doc(productId).delete()
         .then(async () => {
-            showModalMessage("Product Removed Successfully.");
+            renderNotification(`
+                <img src="icons/circle-check-solid.svg" alt="alert">
+                <p>Product Removed Successfully.</p>
+            `);
             displayProducts(allProducts);
         })
         .catch(error => {
@@ -2170,6 +2188,10 @@ function renderCustomerCard(customer) {
         try {
             await getUserCollection("customers").doc(customer.id).delete();
             customersGrid.removeChild(customerCard);
+            renderNotification(`
+                <img src="icons/circle-check-solid.svg" alt"succes">
+                <p>Customer Removed Successfully.</p>
+            `);
         } catch (error) {
             console.log(error);
         }
@@ -2228,7 +2250,10 @@ async function editCustomer(customerId, customerName, customerPhone) {
             duplicateQuerySnapshot.forEach(doc => {
                 if (doc.id !== customerId) {
                     duplicateExists = true;
-                    showModalMessage("A customer with the same name already exists!", false);
+                    renderNotification(`
+                        <img src="icons/circle-exclamation-solid.svg" alt="alert">
+                        <p>A customer with the same name already exists.</p>
+                    `);
                 }
             });
 
@@ -2237,7 +2262,10 @@ async function editCustomer(customerId, customerName, customerPhone) {
             phoneQuerySnapshot.forEach(doc => {
                 if (doc.id !== customerId) {
                     duplicateExists = true;
-                    showModalMessage("A customer with the same phone number already exists!", false);
+                    renderNotification(`
+                        <img src="icons/circle-exclamation-solid.svg" alt="alert">
+                        <p>A customer with the same phone number already exists.</p>
+                    `);
                 }
             });
 
@@ -2250,7 +2278,10 @@ async function editCustomer(customerId, customerName, customerPhone) {
                 phoneNumber: updatedPhone
             });
 
-            showModalMessage("Customer Edited Successfully!", true);
+            renderNotification(`
+                <img src="icons/circle-check-solid.svg" alt="alert">
+                <p>Customer Edited Successfully.</p>
+            `);
             editCustomerForm.style.display = "none";
             overlay.style.display = "none";
             initCustomersPage();
@@ -2318,7 +2349,6 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     document.getElementById("cancel-customer-btn").addEventListener("click", () => {
         initCustomersPage();
     });
-
 
     document.getElementById("add-debt").addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -2415,7 +2445,12 @@ async function renderAddDebtForm(customerId) {
                     balance: balanceConverted,
                     createdAt: firebase.firestore.Timestamp.now(),
                 });
-                showModalMessage("Debt added successfully!", true);
+
+                renderNotification(`
+                    <img src="icons/circle-check-solid.svg" alt="alert">
+                    <p>Debt added successfully.</p>
+                `);
+                
                 document.getElementById("customer-debt").reset();
                 resolve(); // ✅ Only resolve here after successful add
             } catch (error) {
@@ -2482,7 +2517,10 @@ function initCartsAndSalesSection() {
                         doc.ref.delete();
                     });
                     initCartsAndSalesSection();
-                    showModalMessage("All carts deleted successfully!", true);
+                    renderNotification(`
+                        <img src="icons/circle-check-solid.svg" alt="alert">
+                        <p>All carts deleted successfully.</p>
+                    `);
                 } catch (error) {
                     console.error("Error deleting carts:", error);
                     showModalMessage("Error deleting carts. Please try again.", false);
@@ -2555,8 +2593,12 @@ function renderCartsTable(carts) {
             if (confirmation) {
                 try {
                     await getUserCollection("carts").doc(cartId).delete();
-                    showModalMessage("Cart deleted successfully!", true);
-                    // TODO: continue from here
+                    showModalMessage("!", true);
+                    renderNotification(`
+                        <img src="icons/circle-check-solid.svg" alt="alert">
+                        <p>Cart Deleted Successfully.</p>
+                    `);
+
                     cartsTable.removeChild(cartDiv);
                 } catch (error) {
                     console.error("Error deleting cart:", error);
@@ -4330,25 +4372,17 @@ function startTaskNotifications() {
 function renderNotification(content) {
     const notification = document.getElementById('notification');
 
-    // Function to activate the notification with content
     const activateNotification = () => {
         notification.innerHTML = content;
 
-        // Trigger reflow to reset animation
         void notification.offsetWidth;
 
         notification.classList.add('active');
-        // Auto-hide after 7 seconds
-        setTimeout(() => {
-            notification.classList.remove('active');
-        }, 700000);
 
-        // Vibrate
         if (navigator.vibrate) {
             navigator.vibrate(200);
         }
 
-        // Play sound
         const context = new (window.AudioContext || window.webkitAudioContext)();
         fetch('sounds/Alert-notification.mp3')
             .then(res => res.arrayBuffer())
@@ -4360,7 +4394,6 @@ function renderNotification(content) {
                 source.start(0, 0, 1);
             });
 
-        // Touch dismiss (swipe up)
         let touchStartY = 0;
         let touchEndY = 0;
 
@@ -4377,7 +4410,6 @@ function renderNotification(content) {
         });
     };
 
-    // If already active, remove then re-add after animation
     if (notification.classList.contains('active')) {
         notification.classList.remove('active');
         setTimeout(() => {
@@ -5720,6 +5752,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// FIXME: fix mutliple event listeners in store, and pdf settings.
+// FIXME: fix when changing the currency in produts section then exporting it exports multiple times.
 //TODO: change all modal messeage success and warning to notification
 // TODO: change the sounrd of the message to the iphone one.
 // TODO: add infincity spinning animation with background image.
