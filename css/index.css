@@ -345,10 +345,16 @@ hr{
   border-color: var(--accent-color);
 }
 
-.container label {
+.pdf-layout label, .store-settings label {
   font-weight: bold;
   display: flex;
   justify-content: flex-start;
+  color: var(--input-color);
+}
+
+.store-settings h5{
+  color: var(--input-color) !important;
+  font-weight: 900;
 }
 
 .container input {
@@ -404,14 +410,8 @@ hr{
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  background: url("../images/background10.png");
-  background-size: cover;
-  padding-bottom: 200px;
-}
-
-.tasks{
   background: none;
-  background: linear-gradient(360deg, var(--accent-color), var(--text-color));
+  background: linear-gradient(360deg, var(--text-color), var(--accent-color));
 }
 
 .store-settings .product-form, .pdf-layout .product-form{
@@ -663,7 +663,7 @@ hr{
 }
 
 .task-content {
-  background-color: var(--accent-color);
+  background-color: transparent;
   max-height: 0;
   overflow: hidden;
   margin: 0;

@@ -2434,7 +2434,7 @@ function initCartsAndSalesSection() {
 
         const deleteAllCartsBtn = document.getElementById('delete-carts-btn');
         deleteAllCartsBtn.addEventListener('click', async () => {
-            const confirmation = confirm("Are you sure you want to delete all carts? This action cannot be undone.");
+            const confirmation = await showConfirmationModal("Are you sure you want to delete all carts? This action cannot be undone.");
             if (confirmation) {
                 try {
                     const cartsSnapshot = await getUserCollection("carts").get();
@@ -2512,9 +2512,10 @@ function renderCartsTable(carts) {
         `;
 
         const deleteCartBtn = cartDiv.querySelector(".delete-cart-btn");
-        deleteCartBtn.addEventListener('click', async () => {
+        deleteCartBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
             const cartId = deleteCartBtn.dataset.cartId;
-            const confirmation = confirm("Are you sure you want to delete this cart? This action cannot be undone.");
+            const confirmation = await showConfirmationModal("Are you sure you want to delete this cart? This action cannot be undone.");
             if (confirmation) {
                 try {
                     await getUserCollection("carts").doc(cartId).delete();
@@ -4048,54 +4049,56 @@ function addEventListeners() {
             });
         });
     }
-    function setupProfileFormSubmit() {
+}
+function setupProfileFormSubmit() {
+    console.log('called');
 
-        const form = document.querySelector('.product-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
 
-            const storeName = document.getElementById('storeName').value.trim();
-            const exchangeRate = document.getElementById('exchangeRate').value.trim();
-            const currency = getSelectedCurrency();
-            const combo = getSelectedCombo();
+    const form = document.querySelector('.product-form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const storeName = document.getElementById('storeName').value.trim();
+        const exchangeRate = document.getElementById('exchangeRate').value.trim();
+        const currency = getSelectedCurrency();
+        const combo = getSelectedCombo();
 
-            if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
-                !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false)
-                    : showModalMessage("Exchange rate must be a number", false);
-                return;
-            }
-
-            console.log(currentThemeIndex);
-            const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
-            console.log(profileData.currentThemeIndex);
-            await saveUserProfile(profileData);
-        });
-
-        function getSelectedCurrency() {
-            const selectedBtn = document.querySelector('.currency-btn.selected');
-            return selectedBtn ? selectedBtn.dataset.value : null;
+        if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
+            !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false)
+                : showModalMessage("Exchange rate must be a number", false);
+            return;
         }
 
-        function getSelectedCombo() {
-            const selected = document.querySelector('.combo-btn.selected');
-            return selected ? selected.dataset.value : null;
+        console.log(currentThemeIndex);
+        const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
+        console.log(profileData.currentThemeIndex);
+        await saveUserProfile(profileData);
+    }, { once: true });
+
+    function getSelectedCurrency() {
+        const selectedBtn = document.querySelector('.currency-btn.selected');
+        return selectedBtn ? selectedBtn.dataset.value : null;
+    }
+
+    function getSelectedCombo() {
+        const selected = document.querySelector('.combo-btn.selected');
+        return selected ? selected.dataset.value : null;
+    }
+
+    async function saveUserProfile(profileData) {
+        try {
+            await getUserCollection("profile").doc("storeSettings").set(profileData);
+            showModalMessage("Store Settings Saved Successfully.", true);
+        } catch (error) {
+            console.error("Failed to save profile settings:", error);
         }
 
-        async function saveUserProfile(profileData) {
-            try {
-                await getUserCollection("profile").doc("storeSettings").set(profileData);
-                showModalMessage("Store Settings Saved Successfully.", true);
-            } catch (error) {
-                console.error("Failed to save profile settings:", error);
-            }
-
-            updateAccentColor(profileData.combo, profileData.currentThemeIndex);
-        }
+        updateAccentColor(profileData.combo, profileData.currentThemeIndex);
     }
 }
 async function loadUserProfile() {
     const profileRef = getUserCollection("profile").doc("storeSettings");
-
 
     try {
         const doc = await profileRef.get();
@@ -4181,7 +4184,6 @@ function updateComboSelection(combo) {
 function updateAccentColor(combo, index) {
     currentComboColors = themeCombos[combo] || themeCombos.default;
     initialBaseColor = index === 0 ? currentComboColors[0] : currentComboColors[1];
-    console.log(index);
     const root = document.documentElement;
     root.style.setProperty("--accent-color", initialBaseColor);
 
@@ -4687,7 +4689,7 @@ async function initpdfLayout() {
     saveLayoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
         saveLayout();
-    });
+    }, { once: true });
 
     function applyInputValue(settingKey, value) {
         const map = {
