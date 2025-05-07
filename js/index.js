@@ -194,7 +194,6 @@ async function initializeEventListeners() {
     }
 
     profileLink.addEventListener('click', (e) => {
-        e.preventDefault();
         const storeSettings = document.getElementById('store-settings');
         storeSettings.classList.add('active');
         initProfile();
@@ -202,6 +201,19 @@ async function initializeEventListeners() {
             storeSettings.classList.remove('active');
         });
     });
+    const storeSettings = document.getElementById('store-settings');
+    storeSettings.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        storeSettings.disabled = true;
+        try{
+            await setupProfileFormSubmit();
+        } catch(error){
+            console.error("error saving settings: ", error);
+        } finally {
+            storeSettings.disabled = false;
+        }
+    })
 
     tasksLink.addEventListener('click', () => {
         const tasks = document.getElementById('tasks');
@@ -222,11 +234,24 @@ async function initializeEventListeners() {
         }
     });
 
-    pdfLayoutLink.addEventListener('click', (e) => {
-        e.preventDefault();
+    pdfLayoutLink.addEventListener('click', async (e) => {
         const pdfLayout = document.getElementById('pdf-layout');
         pdfLayout.classList.add('active');
-        initpdfLayout();
+        await initpdfLayout();
+
+        const saveLayoutBtn = document.getElementById("save-layout");
+        saveLayoutBtn.addEventListener("click",async (e) => {
+            e.preventDefault();
+            e.stopPropagation
+            saveLayoutBtn.disabled = true;
+            try{
+                await saveLayout();
+            } catch (error) {
+                console.error("Error saving pdflayout:", error);
+            } finally {
+                saveLayoutBtn.disabled = false;
+            }
+        });
     });
 
     helpLink.addEventListener('click', (e) => {
@@ -714,17 +739,17 @@ function showCustomerForm() {
     const customerForm = document.getElementById("customer-form");
 
     customerForm.addEventListener("submit", async (event) => {
-        try{
+        try {
             event.preventDefault();
             event.stopPropagation();
             await addCustomer();
             console.log("add customer finsished");
             customerForm.disabled = true;
         }
-        catch(error){
+        catch (error) {
             console.error(error);
         }
-        finally{
+        finally {
             customerForm.disabled = false;
         }
     });
@@ -1137,16 +1162,16 @@ async function displayProductToAdd(product, productId) {
             return;
         }
 
-        try{
+        try {
             actionBtn.disabled = true;
             await actionFunction(productId, product.label, product.costPrice, product.profit);
             currentStock -= 1;
-            console.log("stock: ",currentStock);
+            console.log("stock: ", currentStock);
         }
-        catch(error){
+        catch (error) {
             console.error(error);
         }
-        finally{
+        finally {
             actionBtn.disabled = false;
         }
         if (!showSales) {
@@ -1195,7 +1220,7 @@ async function displayProductToAdd(product, productId) {
 
     if (showSales) {
         cancelBtn.addEventListener("click", async function () {
-            try{
+            try {
                 cancelBtn.disabled = true;
                 const productInSale = localSale[productId];
                 if (!productInSale || productInSale.quantity <= 0) {
@@ -1208,10 +1233,10 @@ async function displayProductToAdd(product, productId) {
                 currentStock += 1;
                 console.log("stock cacnel: ", currentStock);
             }
-            catch(error){
+            catch (error) {
                 console.error(error);
             }
-            finally{
+            finally {
                 cancelBtn.disabled = false;
             }
         });
@@ -1973,7 +1998,7 @@ async function displayProductForm(product) {
 
                                     refreshProductList();
                                     getUserCollection("products").doc(product.id).update(updatedProduct)
-                                        .then( async () => {
+                                        .then(async () => {
                                             renderNotification(`
                                                 <img src="icons/circle-check-solid.svg" alt="alert">
                                                 <p>Product Updated Successfully.</p>
@@ -2450,7 +2475,7 @@ async function renderAddDebtForm(customerId) {
                     <img src="icons/circle-check-solid.svg" alt="alert">
                     <p>Debt added successfully.</p>
                 `);
-                
+
                 document.getElementById("customer-debt").reset();
                 resolve(); // ✅ Only resolve here after successful add
             } catch (error) {
@@ -4106,7 +4131,6 @@ function initProfile() {
 function addEventListeners() {
     setupCurrencySelector();
     setupComboSelector();
-    setupProfileFormSubmit();
 
     function setupCurrencySelector() {
         const buttons = document.querySelectorAll('.currency-btn');
@@ -4128,31 +4152,23 @@ function addEventListeners() {
         });
     }
 }
-function setupProfileFormSubmit() {
-    console.log('called');
+async function setupProfileFormSubmit() {
 
+    const storeName = document.getElementById('storeName').value.trim();
+    const exchangeRate = document.getElementById('exchangeRate').value.trim();
+    const currency = getSelectedCurrency();
+    const combo = getSelectedCombo();
 
-    const form = document.querySelector('.product-form');
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
+        !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false)
+            : showModalMessage("Exchange rate must be a number", false);
+        return;
+    }
 
-        const storeName = document.getElementById('storeName').value.trim();
-        const exchangeRate = document.getElementById('exchangeRate').value.trim();
-        const currency = getSelectedCurrency();
-        const combo = getSelectedCombo();
-
-        if (!exchangeRate && currency === "LBP" || isNaN(exchangeRate)) {
-            !exchangeRate ? showModalMessage("To chagne the currency to LBP please enter exchange rate!", false)
-                : showModalMessage("Exchange rate must be a number", false);
-            return;
-        }
-
-        console.log(currentThemeIndex);
-        const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
-        console.log(profileData.currentThemeIndex);
-        await saveUserProfile(profileData);
-    }, { once: true });
+    console.log(currentThemeIndex);
+    const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
+    console.log(profileData.currentThemeIndex);
+    await saveUserProfile(profileData);
 
     function getSelectedCurrency() {
         const selectedBtn = document.querySelector('.currency-btn.selected');
@@ -4762,13 +4778,6 @@ async function initpdfLayout() {
             selectedValue = btn.dataset.value;
         });
     });
-
-
-    const saveLayoutBtn = document.getElementById("save-layout");
-    saveLayoutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        saveLayout();
-    }, { once: true });
 
     function applyInputValue(settingKey, value) {
         const map = {
@@ -5754,6 +5763,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // FIXME: fix mutliple event listeners in store, and pdf settings.
 // FIXME: fix when changing the currency in produts section then exporting it exports multiple times.
+// FIXME: fix when updating store name in store settings it doesnt update in the UI
 //TODO: change all modal messeage success and warning to notification
 // TODO: change the sounrd of the message to the iphone one.
 // TODO: add infincity spinning animation with background image.

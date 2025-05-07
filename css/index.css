@@ -697,7 +697,6 @@ hr{
   max-height: 3.5em;
   overflow: hidden;
   text-overflow: ellipsis;
-  -webkit-line-clamp: 3; /* max lines */
   -webkit-box-orient: vertical;
 }
 
