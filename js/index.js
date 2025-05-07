@@ -4338,11 +4338,10 @@ function renderNotification(content) {
         void notification.offsetWidth;
 
         notification.classList.add('active');
-
         // Auto-hide after 7 seconds
         setTimeout(() => {
             notification.classList.remove('active');
-        }, 7000);
+        }, 700000);
 
         // Vibrate
         if (navigator.vibrate) {
@@ -4380,12 +4379,14 @@ function renderNotification(content) {
 
     // If already active, remove then re-add after animation
     if (notification.classList.contains('active')) {
-        return;
+        notification.classList.remove('active');
+        setTimeout(() => {
+            activateNotification();
+        }, 400);
     } else {
         activateNotification();
     }
 }
-
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
     doneBtn.addEventListener('click', () => {
