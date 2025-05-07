@@ -544,7 +544,10 @@ function addProduct() {
             try {
                 showLoadingOverlay(1500);
                 setTimeout(() => {
-                    showModalMessage("Product added successfully!", true);
+                    renderNotification(`
+                        <img src="icons/circle-check-solid.svg" alt"succes">
+                        <p>Product added Successfully.</p>
+                    `);
                     form.reset();
                     document.getElementById("fileName").textContent = `No file selected`;
                 }, 1500);
@@ -667,7 +670,7 @@ function validateProductForm(formData) {
         document.querySelectorAll("input").forEach(input => {
             input.addEventListener("input", () => {
                 input.classList.remove("input-error");
-                
+
                 const existingMsg = input.parentNode.querySelector(`.error-text[data-for="${input.name}"]`);
                 console.log(existingMsg);
                 if (existingMsg) existingMsg.remove();
@@ -764,7 +767,10 @@ async function addCustomer() {
 
             try {
                 await customerRef.set(customerData);
-                showModalMessage("Customer added successfully!", true);
+                renderNotification(`
+                    <img src="icons/circle-check-solid.svg" alt"succes">
+                    <p>Customer added successfully.</p>
+                `);
                 const customerForm = document.getElementById("customer-form");
                 customerForm.reset();
             } catch (error) {
@@ -1105,20 +1111,29 @@ async function displayProductToAdd(product, productId) {
     const animationCooldown = 100;
     const productSnap = await getUserCollection("products").doc(productId).get();
     let currentStock = productSnap.data().stock;
+    console.log(currentStock);
     actionBtn.addEventListener("click", async function () {
 
         if (currentStock <= 0) {
-            showModalMessage(`
-                <p>Product stock is 0!</p>
-                <p style="color: yellow; font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);">
-                    Update the stock to add to sales.
-                </p>
-            `, false);
+            renderNotification(`
+                <img src="icons/triangle-exclamation-solid.svg" alt="alert">
+                <p>Product stock is 0! Update the stock to add to sales.</p>
+            `);
             return;
         }
 
-        await actionFunction(productId, product.label, product.costPrice, product.profit);
-        currentStock -= 1;
+        try{
+            actionBtn.disabled = true;
+            await actionFunction(productId, product.label, product.costPrice, product.profit);
+            currentStock -= 1;
+            console.log("stock: ",currentStock);
+        }
+        catch(error){
+            console.error(error);
+        }
+        finally{
+            actionBtn.disabled = false;
+        }
         if (!showSales) {
             addToSales(productId, product.label, product.costPrice, product.profit);
 
@@ -1165,8 +1180,25 @@ async function displayProductToAdd(product, productId) {
 
     if (showSales) {
         cancelBtn.addEventListener("click", async function () {
-            await cancelSale(productId);
-            currentStock += 1;
+            try{
+                cancelBtn.disabled = true;
+                const productInSale = localSale[productId];
+                if (!productInSale || productInSale.quantity <= 0) {
+                    renderNotification(`
+                        <img src="icons/triangle-exclamation-solid.svg" alt="alert">
+                        <p>Product is not in today's sale to cancel it</p>`);
+                    return;
+                }
+                await cancelSale(productId);
+                currentStock += 1;
+                console.log("stock cacnel: ", currentStock);
+            }
+            catch(error){
+                console.error(error);
+            }
+            finally{
+                cancelBtn.disabled = false;
+            }
         });
     }
 
@@ -1266,12 +1298,6 @@ async function cancelSale(productId) {
     const today = new Date().toLocaleDateString('en-CA');
 
     const productInSale = localSale[productId];
-    if (!productInSale || productInSale.quantity <= 0) {
-        showModalMessage(`
-            <p>Product is not in today's sale to cancel</p>
-        `, false);
-        return;
-    }
 
     showLoadingOverlay(1000);
     const saleDocRef = getUserCollection("sales").doc(currentSaleId);
@@ -1303,7 +1329,7 @@ async function cancelSale(productId) {
 
     recalcuateTotals(saleDocRef);
 }
-async function recalcuateTotals(saleDocRef){
+async function recalcuateTotals(saleDocRef) {
     let totalProductsSold = 0;
     let totalRevenue = 0;
     let totalProfit = 0;
@@ -1932,9 +1958,14 @@ async function displayProductForm(product) {
 
                                     refreshProductList();
                                     getUserCollection("products").doc(product.id).update(updatedProduct)
-                                        .then(() => {
-                                            showModalMessage("Product Updated Successfully!", true);
-                                            displayProducts(allProducts);
+                                        .then( async () => {
+                                            renderNotification(`
+                                                <img src="icons/circle-check-solid.svg" alt="alert">
+                                                <p>Product Updated Successfully.</p>
+                                            `);
+                                            const products = await fetchProductsForDoc();
+                                            allProducts = products;
+                                            displayProducts(products);
                                         })
                                         .catch(error => {
                                             console.error("Error updating product:", error);
@@ -1955,9 +1986,14 @@ async function displayProductForm(product) {
         } else {
             refreshProductList();
             getUserCollection("products").doc(product.id).update(updatedProduct)
-                .then(() => {
-                    showModalMessage("Product Updated Successfully!", true);
-                    displayProducts(allProducts);
+                .then(async () => {
+                    renderNotification(`
+                        <img src="icons/circle-check-solid.svg" alt="alert">
+                        <p>Product Updated Successfully.</p>
+                    `);
+                    const products = await fetchProductsForDoc();
+                    allProducts = products;
+                    displayProducts(products);
                 })
                 .catch(error => {
                     console.error("Error updating product:", error);
@@ -4058,7 +4094,7 @@ function setupProfileFormSubmit() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         const storeName = document.getElementById('storeName').value.trim();
         const exchangeRate = document.getElementById('exchangeRate').value.trim();
         const currency = getSelectedCurrency();
@@ -4255,69 +4291,20 @@ function startTaskNotifications() {
             const timeDiffMs = dueDate - now;
             const timeDiffMinutes = parseFloat(timeDiffMs / (1000 * 60));
 
-            console.log(timeDiffMinutes);
-
-            const notification = document.getElementById('notification');
             if (timeDiffMinutes <= 10 && timeDiffMinutes > 9 && !task.alerted10Min) {
-                notification.innerHTML = `
+                renderNotification(`
                     <img src="icons/bell-solid.svg" alt="alert">
                     <p><strong>Reminder: </strong>10 mins for ${task.title}</p>
-                `;
-                notification.classList.add('active');
-                setTimeout(() => {
-                    notification.classList.remove('active');
-                }, 7000);
-                task.alerted10Min = true;
-
-                const context = new (window.AudioContext || window.webkitAudioContext)();
-                fetch('sounds/Alert-notification.mp3')
-                    .then(res => res.arrayBuffer())
-                    .then(data => context.decodeAudioData(data))
-                    .then(buffer => {
-                        const source = context.createBufferSource();
-                        source.buffer = buffer;
-                        source.connect(context.destination);
-                        source.start(0, 0, 1);
-                    });
+                `);
             }
 
             if (timeDiffMinutes <= 0) {
                 if (notification) {
-                    notification.innerHTML = `
+                    renderNotification(`
                         <img src="icons/bell-solid.svg" alt="alert">
                         <p><strong>Reminder: </strong>Dont't forget to ${task.title}</p>
-                    `;
-                    notification.classList.add('active');
-                    setTimeout(() => {
-                        notification.classList.remove('active');
-                    }, 7000);
+                    `);
                 }
-                console.log(`[Task Notification] Final reminder sent for "${task.title}"`);
-                let touchStartY = 0;
-                let touchEndY = 0;
-                const context = new (window.AudioContext || window.webkitAudioContext)();
-                fetch('sounds/Alert-notification.mp3')
-                    .then(res => res.arrayBuffer())
-                    .then(data => context.decodeAudioData(data))
-                    .then(buffer => {
-                        const source = context.createBufferSource();
-                        source.buffer = buffer;
-                        source.connect(context.destination);
-                        source.start(0, 0, 1);
-                    });
-
-                notification.addEventListener('touchstart', (e) => {
-                    touchStartY = e.changedTouches[0].screenY;
-                });
-
-                notification.addEventListener('touchend', (e) => {
-                    touchEndY = e.changedTouches[0].screenY;
-
-                    if (touchStartY - touchEndY > 50) { // Swipe up threshold
-                        notification.classList.remove('active');
-                    }
-                });
-
 
                 try {
                     await getUserCollection("tasks").doc(task.id).update({
@@ -4340,6 +4327,65 @@ function startTaskNotifications() {
 
     }, 5000);
 }
+function renderNotification(content) {
+    const notification = document.getElementById('notification');
+
+    // Function to activate the notification with content
+    const activateNotification = () => {
+        notification.innerHTML = content;
+
+        // Trigger reflow to reset animation
+        void notification.offsetWidth;
+
+        notification.classList.add('active');
+
+        // Auto-hide after 7 seconds
+        setTimeout(() => {
+            notification.classList.remove('active');
+        }, 7000);
+
+        // Vibrate
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+
+        // Play sound
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        fetch('sounds/Alert-notification.mp3')
+            .then(res => res.arrayBuffer())
+            .then(data => context.decodeAudioData(data))
+            .then(buffer => {
+                const source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                source.start(0, 0, 1);
+            });
+
+        // Touch dismiss (swipe up)
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        notification.addEventListener('touchstart', (e) => {
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        notification.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].screenY;
+
+            if (touchStartY - touchEndY > 50) {
+                notification.classList.remove('active');
+            }
+        });
+    };
+
+    // If already active, remove then re-add after animation
+    if (notification.classList.contains('active')) {
+        return;
+    } else {
+        activateNotification();
+    }
+}
+
 async function initTasksAndReminders() {
     const doneBtn = document.getElementById('done-btn');
     doneBtn.addEventListener('click', () => {
@@ -4371,7 +4417,7 @@ async function saveTask() {
     const dueDate = document.getElementById('task-due-date').value;
 
     if (!title) {
-        alert('Please enter a task title.');
+        showModalMessage(`Please enter a task title.`);
         return;
     }
 
@@ -5048,7 +5094,6 @@ function initHelp() {
 // #endregion }
 
 // #region Modal {
-// TODO: Continue from here.
 function showModalMessage(message, isSuccess) {
     const modalContainer = document.createElement("div");
     Object.assign(modalContainer.style, {
@@ -5674,6 +5719,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+//TODO: change all modal messeage success and warning to notification
+// TODO: change the sounrd of the message to the iphone one.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.
