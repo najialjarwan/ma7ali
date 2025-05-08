@@ -92,7 +92,7 @@ async function initializeApp() {
                 setTimeout(() => {
                     hideSpinner();
                     loadingSpinner.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
-                }, 1000);
+                }, 1500);
 
             }
         });
@@ -304,11 +304,17 @@ async function initializeEventListeners() {
         });
     }
 
-    const toggleSound = new Audio("sounds/light-switch-flip-272436.mp3");
     document.querySelector("#toggle-theme-btn").addEventListener("click", (e) => {
-        toggleSound.currentTime = 0;
-        toggleSound.play();
-        toggleTheme();
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        fetch('sounds/light-switch-flip-272436.mp3')
+            .then(res => res.arrayBuffer())
+            .then(data => context.decodeAudioData(data))
+            .then(buffer => {
+                const source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                source.start(0, 0, 0.5);
+            });
     });
 
     document.querySelector("#feedback-btn").addEventListener("click", (e) => {
@@ -856,7 +862,8 @@ function showCartForm() {
                 <img src="icons/cart-shopping2-solid.svg" alt="Cart" width="35" height="35">
             </div>
         </div>
-        <div class="cart-products-container" id="cart-products-container"></div>
+        <div class="cart-products-container" id="cart-products-container">
+        </div>
         <div class="cart-display-container" id="cart-display-container" style="display: none">
         </div>
     `;
@@ -1125,6 +1132,7 @@ async function fetchProductToAdd() {
 
         async function displayProducts(products) {
             productCardContainer.innerHTML = "";
+        
             if (products.length === 0) {
                 productCardContainer.innerHTML = `
                     <div class="no-products-message">
@@ -1133,10 +1141,12 @@ async function fetchProductToAdd() {
                 `;
                 return;
             }
-            products.forEach(async product => {
-                await displayProductToAdd(product, product.id);
-            });
+        
+            await Promise.all(products.map(product => 
+                displayProductToAdd(product, product.id)
+            ));
         }
+        
     } catch (error) {
         console.error("Error fetching products:", error);
     }
@@ -1266,7 +1276,7 @@ let showSales = false;
 let localSale = {};
 let updateSaleTimer = null;
 let currentSaleId = null;
-function showSalesForm() {
+async function showSalesForm() {
     showSales = true;
     localSale = {};
     const mainContent = document.getElementById("main-content");
@@ -1276,10 +1286,15 @@ function showSalesForm() {
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product To Add"/>
             <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
-        <div class="cart-products-container" id="cart-products-container"></div>
+        <div class="cart-products-container" id="cart-products-container">
+            <div id="addingToSales-spinner" class="spinner"></div>
+        </div>
     `;
     loadTodaySaleToLocal();
-    fetchProductToAdd();
+    const spinner = document.getElementById('addingToSales-spinner');
+    spinner.classList.remove('hidden');
+    await fetchProductToAdd();
+    spinner.classList.add('hidden');
 }
 async function addToSales(productId, label, costPrice, profit) {
     const today = new Date().toLocaleDateString('en-CA');
@@ -1631,8 +1646,6 @@ async function fetchProducts() {
         };
 
         const renderProducts = (filteredProducts) => {
-            const spinner = document.getElementById('products-loading-spinner');
-            spinner.classList.add("hidden");
             productsGrid.innerHTML = "";
 
             filteredProducts.forEach(product => {
@@ -1669,7 +1682,11 @@ async function fetchProducts() {
         profitSelect.addEventListener("change", applyFilters);
         sortByPriceStockProfit.addEventListener("change", applyFilters);
 
+        const spinner = document.getElementById('products-loading-spinner');
+        spinner.classList.remove('hidden');
         renderProducts(products);
+        spinner.classList.add("hidden");
+
     } catch (error) {
         console.error("Error fetching products:", error);
     }
@@ -1777,9 +1794,6 @@ function renderFilters() {
             <div id="products-loading-spinner" class="spinner"></div>
         </div>
     `;
-
-    const spinner = document.getElementById('products-loading-spinner');
-    spinner.classList.remove('hidden');
 
     const exportProducts = document.getElementById('export-product-btn');
     exportProducts.addEventListener('click', async (e) => {
@@ -2434,7 +2448,7 @@ async function loadDebts(customerId) {
     let totalBalance = 0;
 
     if(!debtDetailsTable) return;
-    
+
     debtDetailsTable.innerHTML = '';
 
     debtsSnapshot.forEach((doc) => {
@@ -5833,6 +5847,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// TODO: addd spinner to creating a cart.
 // TODO: add spinner to login and sign up.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
