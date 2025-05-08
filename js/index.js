@@ -315,6 +315,7 @@ async function initializeEventListeners() {
                 source.connect(context.destination);
                 source.start(0, 0, 0.5);
             });
+        toggleTheme();
     });
 
     document.querySelector("#feedback-btn").addEventListener("click", (e) => {
@@ -883,8 +884,9 @@ function showCartForm() {
         cartName.disabled = true;
 
         try {
-            showLoadingOverlay(1500);
+            showSpinner();
             await addCart();
+            hideSpinner();
             document.getElementById("search-customers").disabled = false;
         } catch (error) {
             console.error("Error adding cart:", error);
@@ -918,8 +920,7 @@ function showCartForm() {
 }
 async function cancelCart() {
     try {
-        showLoadingOverlay(1000);
-        showCartForm();
+        showSpinner();
         const cartDocRef = getUserCollection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
 
@@ -948,8 +949,8 @@ async function cancelCart() {
         await batch.commit();
 
         currentCartId = null;
-
-
+        showCartForm();
+        hideSpinner();
     } catch (error) {
         console.error("Error canceling cart:", error);
     }
@@ -987,9 +988,7 @@ async function displayCart(cartId) {
         displayCart(cartId);
     });
     const cartDisplayContainer = document.getElementById("cart-display-container");
-    setTimeout(() => {
-        cartDisplayContainer.style.display = "block";
-    }, 1200);
+    cartDisplayContainer.style.display = "block";
     cartDisplayContainer.innerHTML = `
         <div class="cart-details" id="cart-details"></div>
         <div class="cart-products-list-container" id="cart-products-list-container"></div>
@@ -1132,7 +1131,7 @@ async function fetchProductToAdd() {
 
         async function displayProducts(products) {
             productCardContainer.innerHTML = "";
-        
+
             if (products.length === 0) {
                 productCardContainer.innerHTML = `
                     <div class="no-products-message">
@@ -1141,12 +1140,12 @@ async function fetchProductToAdd() {
                 `;
                 return;
             }
-        
-            await Promise.all(products.map(product => 
+
+            await Promise.all(products.map(product =>
                 displayProductToAdd(product, product.id)
             ));
         }
-        
+
     } catch (error) {
         console.error("Error fetching products:", error);
     }
@@ -1282,7 +1281,7 @@ async function showSalesForm() {
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
         <h2>Add & Cancel Sales</h2>
-        <div class="search-customer-container search-container-main" >
+        <div class="search-customer-container search-container-main">
             <input type="text" class="search-bar" id="search-customers" placeholder="Search Product To Add"/>
             <img src="icons/magnifying-glass-plus-solid.svg" width="24" height="24" alt="Search" class="search-icon"/>
         </div>
@@ -2447,7 +2446,7 @@ async function loadDebts(customerId) {
     const debtsSnapshot = await debtRef.get();
     let totalBalance = 0;
 
-    if(!debtDetailsTable) return;
+    if (!debtDetailsTable) return;
 
     debtDetailsTable.innerHTML = '';
 

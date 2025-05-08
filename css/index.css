@@ -1419,6 +1419,7 @@ footer {
 /* Customer Section */
 .search-customer-container {
   width: 100% !important;
+  padding: 5px;
 }
 
 .search-bar {
