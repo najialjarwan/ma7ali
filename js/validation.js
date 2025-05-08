@@ -91,6 +91,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const repeat_password_input = document.getElementById("repeat-password-input");
     const error_message = document.getElementById("error-message");
 
+    const loginBtn = document.getElementById("signup-btn");
+    const btnText = loginBtn.querySelector(".btn-text");
+    const spinner = loginBtn.querySelector(".spinner");
+
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -113,6 +117,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      btnText.textContent = "";
+      spinner.classList.remove("hidden");
+      loginBtn.disabled = true;
+
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -126,6 +134,10 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "index.html";
       } catch (error) {
         console.error("Signup Error:", error.code, error.message);
+
+        btnText.textContent = "Signup";
+        spinner.classList.add("hidden");
+        loginBtn.disabled = false;
 
         switch (error.code) {
           case 'auth/email-already-in-use':
@@ -158,6 +170,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const password_input = document.getElementById("password-input");
     const error_message = document.getElementById("error-message");
 
+    const loginBtn = document.getElementById("login-btn");
+    const btnText = loginBtn.querySelector(".btn-text");
+    const spinner = loginBtn.querySelector(".spinner");
+
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -173,6 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
         error_message.textContent = errors.join(". ");
         return;
       }
+
+      btnText.textContent = "";
+      spinner.classList.remove("hidden");
+      loginBtn.disabled = true;
+
 
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -191,8 +212,14 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           console.error("User document not found!");
           error_message.textContent = "User document not found! Please try again.";
+          btnText.textContent = "Login";
+          spinner.classList.add("hidden");
+          loginBtn.disabled = false;
         }
       } catch (error) {
+        btnText.textContent = "Login";
+        spinner.classList.add("hidden");
+        loginBtn.disabled = false;
         if (error.code === 'auth/invalid-credential') {
           error_message.textContent = "Invalid email or password. Please try again.";
         } else if (error.code === 'auth/too-many-requests') {

@@ -1,4 +1,5 @@
 // #region ✅ Firebase Config [
+showSpinner();
 const firebaseConfig = {
     apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
     authDomain: "paperless-a64a0.firebaseapp.com",
@@ -21,9 +22,8 @@ let currentUser = null;
 let storeCurrency = "LBP";
 let allProducts = [];
 async function initializeApp() {
-    const loadingSpinner  = document.getElementById('loadingSpinner');
+    const loadingSpinner = document.getElementById('loadingSpinner');
     loadingSpinner.style.backgroundColor = "white";
-    showSpinner();
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -41,7 +41,7 @@ async function initializeApp() {
         console.error("Failed to enable Firestore network:", error);
         showConnectionStatus("⚠️ Firestore offline. Retrying...");
     });
-    
+
     window.addEventListener('online', () => {
         showConnectionStatus("Back Online ✅");
         setTimeout(() => {
@@ -49,7 +49,7 @@ async function initializeApp() {
         }, 3000);
         console.log("Back online");
     });
-    
+
     window.addEventListener('offline', () => {
         showConnectionStatus("🔌 You're offline. Changes will sync when back online.");
         setTimeout(() => {
@@ -57,7 +57,7 @@ async function initializeApp() {
         }, 3000);
         console.log("You're offline");
     });
-    
+
     window.addEventListener('resize', (e) => {
         e.preventDefault();
     });
@@ -93,7 +93,7 @@ async function initializeApp() {
                     hideSpinner();
                     loadingSpinner.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
                 }, 1000);
-                
+
             }
         });
     } catch (error) {
@@ -289,7 +289,7 @@ async function initializeEventListeners() {
     });
 
     refreshLink.addEventListener('click', (e) => {
-        window.location.reload(true);
+        window.location.href = "index.html";
     });
 
     if (logoutBtn) {
@@ -5795,6 +5795,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// TODO: add spinner to login and sign up.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.
