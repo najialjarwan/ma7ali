@@ -44,14 +44,12 @@
     <div class="store-name" id="store-name"></div>
 
     <div class="side-links-container">
-      <a href="#" class="sidebar-link" id="profile"><img src="icons/store-solid.svg"
-          alt="store">Store</a>
+      <a href="#" class="sidebar-link" id="profile"><img src="icons/store-solid.svg" alt="store">Store</a>
       <a href="#" class="sidebar-link" id="tasksLink"><img src="icons/list-check-solid.svg" alt="tasks">Tasks &
         Reminders</a>
-      <a href="#" class="sidebar-link" id="pdf-layout-link"><img src="icons/file-lines-solid.svg"
-          alt="pdf-layout">PDF Layout</a>
-      <a href="#" class="sidebar-link" id="account"><img src="icons/user-solid.svg"
-          alt="account">Account</a>
+      <a href="#" class="sidebar-link" id="pdf-layout-link"><img src="icons/file-lines-solid.svg" alt="pdf-layout">PDF
+        Layout</a>
+      <a href="#" class="sidebar-link" id="account"><img src="icons/user-solid.svg" alt="account">Account</a>
       <a href="#" class="sidebar-link" id="feedback-btn"><img src="icons/comment-dots-solid.svg"
           alt="feedback">Feedback</a>
       <a href="#" class="sidebar-link" data-section="help" id="help"><img src="icons/circle-question-solid.svg"
@@ -179,7 +177,8 @@
         </div>
       </div>
 
-      <button type="submit" id="saveSettings" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
+      <button type="submit" id="saveSettings" class="action-btn"><img src="icons/upload-solid.svg"
+          alt="submit"></button>
     </form>
   </div>
 
@@ -209,6 +208,15 @@
       <div id="progress-bar"></div>
     </div>
   </div>
+
+  <div id="loadingSpinner" class="spinner-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="connectionStatus" class="connection-warning hidden">
+    🔌 You are offline. Some features may not work.
+  </div>
+
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">

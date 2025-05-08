@@ -16,47 +16,61 @@ const storage = firebase.storage();
 
 window.db = db;
 window.auth = auth;
-function hideLoadingOverlay() {
-    const overlay = document.getElementById('loading-overlay');
-    overlay.style.display = 'none';
-}
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-            console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch((error) => {
-            console.log('Service Worker registration failed:', error);
-        });
-}
-window.addEventListener('resize', (e) => {
-    e.preventDefault();
-});
-document.addEventListener('gesturestart', e => e.preventDefault());
 
 let currentUser = null;
 let storeCurrency = "LBP";
 let allProducts = [];
 async function initializeApp() {
-    const connection = navigator.connection;
-    let delay = 2000;
-    if (connection && ['2g', 'slow-2g'].includes(connection.effectiveType)) {
-        delay = 3000;
-    }
-    console.log(delay);
-    showLoadingOverlay(delay);
+    const loadingSpinner  = document.getElementById('loadingSpinner');
+    loadingSpinner.style.backgroundColor = "white";
+    showSpinner();
 
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            hideLoadingOverlay();
-        }, delay);
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
+
+    window.addEventListener('resize', (e) => e.preventDefault());
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    firebase.firestore().enableNetwork().catch((error) => {
+        console.error("Failed to enable Firestore network:", error);
+        showConnectionStatus("⚠️ Firestore offline. Retrying...");
     });
+    
+    window.addEventListener('online', () => {
+        showConnectionStatus("Back Online ✅");
+        setTimeout(() => {
+            hideConnectionStatus();
+        }, 3000);
+        console.log("Back online");
+    });
+    
+    window.addEventListener('offline', () => {
+        showConnectionStatus("🔌 You're offline. Changes will sync when back online.");
+        setTimeout(() => {
+            hideConnectionStatus();
+        }, 3000);
+        console.log("You're offline");
+    });
+    
+    window.addEventListener('resize', (e) => {
+        e.preventDefault();
+    });
+    document.addEventListener('gesturestart', e => e.preventDefault());
+
     const firstInstall = localStorage.getItem('firstInstallDone');
     if (!firstInstall) {
         localStorage.setItem('firstInstallDone', 'true');
         window.location.href = "walkthrough.html";
-    } else {
+        return;
+    }
+
+    try {
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = "signup.html";
@@ -65,14 +79,29 @@ async function initializeApp() {
             }
             currentUser = user;
             console.log("User logged in:", user.uid);
-            await fetchTasks();
-            startTaskNotifications();
-            initTasksAndReminders();
-            loadUserProfile();
-            initializeEventListeners();
+
+            try {
+                loadUserProfile();
+                initializeEventListeners();
+                await fetchTasks();
+                startTaskNotifications();
+                initTasksAndReminders();
+            } catch (err) {
+                console.error("Initialization error:", err);
+            } finally {
+                setTimeout(() => {
+                    hideSpinner();
+                    loadingSpinner.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+                }, 1000);
+                
+            }
         });
+    } catch (error) {
+        console.error("Error initializing app:", error);
+        hideSpinner(); // In case of error, ensure spinner is hidden
     }
 }
+
 export const getUserCollection = (collectionName) => {
     if (!currentUser) {
         console.error("No user is logged in yet!");
@@ -206,9 +235,9 @@ async function initializeEventListeners() {
         e.preventDefault();
         e.stopPropagation();
         storeSettings.disabled = true;
-        try{
+        try {
             await setupProfileFormSubmit();
-        } catch(error){
+        } catch (error) {
             console.error("error saving settings: ", error);
         } finally {
             storeSettings.disabled = false;
@@ -240,11 +269,11 @@ async function initializeEventListeners() {
         await initpdfLayout();
 
         const saveLayoutBtn = document.getElementById("save-layout");
-        saveLayoutBtn.addEventListener("click",async (e) => {
+        saveLayoutBtn.addEventListener("click", async (e) => {
             e.preventDefault();
             e.stopPropagation
             saveLayoutBtn.disabled = true;
-            try{
+            try {
                 await saveLayout();
             } catch (error) {
                 console.error("Error saving pdflayout:", error);
@@ -260,7 +289,7 @@ async function initializeEventListeners() {
     });
 
     refreshLink.addEventListener('click', (e) => {
-        window.location.reload();
+        window.location.reload(true);
     });
 
     if (logoutBtn) {
@@ -444,6 +473,7 @@ function addProduct() {
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        showSpinner(); // Start spinner
 
         clearFieldErrors();
         const formData = new FormData(form);
@@ -454,6 +484,7 @@ function addProduct() {
                 setFieldError(fieldId, errors[fieldId], "error", "icons/circle-exclamation-solid.svg");
             }
             showModalMessage(`Failed to add the product!</br>Check ALL input fields.`);
+            hideSpinner(); // Stop spinner on error
             return;
         }
 
@@ -466,7 +497,6 @@ function addProduct() {
             rawStock,
             imageFile
         } = values;
-        console.log("rawBarCode: ", rawBarcode);
 
         const rawCostPriceToUSD = storeCurrency === "LBP" ? convertCurrency(rawCostPrice, "LBP", "$") : rawCostPrice;
         const rawProfitToUSD = storeCurrency === "LBP" ? convertCurrency(rawProfit, "LBP", "$") : rawProfit;
@@ -489,8 +519,7 @@ function addProduct() {
                         const canvas = document.createElement("canvas");
                         const ctx = canvas.getContext("2d");
 
-                        // Lower resolution for faster upload
-                        const maxWidth = 250; // Adjust as needed
+                        const maxWidth = 250;
                         const maxHeight = 250;
 
                         let width = img.width;
@@ -514,8 +543,8 @@ function addProduct() {
 
                         canvas.toBlob(
                             (blob) => resolve(blob),
-                            "image/jpeg", // Convert to JPEG for smaller file size
-                            0.9 // Adjust quality for faster uploads
+                            "image/jpeg",
+                            0.9
                         );
                     };
                     img.src = event.target.result;
@@ -524,30 +553,24 @@ function addProduct() {
                 reader.readAsDataURL(file);
             });
         };
+
         if (imageFile && imageFile.name && imageFile.size > 0) {
             try {
                 const resizedImage = await convertToJPEG(imageFile);
                 const storageRef = firebase.storage().ref();
                 const imageRef = storageRef.child(`product-images/${imageFile.name}`);
-
-                // Use the Firebase SDK put() method instead of direct XHR
                 const uploadTask = imageRef.put(resizedImage);
-
-                // Wait for upload to complete
                 await uploadTask;
-
-                // Get download URL
                 productData.img = await imageRef.getDownloadURL();
-
             } catch (error) {
                 console.error("[IMAGE] Upload failed:", error);
                 showModalMessage("Image upload failed. Please try again.", false);
+                hideSpinner(); // Stop spinner on error
                 return;
             }
         }
 
         try {
-            showLoadingOverlay(1500);
             const snapshot = await getUserCollection("products")
                 .where("barcode", "==", productData.barcode)
                 .get();
@@ -557,50 +580,42 @@ function addProduct() {
                 .get();
 
             if (!snapshot.empty || !labelSnapshot.empty) {
-                setTimeout(() => {
-                    !snapshot.empty
-                        ? showModalMessage(`Item with the enterd <strong>Barcode</strong> already exists. Update or change product barcode.`, false)
-                        : showModalMessage(`Item with the enterd <strong>Label</strong> already exists. Update or change product label.`, false);
-                }, 1500);
+                !snapshot.empty
+                    ? showModalMessage(`Item with the entered <strong>Barcode</strong> already exists. Update or change product barcode.`, false)
+                    : showModalMessage(`Item with the entered <strong>Label</strong> already exists. Update or change product label.`, false);
+                hideSpinner(); // Stop spinner if duplicate found
                 return;
             }
 
-            // 8. Add product to Firestore
-            try {
-                showLoadingOverlay(1500);
-                setTimeout(() => {
-                    renderNotification(`
-                        <img src="icons/circle-check-solid.svg" alt"succes">
-                        <p>Product added Successfully.</p>
-                    `);
-                    form.reset();
-                    document.getElementById("fileName").textContent = `No file selected`;
-                }, 1500);
+            const productRef = getUserCollection("products").doc(productData.label);
 
-                const productRef = getUserCollection("products").doc(productData.label); // Set doc ID to product label
+            await productRef.set({
+                ...productData,
+                createdAt: firebase.firestore.Timestamp.now(),
+            });
 
-                await productRef.set({
-                    ...productData,
-                    createdAt: firebase.firestore.Timestamp.now(),
-                });
+            const newDoc = await productRef.get();
+            const newProductData = newDoc.data();
 
-                const newDoc = await productRef.get();
-                const newProductData = newDoc.data();
+            allProducts.push({
+                ...newProductData,
+                id: productRef.id,
+                createdAt: newProductData.createdAt.toDate().toLocaleDateString(),
+            });
 
-                allProducts.push({
-                    ...newProductData,
-                    id: productRef.id, // not docRef anymore, it's productRef now
-                    createdAt: newProductData.createdAt.toDate().toLocaleDateString(),
-                });
-
-            } catch (error) {
-                showModalMessage("Failed To Add Product. Try Again later", false);
-            }
+            renderNotification(`
+                <img src="icons/circle-check-solid.svg" alt="success">
+                <p>Product added Successfully.</p>
+            `);
+            form.reset();
+            document.getElementById("fileName").textContent = `No file selected`;
 
         } catch (error) {
-            showModalMessage(`Failed to add product: ${error.message}`, false);
-            console.error("[PRODUCT] Error checking existing product:", error);
+            console.error("[PRODUCT] Error adding product:", error);
+            showModalMessage("Failed To Add Product. Try Again later", false);
         }
+
+        hideSpinner(); // Final stop spinner
     });
 }
 function setFieldError(fieldId, message, type = "error", iconSrc = null) {
@@ -1760,7 +1775,8 @@ function renderFilters() {
     `;
 
     const exportProducts = document.getElementById('export-product-btn');
-    exportProducts.addEventListener('click', async (e) =>{
+    exportProducts.addEventListener('click', async (e) => {
+        showSpinner();
         event.preventDefault();
         event.stopPropagation();
         try {
@@ -1768,7 +1784,8 @@ function renderFilters() {
             const exportType = document.getElementById("export-type-select")?.value || "pdf";
 
             if (exportType === "pdf") {
-                exportToPDF(products);
+                await exportToPDF(products);
+                hideSpinner();
             } else if (exportType === "csv") {
                 exportToCSV(products);
             } else {
@@ -4279,7 +4296,7 @@ function updateAccentColor(combo, index) {
         document.getElementById('toggle-theme-btn').checked = true;
     }
 }
-function updateStoreName(storeName){
+function updateStoreName(storeName) {
     const sideBar = document.getElementById("sidebar");
     if (sideBar) {
         const storeNameEle = document.getElementById('store-name');
@@ -5732,7 +5749,6 @@ function displayCurrency(amount) {
         return `${formatCompactNumber(convertAmount)} LBP`;
     }
 }
-
 function convertCurrency(amount, from = "LBP", to = "$") {
     if (from === "LBP" && to === "$") {
         return amount / EXCHANGE_RATE;
@@ -5741,7 +5757,6 @@ function convertCurrency(amount, from = "LBP", to = "$") {
     }
     return amount;
 }
-
 function formatCompactNumber(num) {
     return new Intl.NumberFormat('en', {
         notation: "compact",
@@ -5749,16 +5764,30 @@ function formatCompactNumber(num) {
         maximumFractionDigits: 2
     }).format(num);
 }
-
 let currentPageCurrencyUpdate = null;
 function setCurrencyUpdateCallback(callback) {
     currentPageCurrencyUpdate = callback;
 }
-
 function updateCurrencyView() {
     if (typeof currentPageCurrencyUpdate === "function") {
         currentPageCurrencyUpdate();
     }
+}
+
+function showSpinner() {
+    document.getElementById("loadingSpinner").classList.remove("hidden");
+}
+function hideSpinner() {
+    document.getElementById("loadingSpinner").classList.add("hidden");
+}
+function showConnectionStatus(message) {
+    const el = document.getElementById("connectionStatus");
+    el.textContent = message;
+    el.classList.remove("hidden");
+}
+function hideConnectionStatus() {
+    const el = document.getElementById("connectionStatus");
+    el.classList.add("hidden");
 }
 // #endregion ]
 
@@ -5766,9 +5795,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// FIXME: fix when updating store name in store settings it doesnt update in the UI
-//TODO: change all modal messeage success and warning to notification
-// TODO: change the sounrd of the message to the iphone one.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.
