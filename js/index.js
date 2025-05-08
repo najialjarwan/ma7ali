@@ -24,6 +24,8 @@ let allProducts = [];
 async function initializeApp() {
     const loadingSpinner = document.getElementById('loadingSpinner');
     loadingSpinner.style.backgroundColor = "white";
+    const spinnerOverlay = document.getElementById('loadingSpinner');
+    spinnerOverlay.style.backgroundImage = 'URL("../icons/web-app-manifest-512x512.png")';
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -200,6 +202,7 @@ async function initializeEventListeners() {
     const closeBtn = document.getElementById('close-btn');
     const tasksLink = document.getElementById('tasksLink');
     const pdfLayoutLink = document.getElementById('pdf-layout-link');
+    const accountLink = document.getElementById('account');
     const helpLink = document.getElementById('help');
     const profileLink = document.getElementById('profile');
     const refreshLink = document.getElementById('refresh');
@@ -222,15 +225,16 @@ async function initializeEventListeners() {
         overlay.style.display = 'none';
     }
 
+    const storeSettings = document.getElementById('store-settings');
     profileLink.addEventListener('click', (e) => {
-        const storeSettings = document.getElementById('store-settings');
+        e.stopPropagation();
         storeSettings.classList.add('active');
         initProfile();
         document.getElementById('store-done-btn').addEventListener('click', () => {
             storeSettings.classList.remove('active');
         });
     });
-    const storeSettings = document.getElementById('store-settings');
+
     storeSettings.addEventListener('submit', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -244,7 +248,8 @@ async function initializeEventListeners() {
         }
     })
 
-    tasksLink.addEventListener('click', () => {
+    tasksLink.addEventListener('click', (e) => {
+        e.stopPropagation();
         const tasks = document.getElementById('tasks');
         tasks.classList.add('active');
     });
@@ -264,6 +269,7 @@ async function initializeEventListeners() {
     });
 
     pdfLayoutLink.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const pdfLayout = document.getElementById('pdf-layout');
         pdfLayout.classList.add('active');
         await initpdfLayout();
@@ -283,12 +289,37 @@ async function initializeEventListeners() {
         });
     });
 
+    const accountSettings = document.getElementById('account-settings');
+    accountLink.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        accountSettings.classList.add('active');
+        await initAccountSettings();
+        document.getElementById('account-done-btn').addEventListener('click', () => {
+            accountSettings.classList.remove('active');
+        });
+    })
+
+    accountSettings.addEventListener('submit', async (e) => {
+        console.log("clicked");
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            accountSettings.disabled = true;
+            await saveUserAccount();
+        } catch (error) {
+            console.error("error saving account: ", error);
+        } finally {
+            accountSettings.disabled = false;
+        }
+    });
+
     helpLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadContent("help");
     });
 
     refreshLink.addEventListener('click', (e) => {
+        e.stopPropagation();
         window.location.href = "index.html";
     });
 
@@ -335,6 +366,95 @@ async function initializeEventListeners() {
         popButton.classList.remove("active");
     }
     // #endregion
+}
+async function initAccountSettings() {
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    const accountSettings = document.getElementById('account-settings')
+    accountSettings.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    accountSettings.addEventListener('touchend', (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeDistance = touchEndY - touchStartY;
+        const swipeThreshold = 50; // Minimum distance to consider it a swipe
+
+        if (swipeDistance > swipeThreshold) {
+            accountSettings.classList.remove('active');
+        }
+    }
+
+    const users = db.collection('users').doc(currentUser.uid);
+    const userDoc = await users.get();
+    const data = userDoc.data();
+
+    const userName = document.getElementById('userName');
+    userName.value = data.userName;
+
+    const email = document.getElementById('email');
+    const emailValue = data.email;
+
+    const atIndex = emailValue.indexOf('@');
+
+    if (atIndex > 5) {
+        const visiblePart = emailValue.slice(0, 4);
+        const hiddenLength = atIndex - 5;
+        const maskedPart = '*'.repeat(hiddenLength);
+        const domain = emailValue.slice(atIndex);
+
+        email.value = visiblePart + maskedPart + domain;
+    } else {
+        // If the email is shorter than expected, fallback to full masking
+        email.value = '*'.repeat(emailValue.length);
+    }
+
+
+    const password = document.getElementById('password');
+    const stars = '*'.repeat(data.passwordLength || 8);
+    password.value = stars;
+
+    const phoneNumber = document.getElementById('phoneNumber');
+    data.phoneNumber ? phoneNumber.value = data.phoneNumber : phoneNumber.placeholder = "Enter you phone number";
+}
+async function saveUserAccount() {
+
+    const users = db.collection('users').doc(currentUser.uid);
+
+    const userName = document.getElementById('userName').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+
+    // Prepare data object
+    const updateData = {
+        userName
+    };
+
+    // Validate phone number if provided
+    if (phoneNumber) {
+        if (isNaN(phoneNumber)) {
+            showModalMessage("Phone Number must be a number.", false);
+            return;
+        }
+        if (phoneNumber.length != 8) {
+            showModalMessage("Phone Number must be at least 8 digits.", false);
+            return;
+        }
+
+        // Only add if valid
+        updateData.phoneNumber = phoneNumber;
+    }
+
+    const confirmation = await showConfirmationModal("Are you sure you want to change the following settings?");
+    if (!confirmation) return;
+
+    await users.update(updateData);
+
+    showModalMessage("Account settings saved successfully", true);
 }
 
 async function loadContent(section) {
@@ -2937,7 +3057,11 @@ function renderSalesTable(salesData) {
         `;
 
         const exportButton = tableActions.querySelector(".export-sales");
-        exportButton.addEventListener("click", event => exportSalesTableToPDF(event));
+        exportButton.addEventListener("click", async event => {
+            showSpinner();
+            await exportSalesTableToPDF(event);
+            hideSpinner();
+        });
 
         table.appendChild(thead);
         table.appendChild(tbody);
@@ -5846,8 +5970,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// TODO: addd spinner to creating a cart.
-// TODO: add spinner to login and sign up.
+// TODO: style spinner animation with image on initilise app.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
 // TODO: add user guid if the user is first time using the app.

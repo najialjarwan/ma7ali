@@ -182,6 +182,11 @@ hr{
   display: flex;
   justify-content: center;
   align-items: center;
+  background-size: 300px;
+  background-attachment: fixed;
+  background-position: center center;
+  background-repeat: no-repeat;
+  
 }
 
 .spinner {
@@ -393,7 +398,9 @@ hr{
   border-color: var(--accent-color);
 }
 
-.pdf-layout label, .store-settings label {
+.pdf-layout label,
+.store-settings label,
+.account-settings label {
   font-weight: bold;
   display: flex;
   justify-content: flex-start;
@@ -449,7 +456,10 @@ hr{
 
 
 /* Tasks Section */
-.tasks, .store-settings, .pdf-layout{
+.tasks,
+.store-settings,
+.pdf-layout,
+.account-settings{
   position: fixed;
   bottom: -100%;
   height: 100vh;
@@ -463,11 +473,16 @@ hr{
   background: linear-gradient(360deg, var(--text-color), var(--accent-color));
 }
 
-.store-settings .product-form, .pdf-layout .product-form{
+.store-settings .product-form,
+.pdf-layout .product-form,
+.account-settings .product-form{
   padding: 20px;
 }
 
-.tasks.active, .store-settings.active , .pdf-layout.active{
+.tasks.active,
+.store-settings.active,
+.pdf-layout.active,
+.account-settings.active{
   bottom: 0;
 }
 

@@ -107,31 +107,28 @@
     </div>
   </footer>
 
-  <div class="tasks" id="tasks">
+  <div class="account-settings" id="account-settings">
     <div class="header-container">
-      <h5>Tasks & Reminders</h5>
-      <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt="done"></button>
+      <h5>Account Settings</h5>
+      <button type="button" class="done-btn" id="account-done-btn"><img src="icons/arrow-down-solid.svg"
+          alt="done"></button>
     </div>
+    <form class="product-form">
+      <label>User Name</label>
+      <input type="text" id="userName" placeholder=""/>
 
-    <!-- Add/Edit Task Modal -->
-    <div id="task-modal" class="task-modal">
-      <div class="task-modal-content">
-        <h2 id="modal-title">Add New Task</h2>
-        <input type="text" id="task-title" placeholder="Task title">
-        <textarea id="task-content" placeholder="Task details (optional)"></textarea>
+      <label>Email</label>
+      <input type="text" id="email" placeholder=""/>
 
-        <label for="task-due-date">Due Date & Time (optional):</label>
-        <input type="datetime-local" id="task-due-date">
+      <label>Password</label>
+      <input type="text" id="password" placeholder=""/>
 
-        <button type="button" class="action-btn" id="add-task-btn"><img src="icons/plus2-solid.svg" alt=""></button>
-      </div>
-    </div>
+      <label>Phone Number</label>
+      <input type="text" id="phoneNumber" placeholder=""/>
 
-    <div class="taskListContainer">
-      <h2>Your Tasks</h2>
-      <div class="tasks-list" id="tasks-list"></div>
-    </div>
-
+      <button type="submit" id="saveAccount" class="action-btn"><img src="icons/upload-solid.svg"
+          alt="submit"></button>
+    </form>
   </div>
 
   <div class="store-settings" id="store-settings">
@@ -180,6 +177,33 @@
       <button type="submit" id="saveSettings" class="action-btn"><img src="icons/upload-solid.svg"
           alt="submit"></button>
     </form>
+  </div>
+
+  <div class="tasks" id="tasks">
+    <div class="header-container">
+      <h5>Tasks & Reminders</h5>
+      <button type="button" id="done-btn"><img src="icons/arrow-down-solid.svg" alt="done"></button>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="task-modal">
+      <div class="task-modal-content">
+        <h2 id="modal-title">Add New Task</h2>
+        <input type="text" id="task-title" placeholder="Task title">
+        <textarea id="task-content" placeholder="Task details (optional)"></textarea>
+
+        <label for="task-due-date">Due Date & Time (optional):</label>
+        <input type="datetime-local" id="task-due-date">
+
+        <button type="button" class="action-btn" id="add-task-btn"><img src="icons/plus2-solid.svg" alt=""></button>
+      </div>
+    </div>
+
+    <div class="taskListContainer">
+      <h2>Your Tasks</h2>
+      <div class="tasks-list" id="tasks-list"></div>
+    </div>
+
   </div>
 
   <div class="pdf-layout" id="pdf-layout"></div>

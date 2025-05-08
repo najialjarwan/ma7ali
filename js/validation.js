@@ -31,12 +31,12 @@ function skipWalkthrough() {
   localStorage.setItem('seenWalkthrough', 'false');
 }
 
-function getSignupFormErrors(firstname, email, password, repeatPassword, inputs) {
+function getSignupFormErrors(userName, email, password, repeatPassword, inputs) {
   const errors = [];
 
-  if (!firstname) {
-    errors.push("Firstname is required");
-    inputs.firstname_input.parentElement.classList.add("incorrect");
+  if (!userName) {
+    errors.push("User Name is required");
+    inputs.userName_input.parentElement.classList.add("incorrect");
   }
   if (!email) {
     errors.push("Email is required");
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm");
 
   if (signupForm) {
-    const firstname_input = document.getElementById("firstname-input");
+    const userName_input = document.getElementById("userName-input");
     const email_input = document.getElementById("email-input");
     const password_input = document.getElementById("password-input");
     const repeat_password_input = document.getElementById("repeat-password-input");
@@ -98,15 +98,16 @@ document.addEventListener("DOMContentLoaded", () => {
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const firstname = firstname_input.value.trim();
+      const userName = userName_input.value.trim();
       const email = email_input.value.trim();
       const password = password_input.value.trim();
       const repeatPassword = repeat_password_input.value.trim();
+      console.log(password.length);
 
       error_message.textContent = ""; // Clear previous errors
 
-      const errors = getSignupFormErrors(firstname, email, password, repeatPassword, {
-        firstname_input,
+      const errors = getSignupFormErrors(userName, email, password, repeatPassword, {
+        userName_input,
         email_input,
         password_input,
         repeat_password_input,
@@ -126,8 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const user = userCredential.user;
 
         await setDoc(doc(db, "users", user.uid), {
-          firstname,
+          userName,
           email,
+          passwordLength: password.length,
           createdAt: serverTimestamp()
         });
 
@@ -157,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Clear error message while typing
-    [firstname_input, email_input, password_input, repeat_password_input].forEach(input => {
+    [userName_input, email_input, password_input, repeat_password_input].forEach(input => {
       input.addEventListener("input", () => {
         error_message.textContent = "";
       });
