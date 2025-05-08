@@ -1631,6 +1631,8 @@ async function fetchProducts() {
         };
 
         const renderProducts = (filteredProducts) => {
+            const spinner = document.getElementById('products-loading-spinner');
+            spinner.classList.add("hidden");
             productsGrid.innerHTML = "";
 
             filteredProducts.forEach(product => {
@@ -1771,8 +1773,13 @@ function renderFilters() {
                 <button class="export-btn" style="color: var(--btnText-color);" id="export-product-btn"><img src="icons/file-pdf-solid.svg" alt"add debt"></button>
             </div>
         </div>
-        <div id="products-grid" class="products-grid"></div>
+        <div id="products-grid" class="products-grid">
+            <div id="products-loading-spinner" class="spinner"></div>
+        </div>
     `;
+
+    const spinner = document.getElementById('products-loading-spinner');
+    spinner.classList.remove('hidden');
 
     const exportProducts = document.getElementById('export-product-btn');
     exportProducts.addEventListener('click', async (e) => {
@@ -2084,7 +2091,7 @@ async function removeProductFromFirebase(productId) {
 // #endregion }
 
 // #region 2️⃣ Customers Section {
-function initCustomersPage() {
+async function initCustomersPage() {
     setCurrencyUpdateCallback(() => {
         initCustomersPage();
     });
@@ -2095,9 +2102,14 @@ function initCustomersPage() {
                 <input type="text" class="search-bar" id="search-customers" placeholder="Search Customer"/>
                 <img src="icons/magnifying-glass-solid.svg" width="24" height="24" alt="Search" class="search-icon" />
             </div>
-            <div class="customers-grid" id="customers-grid"></div>
+            <div class="customers-grid" id="customers-grid">
+                <div id="customers-loading-spinner" class="spinner"></div>
+            </div>
         `;
-    fetchCustomers();
+    const spinner = document.getElementById('customers-loading-spinner');
+    spinner.classList.remove('hidden');
+    await fetchCustomers();
+    spinner.classList.add('hidden');
 }
 async function fetchCustomers() {
     const searchInput = document.getElementById("search-customers");
@@ -2366,7 +2378,9 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
                         <th>Remove</th>
                     </tr>
                 </thead>
-                <tbody id="debt-details-table"></tbody>
+                <tbody id="debt-details-table">
+                    <div id="debt-loading-spinner" class="spinner"></div>
+                </tbody>
             </table>
             <p><strong>Total Balance: <span id="total-balance">0</span></strong></p>
         </div>
@@ -2377,12 +2391,18 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         </div>
     `;
 
+    const spinner = document.getElementById('debt-loading-spinner');
+    spinner.classList.remove('hidden');
+
     await loadDebts(customerId);
+    spinner.classList.add('hidden');
 
     document.getElementById("export").addEventListener("click", async () => {
         try {
+            showSpinner();
             const { debts, total } = await fetchDebtDetailsForExport(customerId);
             exportDebtDetailsToPDF(debts, customerName, customerPhone, total);
+            hideSpinner();
         } catch (error) {
             console.error("Error exporting debt details:", error);
         }
@@ -2392,13 +2412,16 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
         initCustomersPage();
     });
 
-    document.getElementById("add-debt").addEventListener("click", async (e) => {
+    const addDebtBtn = document.getElementById('add-debt');
+    addDebtBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         try {
+            addDebtBtn.disabled = true;
             await renderAddDebtForm(customerId);
-            await loadDebts(customerId); // ✅ Only after form is submitted or closed
         } catch (error) {
             console.error("Debt form failed:", error);
+        } finally {
+            addDebtBtn.disabled = false;
         }
     });
 }
@@ -2410,6 +2433,8 @@ async function loadDebts(customerId) {
     const debtsSnapshot = await debtRef.get();
     let totalBalance = 0;
 
+    if(!debtDetailsTable) return;
+    
     debtDetailsTable.innerHTML = '';
 
     debtsSnapshot.forEach((doc) => {
@@ -2448,7 +2473,7 @@ async function renderAddDebtForm(customerId) {
                 <input type="text" id="debt-details" />
                 <label for="debt-balance">Balance (${storeCurrency}):</label>
                 <input type="text" id="debt-balance" />
-                <button type="submit" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
+                <button type="submit" id="submit-debt-btn" class="action-btn"><img src="icons/upload-solid.svg" alt="submit"></button>
             </form>
         `;
 
@@ -2470,7 +2495,9 @@ async function renderAddDebtForm(customerId) {
             resolve(); // Same as above
         });
 
+        const submitdebtBtn = document.getElementById('submit-debt-btn');
         document.getElementById("customer-debt").addEventListener("submit", async (event) => {
+            submitdebtBtn.disabled = true;
             event.preventDefault();
             const details = document.getElementById("debt-details").value.trim();
             const balance = parseFloat(document.getElementById("debt-balance").value.trim());
@@ -2494,10 +2521,13 @@ async function renderAddDebtForm(customerId) {
                 `);
 
                 document.getElementById("customer-debt").reset();
-                resolve(); // ✅ Only resolve here after successful add
+                resolve();
             } catch (error) {
                 console.log(error);
-                reject(error); // You can also handle errors
+                reject(error);
+            } finally {
+                submitdebtBtn.disabled = false;
+                await loadDebts(customerId);
             }
         });
     });
@@ -2512,7 +2542,7 @@ function initCartsAndSalesSection() {
         <h2>Sales and Carts</h2>
         <button type="submit" id="view-carts-btn" class="func-btn">View Carts</button>
         <div class="sales-container" id="sales-container"></div>
-                            `;
+    `;
     loadSalesData();
 
     const viewCartsBtn = document.getElementById("view-carts-btn");
@@ -2747,14 +2777,22 @@ async function loadSalesData() {
                 </select>
             </div>
         </div>
-        <div id="sales-table-container"></div>
+        <div id="sales-table-container">
+            <div id="sales-loading-spinner" class="spinner"></div>
+        </div>
+
     `;
 
     initButtonSelect("filter-sales-select", "filter-sales-buttons");
 
+    const spinner = document.getElementById("sales-loading-spinner");
+    spinner.classList.remove("hidden");
+
     const salesData = await fetchSalesData();
     populateDropdown(salesData);
     renderSalesTable(salesData);
+
+    spinner.classList.add("hidden");
 
     const salesDateSelect = document.getElementById("sales-date-select");
     if (!salesDateSelect)
