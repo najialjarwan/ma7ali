@@ -1473,7 +1473,9 @@ function showLoadingOverlay(duration = 400) {
 
 // #region 1️⃣ Products Section {
 function initProductPage() {
-
+    setCurrencyUpdateCallback(() => {
+        initProductPage();
+    });
     renderFilters();
 
     initButtonSelect("price-select", "price-buttons");
@@ -1481,26 +1483,6 @@ function initProductPage() {
     initButtonSelect("profit-select", "profit-buttons");
 
     fetchProducts();
-
-    document.body.addEventListener("click", async (event) => {
-        if (event.target && event.target.id === "export-product-btn") {
-            try {
-                const products = await fetchProductsforExporting();
-                const exportType = document.getElementById("export-type-select")?.value || "pdf";
-
-                if (exportType === "pdf") {
-                    exportToPDF(products);
-                } else if (exportType === "csv") {
-                    exportToCSV(products);
-                } else {
-                    console.error("Invalid export type selected!");
-                }
-            } catch (error) {
-                console.error("Error exporting products:", error);
-            }
-        }
-    });
-
 }
 function initButtonSelect(selectId, buttonContainerId) {
     const select = document.getElementById(selectId);
@@ -1524,9 +1506,7 @@ function initButtonSelect(selectId, buttonContainerId) {
     });
 }
 async function fetchProducts() {
-    setCurrencyUpdateCallback(() => {
-        initProductPage();
-    });
+
     const productsGrid = document.getElementById("products-grid");
     const categorySelect = document.getElementById("category-select");
     const priceSelect = document.getElementById("price-select");
@@ -1778,6 +1758,26 @@ function renderFilters() {
         </div>
         <div id="products-grid" class="products-grid"></div>
     `;
+
+    const exportProducts = document.getElementById('export-product-btn');
+    exportProducts.addEventListener('click', async (e) =>{
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+            const products = await fetchProductsforExporting();
+            const exportType = document.getElementById("export-type-select")?.value || "pdf";
+
+            if (exportType === "pdf") {
+                exportToPDF(products);
+            } else if (exportType === "csv") {
+                exportToCSV(products);
+            } else {
+                console.error("Invalid export type selected!");
+            }
+        } catch (error) {
+            console.error("Error exporting products:", error);
+        }
+    });
 }
 function productCard(product) {
     return `
@@ -2618,7 +2618,6 @@ function renderCartsTable(carts) {
             if (confirmation) {
                 try {
                     await getUserCollection("carts").doc(cartId).delete();
-                    showModalMessage("!", true);
                     renderNotification(`
                         <img src="icons/circle-check-solid.svg" alt="alert">
                         <p>Cart Deleted Successfully.</p>
@@ -4189,6 +4188,7 @@ async function setupProfileFormSubmit() {
         }
 
         updateAccentColor(profileData.combo, profileData.currentThemeIndex);
+        updateStoreName(profileData.storeName);
     }
 }
 async function loadUserProfile() {
@@ -4231,14 +4231,7 @@ async function loadUserProfile() {
         updateAccentColor(data.combo, data.currentThemeIndex);
 
         if (data.storeName) {
-            const sideBar = document.getElementById("sidebar");
-            if (sideBar) {
-                const storeName = data.storeName;
-                const storeNameEle = document.createElement("div");
-                storeNameEle.className = "store-name";
-                storeNameEle.textContent = storeName;
-                sideBar.appendChild(storeNameEle);
-            }
+            updateStoreName(data.storeName);
         }
     }
 }
@@ -4284,6 +4277,14 @@ function updateAccentColor(combo, index) {
     if (index === 1) {
         console.log(document.getElementById('toggle-theme-btn'));
         document.getElementById('toggle-theme-btn').checked = true;
+    }
+}
+function updateStoreName(storeName){
+    const sideBar = document.getElementById("sidebar");
+    if (sideBar) {
+        const storeNameEle = document.getElementById('store-name');
+        storeNameEle.textContent = storeName;
+        sideBar.appendChild(storeNameEle);
     }
 }
 
@@ -4354,6 +4355,7 @@ function startTaskNotifications() {
                     <img src="icons/bell-solid.svg" alt="alert">
                     <p><strong>Reminder: </strong>10 mins for ${task.title}</p>
                 `);
+                task.alerted10Min = true;
             }
 
             if (timeDiffMinutes <= 0) {
@@ -4489,7 +4491,10 @@ async function saveTask() {
 
     try {
         const docRef = await getUserCollection("tasks").add(newTask);
-        console.log('Task added successfully!');
+        renderNotification(`
+            <img src="icons/circle-check-solid.svg" alt="alert">
+            <p>Task Added Successfully.</p>
+        `);
         renderTask(newTask, docRef.id);
         await fetchTasks();
     } catch (error) {
@@ -5761,8 +5766,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
-// FIXME: fix mutliple event listeners in store, and pdf settings.
-// FIXME: fix when changing the currency in produts section then exporting it exports multiple times.
 // FIXME: fix when updating store name in store settings it doesnt update in the UI
 //TODO: change all modal messeage success and warning to notification
 // TODO: change the sounrd of the message to the iphone one.
