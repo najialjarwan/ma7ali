@@ -24,8 +24,6 @@ let allProducts = [];
 async function initializeApp() {
     const loadingSpinner = document.getElementById('loadingSpinner');
     loadingSpinner.style.backgroundColor = "white";
-    const spinnerOverlay = document.getElementById('loadingSpinner');
-    spinnerOverlay.style.backgroundImage = 'URL("../icons/web-app-manifest-512x512.png")';
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -5026,20 +5024,7 @@ async function initAccountSettings() {
     userName.value = data.userName;
 
     const email = document.getElementById('email');
-    const emailValue = data.email;
-
-    const atIndex = emailValue.indexOf('@');
-
-    if (atIndex > 5) {
-        const visiblePart = emailValue.slice(0, 4);
-        const hiddenLength = atIndex - 5;
-        const maskedPart = '*'.repeat(hiddenLength);
-        const domain = emailValue.slice(atIndex);
-
-        email.value = visiblePart + maskedPart + domain;
-    } else {
-        email.value = '*'.repeat(emailValue.length);
-    }
+    email.value = data.email;
 
     const password = document.getElementById('password');
     const stars = '*'.repeat(data.passwordLength || 8);
@@ -5062,20 +5047,20 @@ async function initAccountSettings() {
             </div>
             <form class="product-form">
                 <label>Old Password</label>
-                <input type="password" id="oldPassword" placeholder="Enter old password" />
+                <input type="password" id="oldPassword" autocomplete placeholder="Enter old password" />
 
                 <label>New Password</label>
-                <input type="password" id="newPassword" placeholder="Enter new password" />
+                <input type="password" id="newPassword" autocomplete placeholder="Enter new password" />
 
                 <label>Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm new password" />
+                <input type="password" id="confirmPassword" autocomplete placeholder="Confirm new password" />
 
                 <button type="submit" id="savePassword" class="action-btn">
                     <img src="icons/upload-solid.svg" alt="save">
                 </button>
 
                 <p>
-                    <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+                    Forgot your password?<a href="#" id="forgotPasswordLink"> click here</a>
                 </p>
             </form>
         `;
@@ -5095,12 +5080,10 @@ async function initAccountSettings() {
 
         document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
             e.preventDefault();
-
-            const email = prompt("Please enter your email to reset your password:");
-            if (!email) return;
-
+            
             try {
-                await firebase.auth().sendPasswordResetEmail(email);
+                showSpinner();
+                await firebase.auth().sendPasswordResetEmail(data.email);
                 showModalMessage("✅ Password reset email sent! Check your inbox.", true);
             } catch (error) {
                 console.error("Password reset error:", error);
@@ -5112,6 +5095,8 @@ async function initAccountSettings() {
                 } else {
                     showModalMessage("❌ Something went wrong. Please try again.", false);
                 }
+            } finally{
+                hideSpinner();
             }
         });
     });
@@ -5170,13 +5155,12 @@ async function saveUserAccount() {
 
     const userName = document.getElementById('userName').value.trim();
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const newEmail = document.getElementById('email').value.trim();
 
-    // Prepare data object
     const updateData = {
         userName
     };
 
-    // Validate phone number if provided
     if (phoneNumber) {
         if (isNaN(phoneNumber)) {
             showModalMessage("Phone Number must be a number.", false);
@@ -5198,6 +5182,7 @@ async function saveUserAccount() {
 
     showModalMessage("Account settings saved successfully", true);
 }
+
 // #endregion }
 
 // #region Feedback {
@@ -6097,16 +6082,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // TODO: continue with email and passowrd changes then add forogt password link in the login page.
-// TODO: style spinner animation with image on initilise app.
-// TODO: add infincity spinning animation with background image.
-// TODO: change modal style.
-// TODO: add user guid if the user is first time using the app.
 // TODO: Add first time? check help center.
-// TODO: add change email and password setting with phone number too.
-// TODO: Change how store and pdf settings are rendered.
 // TODO: add expriry date to products and send a notification to the user when a product expires.
-// TODO: set a loading animation or something to when the application is loading.
 // TODO: offline usring sw.
 // TODO: add export to excel and csv later.
-// TODO: change text in the feedback to ever wished.....
-// TODO: Add predefined coll
