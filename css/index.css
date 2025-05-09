@@ -354,7 +354,6 @@ hr{
 }
 
 
-
 .container form {
   display: flex;
   flex-direction: column;
@@ -445,6 +444,12 @@ hr{
 .combo-btn div {
   width: 100%;
   height: 50px;
+}
+
+#forgotPasswordLink {
+  text-decoration:underline;
+  color: white;
+  margin-top: 10px;
 }
 
 

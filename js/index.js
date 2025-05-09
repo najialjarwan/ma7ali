@@ -5073,6 +5073,10 @@ async function initAccountSettings() {
                 <button type="submit" id="savePassword" class="action-btn">
                     <img src="icons/upload-solid.svg" alt="save">
                 </button>
+
+                <p>
+                    <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+                </p>
             </form>
         `;
 
@@ -5082,56 +5086,83 @@ async function initAccountSettings() {
             initAccountSettings();
         });
 
-        initPasswordSettings();
+        document.getElementById('savePassword').addEventListener('click', async (e) => {
+            e.preventDefault();
+            showSpinner();
+            await initPasswordSettings();
+            hideSpinner();
+        });
+
+        document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
+            e.preventDefault();
+
+            const email = prompt("Please enter your email to reset your password:");
+            if (!email) return;
+
+            try {
+                await firebase.auth().sendPasswordResetEmail(email);
+                showModalMessage("✅ Password reset email sent! Check your inbox.", true);
+            } catch (error) {
+                console.error("Password reset error:", error);
+
+                if (error.code === "auth/user-not-found") {
+                    showModalMessage("❌ No user found with that email.", false);
+                } else if (error.code === "auth/invalid-email") {
+                    showModalMessage("❌ Invalid email address.", false);
+                } else {
+                    showModalMessage("❌ Something went wrong. Please try again.", false);
+                }
+            }
+        });
     });
 }
-function initPasswordSettings() {
-    document.getElementById('savePassword').addEventListener('click', (e) => {
-        e.preventDefault();
+async function initPasswordSettings() {
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
-        const oldPassword = document.getElementById('oldPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        showModalMessage("Please enter all the fields.");
+        return;
+    }
 
-        if (!oldPassword || !newPassword || !confirmPassword) {
-            showModalMessage("Please enter all the fields.");
-            return;
-        }
+    console.log(newPassword);
 
-        if (newPassword !== confirmPassword) {
-            showModalMessage(`Password do not match.`, false);
-            return;
-        }
+    if (newPassword.length < 8) {
+        showModalMessage("New password must be at least 8 characters.");
+        return;
+    }
 
-        const user = firebase.auth().currentUser;
+    if (newPassword !== confirmPassword) {
+        showModalMessage(`Password do not match.`, false);
+        return;
+    }
 
-        if (!user || !user.email) {
-            alert("❌ No authenticated user.");
-            return;
-        }
+    const user = firebase.auth().currentUser;
 
-        const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
+    if (!user || !user.email) {
+        alert("❌ No authenticated user.");
+        return;
+    }
 
-        user.reauthenticateWithCredential(credential)
-            .then(() => {
-                return user.updatePassword(newPassword);
-            })
-            .then(() => {
-                showModalMessage()
-            })
-            .catch((error) => {
-                console.error("Error changing password:", error);
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
 
-                if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
-                    showModalMessage("Old password is incorrect.", false);
-                } else if (error.code === "auth/too-many-requests") {
-                    showModalMessage("🚫 Too many attempts. Please try again later.", false);
-                } else {
-                    showModalMessage("❌ Something went wrong. Please try again later.", false);
-                }
-            });
-    });
-
+    user.reauthenticateWithCredential(credential)
+        .then(() => {
+            return user.updatePassword(newPassword);
+        })
+        .then(() => {
+            showModalMessage(`Password changed successfully.`, true);
+        })
+        .catch((error) => {
+            if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
+                showModalMessage("Old password is incorrect.", false);
+            } else if (error.code === "auth/too-many-requests") {
+                showModalMessage("Too many attempts. Please try again later.", false);
+            } else {
+                showModalMessage("❌ Something went wrong. Please try again later.", false);
+            }
+        });
 }
 async function saveUserAccount() {
 
@@ -6065,6 +6096,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
 });
 
+// TODO: continue with email and passowrd changes then add forogt password link in the login page.
 // TODO: style spinner animation with image on initilise app.
 // TODO: add infincity spinning animation with background image.
 // TODO: change modal style.
