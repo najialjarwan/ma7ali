@@ -298,10 +298,6 @@ async function initializeEventListeners() {
     accountLink.addEventListener('click', async (e) => {
         e.stopPropagation();
         accountSettings.classList.add('active');
-        document.getElementById('account-done-btn').addEventListener('click', () => {
-            accountSettings.classList.remove('active');
-        });
-        swap(accountSettings);
     });
     accountSettings.addEventListener('submit', async (e) => {
         console.log("clicked");
@@ -5016,6 +5012,12 @@ async function saveLayout() {
 // #region Account Settings{
 async function initAccountSettings() {
 
+    const accountSettings = document.getElementById('account-settings');
+    document.getElementById('account-done-btn').addEventListener('click', () => {
+        accountSettings.classList.remove('active');
+    });
+    swap(accountSettings);
+
     const users = db.collection('users').doc(currentUser.uid);
     const userDoc = await users.get();
     const data = userDoc.data();
@@ -5039,13 +5041,97 @@ async function initAccountSettings() {
         email.value = '*'.repeat(emailValue.length);
     }
 
-
     const password = document.getElementById('password');
     const stars = '*'.repeat(data.passwordLength || 8);
     password.value = stars;
 
     const phoneNumber = document.getElementById('phoneNumber');
     data.phoneNumber ? phoneNumber.value = data.phoneNumber : phoneNumber.placeholder = "Enter you phone number";
+
+    const originalContent = accountSettings.innerHTML;
+
+    password.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        accountSettings.innerHTML = `
+            <div class="header-container">
+                <h5>Password Settings</h5>
+                <button type="button" class="exit-btn" id="back-to-settings">
+                    <img src="icons/arrow-left-solid.svg" alt="back">
+                </button>
+            </div>
+            <form class="product-form">
+                <label>Old Password</label>
+                <input type="password" id="oldPassword" placeholder="Enter old password" />
+
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password" />
+
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password" />
+
+                <button type="submit" id="savePassword" class="action-btn">
+                    <img src="icons/upload-solid.svg" alt="save">
+                </button>
+            </form>
+        `;
+
+        const backBtn = document.getElementById('back-to-settings');
+        backBtn.addEventListener('click', () => {
+            accountSettings.innerHTML = originalContent;
+            initAccountSettings();
+        });
+
+        initPasswordSettings();
+    });
+}
+function initPasswordSettings() {
+    document.getElementById('savePassword').addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            showModalMessage("Please enter all the fields.");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showModalMessage(`Password do not match.`, false);
+            return;
+        }
+
+        const user = firebase.auth().currentUser;
+
+        if (!user || !user.email) {
+            alert("❌ No authenticated user.");
+            return;
+        }
+
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
+
+        user.reauthenticateWithCredential(credential)
+            .then(() => {
+                return user.updatePassword(newPassword);
+            })
+            .then(() => {
+                showModalMessage()
+            })
+            .catch((error) => {
+                console.error("Error changing password:", error);
+
+                if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
+                    showModalMessage("Old password is incorrect.", false);
+                } else if (error.code === "auth/too-many-requests") {
+                    showModalMessage("🚫 Too many attempts. Please try again later.", false);
+                } else {
+                    showModalMessage("❌ Something went wrong. Please try again later.", false);
+                }
+            });
+    });
+
 }
 async function saveUserAccount() {
 

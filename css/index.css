@@ -314,7 +314,7 @@ hr{
 
 .header-container {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   position: relative;
   width: 100%;
   border-bottom: 1px solid var(--input-color);
@@ -353,14 +353,7 @@ hr{
   color: var(--accent-color);
 }
 
-.container h2 {
-  padding: 1rem;
-  margin: 1rem;
-  font-size: 1.3rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  font-family: sans-serif;
-}
+
 
 .container form {
   display: flex;
