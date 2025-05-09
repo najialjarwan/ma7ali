@@ -84,6 +84,7 @@ async function initializeApp() {
 
             try {
                 loadUserProfile();
+                initAccountSettings();
                 initializeEventListeners();
                 await fetchTasks();
                 startTaskNotifications();
@@ -233,6 +234,7 @@ async function initializeEventListeners() {
         document.getElementById('store-done-btn').addEventListener('click', () => {
             storeSettings.classList.remove('active');
         });
+        swap(storeSettings);
     });
 
     storeSettings.addEventListener('submit', async (e) => {
@@ -252,6 +254,7 @@ async function initializeEventListeners() {
         e.stopPropagation();
         const tasks = document.getElementById('tasks');
         tasks.classList.add('active');
+        swap(tasks);
     });
 
     const addTaskBtn = document.getElementById('add-task-btn');
@@ -287,18 +290,19 @@ async function initializeEventListeners() {
                 saveLayoutBtn.disabled = false;
             }
         });
+        const pdfSettings = document.getElementById('pdf-layout');
+        swap(pdfSettings);
     });
 
     const accountSettings = document.getElementById('account-settings');
     accountLink.addEventListener('click', async (e) => {
         e.stopPropagation();
         accountSettings.classList.add('active');
-        await initAccountSettings();
         document.getElementById('account-done-btn').addEventListener('click', () => {
             accountSettings.classList.remove('active');
         });
-    })
-
+        swap(accountSettings);
+    });
     accountSettings.addEventListener('submit', async (e) => {
         console.log("clicked");
         e.preventDefault();
@@ -354,6 +358,7 @@ async function initializeEventListeners() {
         openFeedbackModal();
     });
     document.querySelector("#submit-feedback").addEventListener("click", submitFeedback);
+
     document.querySelector(".close-feedback-modal").addEventListener("click", () => {
         document.getElementById("feedback-modal").style.display = "none";
     });
@@ -366,95 +371,6 @@ async function initializeEventListeners() {
         popButton.classList.remove("active");
     }
     // #endregion
-}
-async function initAccountSettings() {
-    let touchStartY = 0;
-    let touchEndY = 0;
-
-    const accountSettings = document.getElementById('account-settings')
-    accountSettings.addEventListener('touchstart', (e) => {
-        touchStartY = e.changedTouches[0].screenY;
-    });
-
-    accountSettings.addEventListener('touchend', (e) => {
-        touchEndY = e.changedTouches[0].screenY;
-        handleSwipe();
-    });
-
-    function handleSwipe() {
-        const swipeDistance = touchEndY - touchStartY;
-        const swipeThreshold = 50; // Minimum distance to consider it a swipe
-
-        if (swipeDistance > swipeThreshold) {
-            accountSettings.classList.remove('active');
-        }
-    }
-
-    const users = db.collection('users').doc(currentUser.uid);
-    const userDoc = await users.get();
-    const data = userDoc.data();
-
-    const userName = document.getElementById('userName');
-    userName.value = data.userName;
-
-    const email = document.getElementById('email');
-    const emailValue = data.email;
-
-    const atIndex = emailValue.indexOf('@');
-
-    if (atIndex > 5) {
-        const visiblePart = emailValue.slice(0, 4);
-        const hiddenLength = atIndex - 5;
-        const maskedPart = '*'.repeat(hiddenLength);
-        const domain = emailValue.slice(atIndex);
-
-        email.value = visiblePart + maskedPart + domain;
-    } else {
-        // If the email is shorter than expected, fallback to full masking
-        email.value = '*'.repeat(emailValue.length);
-    }
-
-
-    const password = document.getElementById('password');
-    const stars = '*'.repeat(data.passwordLength || 8);
-    password.value = stars;
-
-    const phoneNumber = document.getElementById('phoneNumber');
-    data.phoneNumber ? phoneNumber.value = data.phoneNumber : phoneNumber.placeholder = "Enter you phone number";
-}
-async function saveUserAccount() {
-
-    const users = db.collection('users').doc(currentUser.uid);
-
-    const userName = document.getElementById('userName').value.trim();
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
-
-    // Prepare data object
-    const updateData = {
-        userName
-    };
-
-    // Validate phone number if provided
-    if (phoneNumber) {
-        if (isNaN(phoneNumber)) {
-            showModalMessage("Phone Number must be a number.", false);
-            return;
-        }
-        if (phoneNumber.length != 8) {
-            showModalMessage("Phone Number must be at least 8 digits.", false);
-            return;
-        }
-
-        // Only add if valid
-        updateData.phoneNumber = phoneNumber;
-    }
-
-    const confirmation = await showConfirmationModal("Are you sure you want to change the following settings?");
-    if (!confirmation) return;
-
-    await users.update(updateData);
-
-    showModalMessage("Account settings saved successfully", true);
 }
 
 async function loadContent(section) {
@@ -4304,8 +4220,31 @@ async function fetchSalesDataAndRenderInsights() {
 
 
 // #region 🟦 Sidebar Region [
+function swap(element) {
+    let touchStartY = 0;
+    let touchEndY = 0;
 
-// #region Profile Settings {
+    element.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    element.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeDistance = touchEndY - touchStartY;
+        const swipeThreshold = 300;
+
+        if (swipeDistance > swipeThreshold) {
+            element.classList.remove('active');
+        }
+    }
+}
+// #region Store Settings {
 let initialBaseColor;
 let currentComboColors = [];
 let currentThemeIndex = 0;
@@ -5071,6 +5010,76 @@ async function saveLayout() {
     } catch (err) {
         console.error("Error saving layout:", err);
     }
+}
+// #endregion }
+
+// #region Account Settings{
+async function initAccountSettings() {
+
+    const users = db.collection('users').doc(currentUser.uid);
+    const userDoc = await users.get();
+    const data = userDoc.data();
+
+    const userName = document.getElementById('userName');
+    userName.value = data.userName;
+
+    const email = document.getElementById('email');
+    const emailValue = data.email;
+
+    const atIndex = emailValue.indexOf('@');
+
+    if (atIndex > 5) {
+        const visiblePart = emailValue.slice(0, 4);
+        const hiddenLength = atIndex - 5;
+        const maskedPart = '*'.repeat(hiddenLength);
+        const domain = emailValue.slice(atIndex);
+
+        email.value = visiblePart + maskedPart + domain;
+    } else {
+        email.value = '*'.repeat(emailValue.length);
+    }
+
+
+    const password = document.getElementById('password');
+    const stars = '*'.repeat(data.passwordLength || 8);
+    password.value = stars;
+
+    const phoneNumber = document.getElementById('phoneNumber');
+    data.phoneNumber ? phoneNumber.value = data.phoneNumber : phoneNumber.placeholder = "Enter you phone number";
+}
+async function saveUserAccount() {
+
+    const users = db.collection('users').doc(currentUser.uid);
+
+    const userName = document.getElementById('userName').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+
+    // Prepare data object
+    const updateData = {
+        userName
+    };
+
+    // Validate phone number if provided
+    if (phoneNumber) {
+        if (isNaN(phoneNumber)) {
+            showModalMessage("Phone Number must be a number.", false);
+            return;
+        }
+        if (phoneNumber.length != 8) {
+            showModalMessage("Phone Number must be at least 8 digits.", false);
+            return;
+        }
+
+        // Only add if valid
+        updateData.phoneNumber = phoneNumber;
+    }
+
+    const confirmation = await showConfirmationModal("Are you sure you want to change the following settings?");
+    if (!confirmation) return;
+
+    await users.update(updateData);
+
+    showModalMessage("Account settings saved successfully", true);
 }
 // #endregion }
 
