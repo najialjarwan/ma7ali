@@ -800,15 +800,17 @@ function showCustomerForm() {
         try {
             event.preventDefault();
             event.stopPropagation();
+            customerForm.disabled = true;
             await addCustomer();
             console.log("add customer finsished");
-            customerForm.disabled = true;
         }
         catch (error) {
             console.error(error);
         }
         finally {
-            customerForm.disabled = false;
+            setTimeout(() => {
+                customerForm.disabled = false;
+            }, 400);
         }
     });
 }
@@ -952,11 +954,16 @@ function showCartForm() {
     });
 
     const cancelCartBtn = document.getElementById("cancel-cart-btn");
-    cancelCartBtn.addEventListener("click", cancelCart);
+    cancelCartBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const confirmation = await showConfirmationModal("Are you sure you want to cancel this cart? all products added to it will be canceled too.");
+        if (!confirmation) return;
+        cancelCart();
+    });
 }
 async function cancelCart() {
     try {
-        showSpinner();
         const cartDocRef = getUserCollection("carts").doc(currentCartId);
         const cartProductsSnapshot = await cartDocRef.collection("cartProducts").get();
 
@@ -986,7 +993,6 @@ async function cancelCart() {
 
         currentCartId = null;
         showCartForm();
-        hideSpinner();
     } catch (error) {
         console.error("Error canceling cart:", error);
     }
