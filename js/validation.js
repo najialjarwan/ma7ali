@@ -78,11 +78,31 @@ function getLoginFormErrors(email, password, inputs) {
 document.addEventListener("DOMContentLoaded", () => {
   const auth = window.fbAuth;
   const db = window.fbDb;
-  const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = window.fbAuthFunctions;
+  const { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } = window.fbAuthFunctions;
   const { doc, setDoc, getDoc, serverTimestamp } = window.fbFirestore;
 
   const signupForm = document.getElementById("signupForm");
   const loginForm = document.getElementById("loginForm");
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const email = prompt("Enter your email:");
+      if (email) {
+        try {
+          await sendPasswordResetEmail(auth, email);
+          alert(`✅ Password reset email sent to ${email}! Check your inbox.`);
+        } catch (error) {
+          console.error(error);
+          alert("❌ Failed to send reset email: " + error.message);
+        }
+      } else {
+        alert("⚠️ Email is required.");
+      }
+    });
+  }
 
   if (signupForm) {
     const userName_input = document.getElementById("userName-input");

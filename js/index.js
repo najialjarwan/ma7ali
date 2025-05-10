@@ -444,58 +444,7 @@ function showProductForm() {
     `;
     addProduct();
 
-    const costPriceInput = document.getElementById("costPrice");
-    const imgSrc = "icons/triangle-exclamation-solid.svg";
-
-    costPriceInput.addEventListener("input", () => {
-        const profitInput = document.getElementById("profit");
-        const costPriceInput = document.getElementById("costPrice");
-
-        const rawProfit = parseFloat(profitInput.value);
-        const rawCostPrice = parseFloat(costPriceInput.value);
-
-        costPriceInput.classList.remove("input-warning");
-        const existingMsg = costPriceInput.parentNode.querySelector(`.error-text[data-for="costPrice"]`);
-        if (existingMsg) existingMsg.remove();
-
-        if (isNaN(rawCostPrice)) return;
-
-        if (storeCurrency === "$" && rawCostPrice > 100)
-            setFieldError("costPrice", "Cost Price is too high", "warning", imgSrc);
-        else if (storeCurrency === "LBP" && rawCostPrice < 5000)
-            setFieldError("costPrice", "Cost Price is too low", "warning", imgSrc);
-        else if (rawCostPrice >= 10000000)
-            setFieldError("costPrice", "Cost Price is way too high", "warning", imgSrc);
-
-        initWarnings(rawProfit, rawCostPrice);
-    });
-
-    document.getElementById("profit").addEventListener("input", () => {
-        const profitInput = document.getElementById("profit");
-        const costPriceInput = document.getElementById("costPrice");
-
-        const rawProfit = parseFloat(profitInput.value);
-        const rawCostPrice = parseFloat(costPriceInput.value);
-
-        profitInput.classList.remove("input-warning");
-        const existingMsg = profitInput.parentNode.querySelector(`.error-text[data-for="profit"]`);
-        if (existingMsg) existingMsg.remove();
-
-        initWarnings(rawProfit, rawCostPrice);
-    });
-
-    function initWarnings(rawProfit, rawCostPrice) {
-        if (!isNaN(rawProfit)) {
-            if (rawProfit < 1000 && storeCurrency === "LBP")
-                setFieldError("profit", "Profit is too low !", "warning", imgSrc);
-            else if (!isNaN(rawCostPrice) && rawProfit >= rawCostPrice)
-                setFieldError("profit", "Profit is way too high for this price", "warning", imgSrc);
-            else if (!isNaN(rawCostPrice) && rawProfit >= (rawCostPrice * 0.9))
-                setFieldError("profit", "Profit is too high for this price", "warning", imgSrc);
-            else if (rawProfit >= 90 && storeCurrency === "$" || rawProfit >= 900000 && storeCurrency === "LBP")
-                setFieldError("profit", "Profit is too high", "warning", imgSrc);
-        }
-    }
+    costPriceAndProfitWarnings();
 
     document.getElementById("customFileButton").addEventListener("click", () => {
         document.getElementById("img").click();
@@ -655,6 +604,63 @@ function addProduct() {
         hideSpinner(); // Final stop spinner
     });
 }
+function costPriceAndProfitWarnings() {
+    const costPriceInput = document.getElementById("costPrice");
+    const profitInput = document.getElementById("profit");
+    const imgSrc = "icons/triangle-exclamation-solid.svg";
+
+    function sanitize(value) {
+        return parseFloat(value.trim().replace(/,/g, ""));
+    }
+
+    function showWarnings() {
+        const rawCostPrice = sanitize(costPriceInput.value);
+        const rawProfit = sanitize(profitInput.value);
+
+        // Clear previous warnings
+        costPriceInput.classList.remove("input-warning");
+        profitInput.classList.remove("input-warning");
+
+        const costMsg = costPriceInput.parentNode.querySelector(`.error-text[data-for="costPrice"]`);
+        const profitMsg = profitInput.parentNode.querySelector(`.error-text[data-for="profit"]`);
+        if (costMsg) costMsg.remove();
+        if (profitMsg) profitMsg.remove();
+
+        // Cost price warnings
+        if (!isNaN(rawCostPrice)) {
+            if (storeCurrency === "$" && rawCostPrice > 100) {
+                setFieldError("costPrice", "Cost Price is too high", "warning", imgSrc);
+            } else if (storeCurrency === "LBP" && rawCostPrice < 5000) {
+                setFieldError("costPrice", "Cost Price is too low", "warning", imgSrc);
+            } else if (rawCostPrice >= 10000000) {
+                setFieldError("costPrice", "Cost Price is way too high", "warning", imgSrc);
+            }
+        }
+
+        // Profit warnings
+        if (!isNaN(rawProfit)) {
+            if (storeCurrency === "LBP" && rawProfit < 1000) {
+                setFieldError("profit", "Profit is too low !", "warning", imgSrc);
+            } else if (!isNaN(rawCostPrice)) {
+                if (rawProfit >= rawCostPrice) {
+                    setFieldError("profit", "Profit is way too high for this price", "warning", imgSrc);
+                } else if (rawProfit >= rawCostPrice * 0.9) {
+                    setFieldError("profit", "Profit is too high for this price", "warning", imgSrc);
+                }
+            }
+
+            if ((storeCurrency === "$" && rawProfit >= 90) ||
+                (storeCurrency === "LBP" && rawProfit >= 900000)) {
+                setFieldError("profit", "Profit is too high", "warning", imgSrc);
+            }
+        }
+    }
+
+    // Attach to both inputs
+    costPriceInput.addEventListener("input", showWarnings);
+    profitInput.addEventListener("input", showWarnings);
+}
+
 function setFieldError(fieldId, message, type = "error", iconSrc = null) {
     console.log(iconSrc);
     const input = document.getElementById(fieldId);
@@ -1966,6 +1972,8 @@ async function displayProductForm(product) {
     const fileInput = document.getElementById("img");
     const customFileButton = document.getElementById("customFileButton");
     const fileNameSpan = document.getElementById("fileName");
+
+    costPriceAndProfitWarnings();
 
     customFileButton.addEventListener("click", () => {
         fileInput.click();
@@ -5080,7 +5088,7 @@ async function initAccountSettings() {
 
         document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
             e.preventDefault();
-            
+
             try {
                 showSpinner();
                 await firebase.auth().sendPasswordResetEmail(data.email);
@@ -5095,7 +5103,7 @@ async function initAccountSettings() {
                 } else {
                     showModalMessage("❌ Something went wrong. Please try again.", false);
                 }
-            } finally{
+            } finally {
                 hideSpinner();
             }
         });

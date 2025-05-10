@@ -12,14 +12,14 @@
   <link rel="shortcut icon" href="/icons/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Ma7ali" />
-  
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail }
       from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    
+      from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
       authDomain: "paperless-a64a0.firebaseapp.com",
@@ -38,7 +38,8 @@
     window.fbDb = db;
     window.fbAuthFunctions = {
       createUserWithEmailAndPassword,
-      signInWithEmailAndPassword
+      signInWithEmailAndPassword,
+      sendPasswordResetEmail
     };
     window.fbFirestore = {
       doc,
@@ -51,7 +52,7 @@
 </head>
 
 <body>
-  
+
   <div class="wrapper">
     <h1>Login</h1>
 
@@ -87,7 +88,10 @@
       <button type="submit" id="login-btn">
         <span class="btn-text">Login</span>
         <span class="spinner hidden"></span>
-      </button>      
+      </button>
+      <p>
+        Forgot your password?<a href="#" id="forgotPasswordLink"> click here</a>
+      </p>
       <p>New here? <a href="signup.html">Create an Account</a></p>
     </form>
   </div>
