@@ -74,6 +74,10 @@ function getLoginFormErrors(email, password, inputs) {
 
   return errors;
 }
+import {
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const auth = window.fbAuth;
@@ -84,6 +88,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signupForm");
   const loginForm = document.getElementById("loginForm");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+
+  const googleBtn = document.getElementById("googleSignupBtn");
+
+  if (googleBtn) {
+    googleBtn.addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Check if user already exists
+        const userDocRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userDocRef);
+
+        if (!userSnap.exists()) {
+          // Create user doc if it doesn't exist
+          await setDoc(userDocRef, {
+            userName: user.displayName || "No Name",
+            email: user.email,
+            createdAt: serverTimestamp(),
+            authProvider: "google"
+          });
+        }
+
+        // Redirect to main app
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Google Sign-In Error:", error);
+        alert("❌ Google Sign-In failed: " + error.message);
+      }
+    });
+  }
 
   if (forgotPasswordLink) {
     forgotPasswordLink.addEventListener('click', async (e) => {

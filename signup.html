@@ -12,7 +12,7 @@
   <link rel="shortcut icon" href="/icons/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Ma7ali" />
-  
+
   <script type="module">
     // Import Firebase services
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -20,6 +20,8 @@
       from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { GoogleAuthProvider, signInWithPopup } 
+    from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADCUzBdWRmheIFqQU6p-Oyf6sZ1mQynPY",
@@ -56,7 +58,7 @@
     <h1>Create Account</h1>
     <div class="signupMethods">
       <div class="method-buttons">
-        <button class="method-btn google-btn" onclick="redirectToSignup('signup-google.html')">
+        <button class="method-btn google-btn" id="googleSignupBtn">
           <img src="icons/google-brands.svg" alt="Google Logo" />
         </button>
 

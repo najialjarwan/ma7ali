@@ -433,7 +433,8 @@ function showProductForm() {
             <input type="text" id="stock" name="stock">
 
             <label for="img">Product Image: <span id="fileName">No file selected!</span> </label>
-            <input type="file" id="img" name="img" accept="image/*" capture="environment" class="file-input">
+            <input type="file" id="img" name="img" accept="image/*" class="file-input">
+
             <button type="button" id="customFileButton"><img src="icons/cloud-arrow-up-solid.svg" alt="upload"></button>
 
             <hr>
