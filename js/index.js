@@ -311,9 +311,11 @@ async function initializeEventListeners() {
         }
     });
 
+    const helpCenter = document.getElementById('help-center');
     helpLink.addEventListener('click', (e) => {
         e.preventDefault();
-        loadContent("help");
+        helpCenter.classList.add('active');
+        initHelp();
     });
 
     refreshLink.addEventListener('click', (e) => {
@@ -396,9 +398,6 @@ async function loadContent(section) {
         if (section === "addSales")
             showSalesForm();
         //
-
-        if (section === "help")
-            initHelp();
     } catch (error) {
         mainContent.innerHTML = `<h2>Error loading ${section}. Please try again later.</h2>`;
         console.error(error);
@@ -5223,7 +5222,13 @@ function submitFeedback() {
 
 // #region Help {
 function initHelp() {
-    document.body.innerHTML = `
+    const helpCenter = document.getElementById('help-center');
+    swap(helpCenter);
+    helpCenter.innerHTML = `
+        <div class = "header-container">
+            <h5>Help Center</h5>
+            <button type="button" id="help-done-btn"><img src="icons/arrow-down-solid.svg" alt"done"></button>
+        </div>
         <div class="help-section">
             <h1>1-Overview of the Ma7ali Application</h1>
             <section class="app-description">
@@ -5355,6 +5360,37 @@ function initHelp() {
                         <h2>How do I set the currency to LBP or $ on default?</h2>
                         <p>You can select the default currency from the "Store Setting" button in the side bar. Select the currency you want and press "Save Setting".</p>
                     </div>
+                    <div class="app-title">
+                        <h2>How Can I correcly use Tasks & Reminders?</h2>
+                        <p><strong>To use Tasks & Reminders follow these instructions:</strong></br></p>
+                        <ul>
+                            <li>Click on the Tasks & Reminders link in the side bar.</li>
+                            <li>From the Tasks & Reminders section enter a task title (requierd), and optinaly enter details or date to be reminded.</li>
+                            <li>Click on the + icon, then the task will be added to "Your Tasks" section below.</li>
+                            <li>You can remove a task by clicking on the trash icon on the right side of the task, or by swiping the icon to the left.</li>
+                            <li>You can click on the white circle to mark a task as "Done".</li>
+                            <li>A task that has a due date will send you a notifcation to remind you to do the task.</li>
+                            <li>A task that is mark as "Done" will not send you a notifcation reminder.</li>
+                            <li>Click on the task box to see the task details and due date (if added).</li>
+                            <li>A task will remind you 10 mins before its due date.</li>
+                        </ul>
+                    </div>
+                    <div class="app-title">
+                        <h2>How Can I change my account settings?</h2>
+                        <p><strong>To change your account settings follow these instructions:</strong></br></p>
+                        <ul>
+                            <li>Click on the account link in the sidebar.</li>
+                            <li>From the accont section you can change the following: User Name, Email, Password and Phone Number.</li>
+                            <li>To change your user name simply enter your new user name.</li>
+                            <li>To change your email enter your new email, and after saving the changes a message should tell you that a verifcation email
+                            has been sent to your email account to verify it. Click on the link in the email inbox and verify it to make the changes.</li>
+                            <li>To change your password click on the password that contain your password hashed in "*", then enter your old password, new password and confirm password.</li>
+                            <li>If you forogot your old password click on the link below the save icon and enter your email. A reset password link will be sent to your email that is associated to your store account. 
+                            Then you click on the link in the email and reset your password.</li>
+                            <li>To change your phone number simply enter your new phone number and click save.</li>
+                            <li>If you had any problem changing any of your account settings a message will tell what went wrong. Read and follow the message's instructions.</li>
+                        </ul>
+                    </div>
                 </section>
             </section>
 
@@ -5418,41 +5454,32 @@ function initHelp() {
                         </ul>
                     </div>
                     <div class="app-title">
-                        <h2>Other tools</h2>
-                        <p><strong>Other tools you can use:</strong></br></p>
+                        <h2>Other Tools you can use</h2>
+                        <p><strong>Feedback:</strong></br></p>
                         <ul>
-                            <li></li>
-                            <li>Check your dashboard hourly or daily to keep track of your products stock, sales, revenues, profits and more.</li>
-                            <li>Each chart and table in the dashboard provides you with powerfull different analytics, use them to create notes in your notes tool in the side bar to keep track of the things you want to add, update or change.</li>
-                            <li>You can also remove customer debt and balance if he/she payed for it, you can do that by locating the customer debt and remove it.</li>
-                            <li>Use the debt exporting button to export the details to inform the customer about his debt before or after he pays them.</li>
+                            <li>From the sidebar, click the feedback link to send any problem you are facing including optionaly screen shots.</li>
+                            <li>Use precise description of what problem you are facing.</li>
+                            <li>Use screenshots to help us locate exactly what and where the problem is.</li>
+                            <li>If no problems accuring you can send us your preferences and things you want us to include or exclude.</li>
+                            <li>Feedback tool is a very important tool to help us improve, fix, and maintain your application, experience and store.</li>
                         </ul>
                     </div>
                 </section>
             </section>
-
-            </br>
-            <hr>
-            </br>
-
-            
-            <h3>Dashboard Overview</h3>
-                                    <h2>How do I add products to the sotre?</h2>
-                        <p>To add a new product press the + icon located in the bot bottom of the application to open adder section.
-                        After that press the icon with an arrow and box. Then you will need to enter products details and press add.</p>
-
-            <h3>Managing Products</h3>
-            <p>Instructions on how to manage products in the system.</p>
-
-            <h2>4. Troubleshooting</h2>
-            <h3>Common Issues</h3>
-            <p>Solutions to common problems users might face.</p>
-
-            <h2>5. Contact Support</h2>
-            <h3>Support Email</h3>
-            <p>For assistance, contact our support team at: support@company.com.</p>
+            <div class="footer">
+                <img src="images/1880760.png">
+                <div class="text">
+                    <p>Developed and maintained by</p>
+                    <p><strong>Naji Al-Jarawan</strong></p>
+                    <p><strong>Lebanese International University</strong></p>
+                </div>
+            </div>
         </div>
     `;
+    document.getElementById('help-done-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        helpCenter.classList.remove('active');
+    });
 }
 // #endregion }
 
