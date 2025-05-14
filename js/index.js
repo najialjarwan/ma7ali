@@ -28,10 +28,10 @@ async function initializeApp() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-                console.log('Service Worker registered with scope:', registration.scope);
+                
             })
             .catch((error) => {
-                console.log('Service Worker registration failed:', error);
+                
             });
     }
 
@@ -47,7 +47,7 @@ async function initializeApp() {
         setTimeout(() => {
             hideConnectionStatus();
         }, 3000);
-        console.log("Back online");
+        
     });
 
     window.addEventListener('offline', () => {
@@ -55,7 +55,7 @@ async function initializeApp() {
         setTimeout(() => {
             hideConnectionStatus();
         }, 3000);
-        console.log("You're offline");
+        
     });
 
     window.addEventListener('resize', (e) => {
@@ -74,11 +74,11 @@ async function initializeApp() {
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = "signup.html";
-                console.log("No user found, redirecting...");
+                
                 return;
             }
             currentUser = user;
-            console.log("User logged in:", user.uid);
+            
 
             try {
                 loadUserProfile();
@@ -257,7 +257,7 @@ async function initializeEventListeners() {
 
     const addTaskBtn = document.getElementById('add-task-btn');
     addTaskBtn.addEventListener('click', async () => {
-        console.log("Add task is clicked:");
+        
         addTaskBtn.disabled = true;
 
         try {
@@ -298,7 +298,7 @@ async function initializeEventListeners() {
         accountSettings.classList.add('active');
     });
     accountSettings.addEventListener('submit', async (e) => {
-        console.log("clicked");
+        
         e.preventDefault();
         e.stopPropagation();
         try {
@@ -662,7 +662,7 @@ function costPriceAndProfitWarnings() {
 }
 
 function setFieldError(fieldId, message, type = "error", iconSrc = null) {
-    console.log(iconSrc);
+    
     const input = document.getElementById(fieldId);
 
     input.classList.remove("input-error", "input-warning");
@@ -755,7 +755,7 @@ function validateProductForm(formData) {
                 input.classList.remove("input-error");
 
                 const existingMsg = input.parentNode.querySelector(`.error-text[data-for="${input.name}"]`);
-                console.log(existingMsg);
+                
                 if (existingMsg) existingMsg.remove();
             }, { once: true }); // Listener triggers once and then removes itself
         });
@@ -802,7 +802,7 @@ function showCustomerForm() {
             event.stopPropagation();
             customerForm.disabled = true;
             await addCustomer();
-            console.log("add customer finsished");
+            
         }
         catch (error) {
             console.error(error);
@@ -815,7 +815,7 @@ function showCustomerForm() {
     });
 }
 async function addCustomer() {
-    console.log("called add customer");
+    
     const name = document.getElementById("name").value.trim().toLowerCase();
     const phoneNumber = document.getElementById("phoneNumber").value.trim().toLowerCase();
 
@@ -1217,7 +1217,7 @@ async function displayProductToAdd(product, productId) {
     const animationCooldown = 100;
     const productSnap = await getUserCollection("products").doc(productId).get();
     let currentStock = productSnap.data().stock;
-    console.log(currentStock);
+    
     actionBtn.addEventListener("click", async function () {
 
         if (currentStock <= 0) {
@@ -1232,7 +1232,7 @@ async function displayProductToAdd(product, productId) {
             actionBtn.disabled = true;
             await actionFunction(productId, product.label, product.costPrice, product.profit);
             currentStock -= 1;
-            console.log("stock: ", currentStock);
+            
         }
         catch (error) {
             console.error(error);
@@ -1297,7 +1297,7 @@ async function displayProductToAdd(product, productId) {
                 }
                 await cancelSale(productId);
                 currentStock += 1;
-                console.log("stock cacnel: ", currentStock);
+                
             }
             catch (error) {
                 console.error(error);
@@ -1459,7 +1459,7 @@ async function recalcuateTotals(saleDocRef) {
     }, { merge: true });
 }
 async function cancelProductQuantity(productId, quantityToCancel) {
-    console.log(quantityToCancel);
+    
     const today = new Date().toLocaleDateString('en-CA');
     const saleDocRef = getUserCollection("sales").doc(today);
     const productSoldRef = saleDocRef.collection("productsSold").doc(productId);
@@ -2304,7 +2304,7 @@ function renderCustomerCard(customer) {
                 <p>Customer Removed Successfully.</p>
             `);
         } catch (error) {
-            console.log(error);
+            
         }
     });
 
@@ -2483,7 +2483,7 @@ async function displayCustomerDetails(customerId, customerName, customerPhone) {
     });
 }
 async function loadDebts(customerId) {
-    console.log("called load debts");
+    
     const debtDetailsTable = document.getElementById("debt-details-table");
     const totalBalanceElement = document.getElementById("total-balance");
     const debtRef = getUserCollection("customers").doc(customerId).collection("debts");
@@ -2580,7 +2580,7 @@ async function renderAddDebtForm(customerId) {
                 document.getElementById("customer-debt").reset();
                 resolve();
             } catch (error) {
-                console.log(error);
+                
                 reject(error);
             } finally {
                 submitdebtBtn.disabled = false;
@@ -3730,15 +3730,14 @@ function renderProfitabilityMetrics(products) {
     const lowestProfitMargin = Math.min(...products.map(product => product.profitMargin));
     const averageProfitMargin = products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length;
 
-    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin}%`;
-    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin}%`;
-    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin}%`;
+    document.getElementById("highest-profit-margin").textContent = `${highestProfitMargin.toFixed(2)}%`;
+    document.getElementById("lowest-profit-margin").textContent = `${lowestProfitMargin.toFixed(2)}%`;
+    document.getElementById("average-profit-margin").textContent = `${averageProfitMargin.toFixed(2)}%`;
 }
 function renderProfitMarginChart(products) {
     const canvasId = 'profitMarginChart';
     const ctx = document.getElementById(canvasId).getContext('2d');
 
-    // 💥 Destroy existing chart if it exists
     if (chartInstances[canvasId]) {
         chartInstances[canvasId].destroy();
     }
@@ -4303,9 +4302,9 @@ async function setupProfileFormSubmit() {
         return;
     }
 
-    console.log(currentThemeIndex);
+    
     const profileData = { storeName, exchangeRate, currency, combo, currentThemeIndex, updatedAt: new Date() };
-    console.log(profileData.currentThemeIndex);
+    
     await saveUserProfile(profileData);
 
     function getSelectedCurrency() {
@@ -4363,7 +4362,7 @@ async function loadUserProfile() {
 
         if (data.currentThemeIndex) {
             currentThemeIndex = data.currentThemeIndex;
-            console.log("currentThemeIndex: ", currentThemeIndex);
+            
         }
 
         updateComboSelection(data.combo);
@@ -4414,7 +4413,7 @@ function updateAccentColor(combo, index) {
     root.style.setProperty("--accent-color", initialBaseColor);
 
     if (index === 1) {
-        console.log(document.getElementById('toggle-theme-btn'));
+        
         document.getElementById('toggle-theme-btn').checked = true;
     }
 }
@@ -4431,7 +4430,7 @@ async function toggleTheme() {
     const root = document.documentElement;
     const profileRef = getUserCollection("profile").doc("storeSettings");
     if (!currentComboColors.length) {
-        console.log("toggleTheme: ");
+        
         const doc = await profileRef.get();
         if (!doc.exists) return;
 
@@ -4444,12 +4443,12 @@ async function toggleTheme() {
     }
 
     currentThemeIndex = currentThemeIndex === 0 ? 1 : 0;
-    console.log("index: ", currentThemeIndex);
+    
     root.style.setProperty("--accent-color", currentComboColors[currentThemeIndex]);
 
     try {
         await profileRef.update({ currentThemeIndex });
-        console.log("Theme index updated in Firestore:", currentThemeIndex);
+        
     } catch (error) {
         console.error("Error updating theme index in Firestore:", error);
     }
@@ -4509,7 +4508,7 @@ function startTaskNotifications() {
                     await getUserCollection("tasks").doc(task.id).update({
                         alerted: true
                     });
-                    console.log(`[Task Notification] Marked "${task.title}" as completed in Firestore.`);
+                    
                 } catch (error) {
                     console.error(`Error updating task "${task.title}" status to completed:`, error);
                 }
@@ -4601,7 +4600,7 @@ async function tasksList() {
     }
 }
 async function saveTask() {
-    console.log("saveTask is called");
+    
     const title = document.getElementById('task-title').value.trim();
     const content = document.getElementById('task-content').value.trim();
     const dueDate = document.getElementById('task-due-date').value;
@@ -4651,7 +4650,7 @@ function renderTask(task, taskId) {
     statusButton.className = 'status-button';
     statusButton.type = 'button';
     statusButton.dataset.status = task.status;
-    console.log("statusButton.dataset.status: ", statusButton.dataset.status);
+    
     if (task.status === "pending") {
         statusButton.innerHTML = '<img src="icons/circle-regular.svg" alt="circle">';
     }
@@ -4700,7 +4699,7 @@ function renderTask(task, taskId) {
     tasksList.appendChild(taskItem);
 
     taskItem.addEventListener('click', () => {
-        console.log("clicked");
+        
         const isVisible = taskContent.classList.contains("show");
 
         if (isVisible) {
@@ -4727,9 +4726,9 @@ function renderTask(task, taskId) {
         e.stopPropagation();
         try {
             const isCompleted = statusButton.dataset.status === 'completed';
-            console.log("isCompleted: ", isCompleted);
+            
             const newStatus = isCompleted ? 'pending' : 'completed';
-            console.log("new status: ", newStatus);
+            
             statusButton.innerHTML = isCompleted
                 ? '<img src="icons/circle-regular.svg" alt="check">'
                 : '<img src="icons/circle-check-regular.svg" alt="circle">';
@@ -4756,9 +4755,9 @@ function renderTask(task, taskId) {
 
             if (localTaskIndex !== -1) {
                 localTasks[localTaskIndex].status = newStatus;
-                console.log(localTasks[localTaskIndex].status = newStatus);
+                
             }
-            console.log(`Task "${task.title}" marked as ${newStatus}.`);
+            
         } catch (error) {
             console.error('Error toggling task status:', error);
             alert('Failed to update task status. Please try again.');
@@ -4810,14 +4809,14 @@ function renderTask(task, taskId) {
 
     async function taskDelete() {
         try {
-            console.log('Task "${task.title}" deleted successfully.');
+            
             tasksList.removeChild(taskItem);
 
             // Remove from localTasks
             const indexToRemove = localTasks.findIndex(t => t.id === taskId);
             if (indexToRemove !== -1) {
                 localTasks.splice(indexToRemove, 1);
-                console.log("task deleted from localTasks");
+                
             }
 
             await getUserCollection("tasks").doc(taskId).delete();
@@ -5125,7 +5124,7 @@ async function initPasswordSettings() {
         return;
     }
 
-    console.log(newPassword);
+    
 
     if (newPassword.length < 8) {
         showModalMessage("New password must be at least 8 characters.");

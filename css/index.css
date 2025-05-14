@@ -104,8 +104,6 @@ hr{
   opacity: 1 !important;
 }
 
-
-
 @keyframes slideUp {
   from {
     transform: translateY(100%);
@@ -948,7 +946,7 @@ nav {
   border: none;
   outline: none;
   font-size: 20px;
-  margin-left: 20px;
+  margin-left: 5px;
   padding: 5px;
   font-weight: bold;
   padding-left: 45px;
