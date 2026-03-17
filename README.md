@@ -13,11 +13,19 @@
 
 ---
 
+## 📸 Showcase
+<div>
+  <!-- <img src="" width="800" title="*Name* Quick Look" alt="*NAME* GIF screenshots showcase" /> -->
+  Full 50+ page project documentation including technical architecture, UI/UX process, and implementation details is available
+  
+  [here](https://najialjarwan.vercel.app/pdfs/Ma7ali-final-report.pdf)
+</div>
+
 
 ## 🔷 Project Overview
 <table>
 <tr><td>Type</td><td>university project</td></tr>
-<tr><td>Role</td><td>full-stack</td></tr>
+<tr><td>My Role</td><td>full-stack</td></tr>
 <tr><td>Platform</td><td>PWA</td></tr>
 <tr><td>Duration</td><td>mar 15 - may 15</td></tr>
 <tr><td>Status</td><td>completed</td></tr>
@@ -26,22 +34,14 @@
 </table>
 
 
-<!-- 
-📸 SCREENSHOTS PLACEHOLDER
-
-This section will eventually render project screenshots or GIF demos.
-Humans scan images first, so keep it near the top.
--->
-
-<!-- {{screenshots}} -->
-
-
 ## ⚙️ Tech Stack & Tools
 <p>
-  <img src="https://najialjarwan.vercel.app/external-icons/html.svg" height="40" title="HTML5" />&nbsp;&nbsp;
-<img src="https://najialjarwan.vercel.app/external-icons/css.svg" height="40" title="CSS3" />&nbsp;&nbsp;
-<img src="https://najialjarwan.vercel.app/external-icons/javascript.svg" height="40" title="JavaScript (ES6+)" />&nbsp;&nbsp;
-<img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />&nbsp;&nbsp;
+  <img src="https://najialjarwan.vercel.app/external-icons/html.svg" height="40" title="HTML5" />
+<img src="https://najialjarwan.vercel.app/external-icons/css.svg" height="40" title="CSS3" />
+<img src="https://najialjarwan.vercel.app/external-icons/javascript.svg" height="40" title="JavaScript (ES6+)" />
+<img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />
+<img src="https://najialjarwan.vercel.app/external-icons/vscode.svg" height="40" title="VS Code" />
+<img src="https://najialjarwan.vercel.app/external-icons/git.svg" height="40" title="Git" />
 </p>
 
 <table>
@@ -51,15 +51,15 @@ Humans scan images first, so keep it near the top.
   </tr>
   <tr>
     <td><strong>Backend</strong></td>
-    <td></td>
+    <td><strong>⚠️ No Backend at the moment</strong></td>
   </tr>
   <tr>
     <td><strong>Database</strong></td>
-    <td></td>
+    <td><strong>⚠️ No Database at the moment</strong></td>
   </tr>
   <tr>
     <td><strong>Hosting</strong></td>
-    <td></td>
+    <td><strong>⚠️ Not hosted at the moment</strong></td>
   </tr>
     <tr>
     <td><strong>Tools</strong></td>
