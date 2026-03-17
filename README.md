@@ -16,7 +16,7 @@
 ## 📸 Showcase
 <div>
   <!-- <img src="" width="800" title="*Name* Quick Look" alt="*NAME* GIF screenshots showcase" /> -->
-  Full 50+ page project documentation including technical architecture, UI/UX process, and implementation details is available
+  Full 50+ page project documentation including technical architecture, UI/UX process, and implementation details is available:
   
   [here](https://najialjarwan.vercel.app/pdfs/Ma7ali-final-report.pdf)
 </div>
@@ -35,35 +35,39 @@
 
 
 ## ⚙️ Tech Stack & Tools
-<p>
-  <img src="https://najialjarwan.vercel.app/external-icons/html.svg" height="40" title="HTML5" />
-<img src="https://najialjarwan.vercel.app/external-icons/css.svg" height="40" title="CSS3" />
-<img src="https://najialjarwan.vercel.app/external-icons/javascript.svg" height="40" title="JavaScript (ES6+)" />
-<img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />
-<img src="https://najialjarwan.vercel.app/external-icons/vscode.svg" height="40" title="VS Code" />
-<img src="https://najialjarwan.vercel.app/external-icons/git.svg" height="40" title="Git" />
-</p>
 
 <table>
   <tr>
     <td><strong>Frontend</strong></td>
-    <td></td>
+    <td>
+      <img src="https://najialjarwan.vercel.app/external-icons/html.svg" height="40" title="HTML5" />
+      <img src="https://najialjarwan.vercel.app/external-icons/css.svg" height="40" title="CSS3" />
+      <img src="https://najialjarwan.vercel.app/external-icons/javascript.svg" height="40" title="JavaScript" />
+    </td>
   </tr>
   <tr>
     <td><strong>Backend</strong></td>
-    <td><strong>⚠️ No Backend at the moment</strong></td>
+    <td>
+      <img src="https://najialjarwan.vercel.app/external-icons/javascript.svg" height="40" title="JavaScript" />
+      <img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />
+    </td>
   </tr>
   <tr>
     <td><strong>Database</strong></td>
-    <td><strong>⚠️ No Database at the moment</strong></td>
+    <td>
+       <img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />
+    </td>
   </tr>
   <tr>
     <td><strong>Hosting</strong></td>
-    <td><strong>⚠️ Not hosted at the moment</strong></td>
+    <td><strong>⚠️ Not hosted</strong></td>
   </tr>
     <tr>
     <td><strong>Tools</strong></td>
-    <td></td>
+    <td>
+      <img src="https://najialjarwan.vercel.app/external-icons/vscode.svg" height="40" title="VS Code" />
+      <img src="https://najialjarwan.vercel.app/external-icons/git.svg" height="40" title="Git" />
+    </td>
   </tr>
 </table>
 
