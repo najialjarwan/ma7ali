@@ -4,7 +4,7 @@
 
 
 <h1 align="center">
-⭐ Ma7ali • POS PWA for managing small businesses
+⭐ Ma7ali • POS PWA For Managing Small Businesses
 </h1>
 
 
