@@ -58,10 +58,6 @@
        <img src="https://najialjarwan.vercel.app/external-icons/firebase.svg" height="40" title="Firebase" />
     </td>
   </tr>
-  <tr>
-    <td><strong>Hosting</strong></td>
-    <td><strong>⚠️ Not hosted</strong></td>
-  </tr>
     <tr>
     <td><strong>Tools</strong></td>
     <td>
