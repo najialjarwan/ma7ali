@@ -64,6 +64,26 @@
 </table>
 
 
+## 🗂️ Project Structure
+```bash
+├── index.html              # Main entry page
+├── login.html
+├── signup.html
+├── pages/                  # Application pages (dashboard, products, sales, etc.)
+├── css/                    # Stylesheets
+├── js/                     # JavaScript logic
+├── images/                 # Image assets
+├── icons/                  # UI icons and favicons
+├── sounds/                 # Audio feedback files
+├── sw.js                   # Service worker (PWA)
+├── firebase.json           # Firebase configuration
+├── firestore_indexes.json  # Firestore indexes
+├── cors.json               # CORS configuration
+├── site.webmanifest        # PWA manifest
+├── Ma7ali-Final_Report.pdf # Project documentation
+```
+
+
 ## 💡 Problem / Motivation
 
 Ma7ali was developed as my final-year capstone project with the goal of building a practical system for small shopkeepers to manage sales, inventory, and customer debts. The project focused on designing a complete workflow—from database structure and system architecture to user experience and documentation—transforming coursework knowledge into a real operational product.
