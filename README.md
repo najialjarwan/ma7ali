@@ -24,13 +24,12 @@
 
 ## 🔷 Project Overview
 <table align="center">
-<tr><td>Type</td><td>university project</td></tr>
-<tr><td>My Role</td><td>full-stack</td></tr>
+<tr><td>Type</td><td>University Project</td></tr>
+<tr><td>My Role</td><td>Full-Stack</td></tr>
 <tr><td>Platform</td><td>PWA</td></tr>
-<tr><td>Duration</td><td>mar 15 - may 15</td></tr>
-<tr><td>Status</td><td>completed</td></tr>
+<tr><td>Duration</td><td>Mar 15 - May 15</td></tr>
+<tr><td>Status</td><td>Completed</td></tr>
 <tr><td>Version</td><td>1.0.0</td></tr>
-<tr><td>Live Demo</td><td>No public live deployment available</td></tr>
 </table>
 
 
